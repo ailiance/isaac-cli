@@ -1,18 +1,19 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import {
-	CLAUDE_SONNET_1M_SUFFIX,
-	ModelInfo,
-	OPENROUTER_PROVIDER_PREFERENCES,
-	openRouterClaudeOpus461mModelId,
-	openRouterClaudeSonnet41mModelId,
-	openRouterClaudeSonnet451mModelId,
-	openRouterClaudeSonnet461mModelId,
+    CLAUDE_SONNET_1M_SUFFIX,
+    ModelInfo,
+    OPENROUTER_PROVIDER_PREFERENCES,
+    openRouterClaudeOpus461mModelId,
+    openRouterClaudeSonnet41mModelId,
+    openRouterClaudeSonnet451mModelId,
+    openRouterClaudeSonnet461mModelId,
+    stripOpenRouterPreset,
 } from "@shared/api"
 import { normalizeOpenaiReasoningEffort } from "@shared/storage/types"
 import {
-	GEMINI_MAX_OUTPUT_TOKENS,
-	shouldSkipReasoningForModel,
-	supportsReasoningEffortForModel,
+    GEMINI_MAX_OUTPUT_TOKENS,
+    shouldSkipReasoningForModel,
+    supportsReasoningEffortForModel,
 } from "@utils/model-utils"
 import OpenAI from "openai"
 import { ChatCompletionTool } from "openai/resources/chat/completions"
@@ -31,6 +32,7 @@ export async function createOpenRouterStream(
 	tools?: Array<ChatCompletionTool>,
 	enableParallelToolCalling?: boolean,
 ) {
+	const baseModelId = stripOpenRouterPreset(model.id)
 	// Convert Anthropic messages to OpenAI format
 	let openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
 		{ role: "system", content: systemPrompt },
@@ -38,29 +40,36 @@ export async function createOpenRouterStream(
 	]
 
 	const isClaude1m =
-		model.id === openRouterClaudeSonnet41mModelId ||
-		model.id === openRouterClaudeSonnet451mModelId ||
-		model.id === openRouterClaudeSonnet461mModelId ||
-		model.id === openRouterClaudeOpus461mModelId
+		baseModelId === openRouterClaudeSonnet41mModelId ||
+		baseModelId === openRouterClaudeSonnet451mModelId ||
+		baseModelId === openRouterClaudeSonnet461mModelId ||
+		baseModelId === openRouterClaudeOpus461mModelId
 	if (isClaude1m) {
 		// remove the custom :1m suffix, to create the model id openrouter API expects
-		model.id = model.id.slice(0, -CLAUDE_SONNET_1M_SUFFIX.length)
+		const presetIndex = model.id.indexOf("@preset/")
+		if (presetIndex !== -1) {
+			const beforePreset = model.id.substring(0, presetIndex)
+			const afterPreset = model.id.substring(presetIndex)
+			model.id = beforePreset.slice(0, -CLAUDE_SONNET_1M_SUFFIX.length) + afterPreset
+		} else {
+			model.id = model.id.slice(0, -CLAUDE_SONNET_1M_SUFFIX.length)
+		}
 	}
 
 	// Sanitize messages for Gemini models (removes tool_calls without reasoning_details)
-	openAiMessages = sanitizeGeminiMessages(openAiMessages, model.id)
+	openAiMessages = sanitizeGeminiMessages(openAiMessages, baseModelId)
 
-	const isDeepSeek = model.id.includes("deepseek")
+	const isDeepSeek = baseModelId.includes("deepseek")
 	const supportsReasoning = model.info.supportsReasoning
 	const requestedEffort = normalizeOpenaiReasoningEffort(reasoningEffort)
 	const isThinkingEnabled = supportsReasoning && requestedEffort !== "none"
-	const isR1 = model.id.includes("r1") || model.id.includes("reasoner")
+	const isR1 = baseModelId.includes("r1") || baseModelId.includes("reasoner")
 	const shouldAddReasoningContent = isDeepSeek && (isR1 || supportsReasoning)
 
 	// prompt caching: https://openrouter.ai/docs/prompt-caching
 	// this was initially specifically for claude models (some models may 'support prompt caching' automatically without this)
 	// handles direct model.id match logic
-	switch (model.id) {
+	switch (baseModelId) {
 		case "anthropic/claude-opus-4.6":
 		case "anthropic/claude-haiku-4.5":
 		case "anthropic/claude-4.5-haiku":
@@ -128,13 +137,13 @@ export async function createOpenRouterStream(
 			break
 	}
 
-	let temperature: number | undefined = model.info.temperature ?? (model.id.startsWith("anthropic/") ? undefined : 0)
+	let temperature: number | undefined = model.info.temperature ?? (baseModelId.startsWith("anthropic/") ? undefined : 0)
 	let topP: number | undefined
 	if (
-		model.id.startsWith("deepseek/deepseek-r1") ||
-		model.id === "perplexity/sonar-reasoning" ||
-		model.id === "qwen/qwq-32b:free" ||
-		model.id === "qwen/qwq-32b"
+		baseModelId.startsWith("deepseek/deepseek-r1") ||
+		baseModelId === "perplexity/sonar-reasoning" ||
+		baseModelId === "qwen/qwq-32b:free" ||
+		baseModelId === "qwen/qwq-32b"
 	) {
 		// Recommended values from DeepSeek
 		temperature = 0.3
@@ -151,10 +160,10 @@ export async function createOpenRouterStream(
 		})
 	}
 
-	const supportsReasoningEffort = supportsReasoningEffortForModel(model.id)
+	const supportsReasoningEffort = supportsReasoningEffortForModel(baseModelId)
 
 	let reasoning: { max_tokens: number } | undefined
-	switch (model.id) {
+	switch (baseModelId) {
 		case "anthropic/claude-opus-4.7":
 		case "anthropic/claude-4.7-opus":
 		case "anthropic/claude-opus-4.6":
@@ -188,7 +197,7 @@ export async function createOpenRouterStream(
 			}
 	}
 
-	const providerPreferences = OPENROUTER_PROVIDER_PREFERENCES[model.id]
+	const providerPreferences = OPENROUTER_PROVIDER_PREFERENCES[baseModelId]
 	if (providerPreferences) {
 		openRouterProviderSorting = undefined
 	}
@@ -196,7 +205,7 @@ export async function createOpenRouterStream(
 	const normalizedReasoningEffort = reasoningEffort !== undefined ? normalizeOpenaiReasoningEffort(reasoningEffort) : undefined
 	const reasoningEffortValue = supportsReasoningEffort ? normalizedReasoningEffort : undefined
 	// Skip reasoning for models that don't support it (e.g., devstral, grok-4), or when effort explicitly disables it.
-	const includeReasoning = !shouldSkipReasoningForModel(model.id) && reasoningEffortValue !== "none"
+	const includeReasoning = !shouldSkipReasoningForModel(baseModelId) && reasoningEffortValue !== "none"
 	const reasoningPayload =
 		reasoning ?? (reasoningEffortValue && reasoningEffortValue !== "none" ? { effort: reasoningEffortValue } : undefined)
 	const maxTokens = Math.min(model.info.maxTokens || GEMINI_MAX_OUTPUT_TOKENS, GEMINI_MAX_OUTPUT_TOKENS)

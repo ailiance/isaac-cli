@@ -252,7 +252,7 @@ const OpenRouterModelPicker: React.FC<OpenRouterModelPickerProps> = ({ isPopup, 
 						}}
 						onFocus={() => setIsDropdownVisible(true)}
 						onInput={(e) => {
-							setSearchTerm((e.target as HTMLInputElement)?.value.toLowerCase() || "")
+							setSearchTerm((e.target as HTMLInputElement)?.value || "")
 							setIsDropdownVisible(true)
 						}}
 						onKeyDown={handleKeyDown}

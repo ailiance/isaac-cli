@@ -1,6 +1,8 @@
 import { useMemo } from "react"
 import { getProviderLabel } from "../../../utils/providers"
 import { supportsReasoningEffortForModel } from "@/utils/model-utils"
+import { getModelList, CUSTOM_MODEL_ID } from "../../ModelPicker"
+import { usesOpenRouterModels } from "../../../utils/openrouter-models"
 import { version as CLI_VERSION } from "../../../../package.json"
 import { FEATURE_SETTINGS, type FeatureKey } from "../constants"
 import type { ListItem, SettingsTab } from "../types"
@@ -27,6 +29,7 @@ interface UseSettingsItemsProps {
 	openAiCodexEmail?: string
 	githubIsAuthenticated: boolean
 	githubEmail?: string
+	openRouterModels?: string[]
 }
 
 export function useSettingsItems({
@@ -40,6 +43,7 @@ export function useSettingsItems({
 	actReasoningEffort,
 	planReasoningEffort,
 	autoApproveSettings,
+	openRouterModels,
 	features,
 	preferredLanguage,
 	telemetry,
@@ -50,6 +54,9 @@ export function useSettingsItems({
 	githubEmail,
 }: UseSettingsItemsProps): ListItem[] {
 	return useMemo(() => {
+		const modelList = usesOpenRouterModels(provider) ? (openRouterModels || []) : getModelList(provider)
+		const isActCustom = actModelId === CUSTOM_MODEL_ID || (actModelId && !modelList.includes(actModelId))
+		const isPlanCustom = planModelId === CUSTOM_MODEL_ID || (planModelId && !modelList.includes(planModelId))
 		const providerUsesReasoningEffort = provider === "openai-native" || provider === "openai-codex"
 		const showActReasoningEffort = supportsReasoningEffortForModel(actModelId || "")
 		const showPlanReasoningEffort = supportsReasoningEffortForModel(planModelId || "")
@@ -125,8 +132,18 @@ export function useSettingsItems({
 									key: "actModelId",
 									label: "Model ID",
 									type: "editable" as const,
-									value: actModelId || "not set",
+									value: isActCustom ? "Custom" : (actModelId || "not set"),
 								},
+								...(isActCustom
+									? [
+											{
+												key: "actCustomModelId",
+												label: "Preset/Model",
+												type: "editable" as const,
+												value: actModelId === CUSTOM_MODEL_ID ? "" : actModelId,
+											},
+									  ]
+									: []),
 								...(showActThinkingOption
 									? [
 											{
@@ -152,8 +169,18 @@ export function useSettingsItems({
 									key: "planModelId",
 									label: "Model ID",
 									type: "editable" as const,
-									value: planModelId || "not set",
+									value: isPlanCustom ? "Custom" : (planModelId || "not set"),
 								},
+								...(isPlanCustom
+									? [
+											{
+												key: "planCustomModelId",
+												label: "Preset/Model",
+												type: "editable" as const,
+												value: planModelId === CUSTOM_MODEL_ID ? "" : planModelId,
+											},
+									  ]
+									: []),
 								...(showPlanThinkingOption
 									? [
 											{
@@ -181,8 +208,18 @@ export function useSettingsItems({
 									key: "actModelId",
 									label: "Model ID",
 									type: "editable" as const,
-									value: actModelId || "not set",
+									value: isActCustom ? "Custom" : (actModelId || "not set"),
 								},
+								...(isActCustom
+									? [
+											{
+												key: "actCustomModelId",
+												label: "Preset/Model",
+												type: "editable" as const,
+												value: actModelId === CUSTOM_MODEL_ID ? "" : actModelId,
+											},
+									  ]
+									: []),
 								...(showActThinkingOption
 									? [
 											{
@@ -333,5 +370,6 @@ export function useSettingsItems({
 		openAiCodexEmail,
 		githubIsAuthenticated,
 		githubEmail,
+		openRouterModels,
 	])
 }

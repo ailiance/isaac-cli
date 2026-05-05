@@ -7,6 +7,7 @@ import { applyProviderConfig, applyBedrockConfig } from "../../../utils/provider
 import { normalizeReasoningEffort, nextReasoningEffort } from "../utils"
 import { FEATURE_SETTINGS, type FeatureKey } from "../constants"
 import { hasModelPicker, CUSTOM_MODEL_ID } from "../../ModelPicker"
+import { usesOpenRouterModels } from "../../../utils/openrouter-models"
 import { openExternal } from "@/utils/env"
 import { Logger } from "@/shared/services/Logger"
 import type { Controller } from "@/core/controller"
@@ -135,7 +136,6 @@ export function useSettingsActions({
 			stateManager.setGlobalState(config.stateKey, newValue)
 
 			rebuildTaskApi()
-
 		},
 		[features, stateManager, setFeatures, rebuildTaskApi],
 	)
@@ -152,8 +152,6 @@ export function useSettingsActions({
 			} else {
 				setPlanReasoningEffort(effort)
 				stateManager.setGlobalState("planModeReasoningEffort", effort)
-
-
 			}
 			rebuildTaskApi()
 		},
@@ -382,13 +380,15 @@ export function useSettingsActions({
 	])
 
 	const handleSave = useCallback(
-		(editValue: string) => {
+		async (editValue: string) => {
 			const item = items[selectedIndex]
 			if (!item) return
 
 			switch (item.key) {
 				case "actModelId":
-				case "planModelId": {
+				case "planModelId":
+				case "actCustomModelId":
+				case "planCustomModelId": {
 					const apiConfig = stateManager.getApiConfiguration()
 					const actProvider = apiConfig.actModeApiProvider
 					const planProvider = apiConfig.planModeApiProvider || actProvider
@@ -397,7 +397,7 @@ export function useSettingsActions({
 					const planKey = planProvider ? getProviderModelIdKey(planProvider, "plan") : null
 
 					if (separateModels) {
-						const stateKey = item.key === "actModelId" ? actKey : planKey
+						const stateKey = (item.key === "actModelId" || item.key === "actCustomModelId") ? actKey : planKey
 						if (stateKey) stateManager.setGlobalState(stateKey, editValue || undefined)
 					} else {
 						if (actKey) stateManager.setGlobalState(actKey, editValue || undefined)
@@ -411,7 +411,8 @@ export function useSettingsActions({
 					break
 			}
 
-			rebuildTaskApi()
+			await rebuildTaskApi()
+			refreshModelIds()
 
 			setIsEditing(false)
 		},
@@ -503,10 +504,16 @@ export function useSettingsActions({
 	const handleModelSelect = useCallback(
 		async (modelId: string) => {
 			if (!pickingModelKey) return
-			if (modelId === CUSTOM_MODEL_ID && provider === "bedrock") {
-				setIsPickingModel(false)
-				setIsBedrockCustomFlow(true)
-				return
+			if (modelId === CUSTOM_MODEL_ID) {
+				if (provider === "bedrock") {
+					setIsPickingModel(false)
+					setIsBedrockCustomFlow(true)
+					return
+				}
+				if (usesOpenRouterModels(provider)) {
+					// For OpenRouter, selecting "Custom" just sets the model ID to __custom__
+					// which triggers the third line to appear in the settings list.
+				}
 			}
 
 			const apiConfig = stateManager.getApiConfiguration()

@@ -1,7 +1,7 @@
 import { ApiHandlerModel, ApiProviderInfo } from "@core/api"
 import {
-	AnthropicModelId,
-	anthropicModels, getProviderForModel
+    AnthropicModelId,
+    anthropicModels, getProviderForModel
 } from "@/shared/api"
 
 export { supportsReasoningEffortForModel } from "@shared/utils/reasoning-support"
@@ -75,3 +75,4 @@ export function isParallelToolCallingEnabled(enableParallelSetting: boolean, pro
 function normalize(text: string): string {
 	return text.trim().toLowerCase()
 }
+

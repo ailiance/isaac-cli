@@ -11,6 +11,7 @@ import { copyToClipboardNative } from "../../utils/clipboard"
 import { Panel } from "../Panel"
 import { TABS, FEATURE_SETTINGS, type FeatureKey } from "./constants"
 import { normalizeReasoningEffort } from "./utils"
+import { usesOpenRouterModels } from "../../utils/openrouter-models"
 import { useAuthStatus } from "./hooks/useAuthStatus"
 import { useSettingsItems } from "./hooks/useSettingsItems"
 import { useSettingsActions } from "./hooks/useSettingsActions"
@@ -106,6 +107,16 @@ export const SettingsPanelContent: React.FC<SettingsPanelContentProps> = ({
 	)
 
 	const [modelRefreshKey, setModelRefreshKey] = useState(0)
+	const [openRouterModels, setOpenRouterModels] = useState<string[]>([])
+	React.useEffect(() => {
+		if (usesOpenRouterModels(provider)) {
+			controller?.readOpenRouterModels().then((models) => {
+				if (models) {
+					setOpenRouterModels(Object.keys(models))
+				}
+			})
+		}
+	}, [provider, controller, modelRefreshKey])
 	const refreshModelIds = useCallback(() => setModelRefreshKey((k) => k + 1), [])
 
 	const { actModelId, planModelId } = useMemo(() => {
@@ -162,6 +173,7 @@ export const SettingsPanelContent: React.FC<SettingsPanelContentProps> = ({
 		openAiCodexEmail,
 		githubIsAuthenticated,
 		githubEmail,
+		openRouterModels,
 	})
 
 	const {

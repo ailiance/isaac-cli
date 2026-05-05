@@ -168,7 +168,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({ provider, controller, 
 	}, [provider, asyncModels])
 
 	// Providers that support custom model IDs (e.g., Bedrock Application Inference Profiles)
-	const supportsCustomModel = provider === "bedrock"
+	const supportsCustomModel = provider === "bedrock" || usesOpenRouterModels(provider)
 
 	const items: SearchableListItem[] = useMemo(() => {
 		const list = modelList.map((modelId) => ({
@@ -177,13 +177,14 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({ provider, controller, 
 		}))
 		// Add "Custom" option at the end for providers that support it
 		if (supportsCustomModel) {
+			const label = usesOpenRouterModels(provider) ? "Custom Model ID / Preset" : "Custom (ARN / Inference Profile)"
 			list.push({
 				id: CUSTOM_MODEL_ID,
-				label: "Custom (ARN / Inference Profile)",
+				label,
 			})
 		}
 		return list
-	}, [modelList, supportsCustomModel])
+	}, [modelList, supportsCustomModel, provider])
 
 	// For providers without a model picker, render nothing
 	if (!hasModelPicker(provider)) {
