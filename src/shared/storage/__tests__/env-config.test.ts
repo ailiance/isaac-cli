@@ -122,3 +122,51 @@ describe("getProviderFromEnv - Bedrock detection", () => {
 		expect(getProviderFromEnv()).to.equal("anthropic")
 	})
 })
+
+describe("getSettingsFromEnv - OpenAI settings", () => {
+	it("maps OPENAI_API_BASE to openAiBaseUrl", () => {
+		process.env.OPENAI_API_BASE = "https://api.custom.com/v1"
+		const settings = getSettingsFromEnv()
+		expect(settings.openAiBaseUrl).to.equal("https://api.custom.com/v1")
+	})
+})
+
+describe("getSecretsFromEnv - OpenAI secrets", () => {
+	it("maps OPENAI_COMPATIBLE_CUSTOM_KEY to openAiCompatibleCustomApiKey", () => {
+		process.env.OPENAI_COMPATIBLE_CUSTOM_KEY = "sk-custom-key"
+		const secrets = getSecretsFromEnv()
+		expect(secrets.openAiCompatibleCustomApiKey).to.equal("sk-custom-key")
+	})
+
+	it("does NOT map OPENAI_API_BASE to openAiCompatibleCustomApiKey", () => {
+		process.env.OPENAI_API_BASE = "https://api.custom.com/v1"
+		const secrets = getSecretsFromEnv()
+		expect(secrets.openAiCompatibleCustomApiKey).to.be.undefined
+	})
+
+	it("maps OPENAI_COMPATIBLE_CUSTOM_KEY to openAiApiKey as fallback", () => {
+		process.env.OPENAI_COMPATIBLE_CUSTOM_KEY = "sk-custom-key"
+		delete process.env.OPENAI_API_KEY
+		const secrets = getSecretsFromEnv()
+		expect(secrets.openAiApiKey).to.equal("sk-custom-key")
+	})
+
+	it("does NOT map OPENAI_API_BASE to openAiApiKey as fallback", () => {
+		process.env.OPENAI_API_BASE = "https://api.custom.com/v1"
+		delete process.env.OPENAI_API_KEY
+		const secrets = getSecretsFromEnv()
+		expect(secrets.openAiApiKey).to.be.undefined
+	})
+})
+
+describe("getProviderFromEnv - OpenAI detection", () => {
+	it("returns openai when OPENAI_API_BASE is set", () => {
+		process.env.OPENAI_API_BASE = "https://api.custom.com/v1"
+		expect(getProviderFromEnv()).to.equal("openai")
+	})
+
+	it("returns openai when OPENAI_COMPATIBLE_CUSTOM_KEY is set", () => {
+		process.env.OPENAI_COMPATIBLE_CUSTOM_KEY = "sk-custom-key"
+		expect(getProviderFromEnv()).to.equal("openai")
+	})
+})

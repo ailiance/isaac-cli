@@ -72,14 +72,13 @@ export async function applyTaskOptions(options: TaskOptions): Promise<void> {
 
 	const stateManager = StateManager.get()
 
-	if (process.env.OPENAI_COMPATIBLE_CUSTOM_KEY || process.env.OPENAI_API_BASE) {
-		const customKeyName = process.env.OPENAI_API_BASE ? "OPENAI_API_BASE" : "OPENAI_COMPATIBLE_CUSTOM_KEY"
-		if (!options.provider || !options.model) {
-			printError(`Error: ${customKeyName} requires --provider (base URL) and --model to be specified.`)
+	if (process.env.OPENAI_COMPATIBLE_CUSTOM_KEY) {
+		if (!options.provider && !process.env.OPENAI_API_BASE && !stateManager.getGlobalSettingsKey("openAiBaseUrl")) {
+			printError("Error: OPENAI_COMPATIBLE_CUSTOM_KEY requires --provider (base URL) or OPENAI_API_BASE to be specified.")
 			exit(1)
 		}
-		if (!options.provider || !options.provider.startsWith("http")) {
-			printError(`Error: When using ${customKeyName}, --provider must be a base URL (starting with http/https).`)
+		if (!options.model && !stateManager.getGlobalSettingsKey("actModeOpenAiModelId") && !stateManager.getGlobalSettingsKey("planModeOpenAiModelId")) {
+			printError("Error: OPENAI_COMPATIBLE_CUSTOM_KEY requires --model to be specified.")
 			exit(1)
 		}
 	}

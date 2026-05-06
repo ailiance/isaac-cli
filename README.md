@@ -652,17 +652,19 @@ Common API Keys:
 You can use any OpenAI-compatible provider (e.g., DeepSeek, DeepInfra, OpenRouter, or your own local proxy) by providing the base URL and model ID.
 
 **Environment Variables:**
-- `OPENAI_API_BASE` (or `OPENAI_COMPATIBLE_CUSTOM_KEY`): Your API key.
+- `OPENAI_API_BASE`: Your API base URL (e.g., `https://api.deepseek.com/v1`).
+- `OPENAI_API_KEY` (or `OPENAI_COMPATIBLE_CUSTOM_KEY`): Your API key.
 - `CUSTOM_HEADERS`: Optional custom headers (e.g., `"Authorization=Bearer token,X-Account-Id=123"` or JSON format).
 
 **CLI Example:**
 ```bash
 # Using environment variables
-export OPENAI_API_BASE="your-api-key"
+export OPENAI_API_BASE="https://api.yourprovider.com/v1"
+export OPENAI_API_KEY="your-api-key"
 export CUSTOM_HEADERS="Authorization=Bearer XXX"
 
 dirac "explain Dirac Delta function" \
-  --provider "https://api.yourprovider.com/v1" \
+  # --provider is now optional if OPENAI_API_BASE is set
   --model "your-model-id"
 ```
 
