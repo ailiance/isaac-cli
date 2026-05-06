@@ -1,5 +1,5 @@
 import { DeepSeekModelId, deepSeekDefaultModelId, deepSeekModels, ModelInfo } from "@shared/api"
-import { calculateApiCostOpenAI } from "@utils/cost"
+import { formatOpenAiCompatibleUsage } from "../transform/openai-usage"
 import OpenAI from "openai"
 import type { ChatCompletionTool as OpenAITool } from "openai/resources/chat/completions"
 import { buildExternalBasicHeaders } from "@/services/EnvUtils"
@@ -48,32 +48,8 @@ export class DeepSeekHandler implements ApiHandler {
 	}
 
 	private async *yieldUsage(info: ModelInfo, usage: OpenAI.Completions.CompletionUsage | undefined): ApiStream {
-		// Deepseek reports total input AND cache reads/writes,
-		// see context caching: https://api-docs.deepseek.com/guides/kv_cache)
-		// DeepSeek reports prompt_tokens as the sum of prompt_cache_hit_tokens and prompt_cache_miss_tokens.
-		// We yield the non-cached input tokens to ensure correct UI display and context management.
-
-		// Deepseek usage includes extra fields.
-		// Safely cast the prompt token details section to the appropriate structure.
-		interface DeepSeekUsage extends OpenAI.CompletionUsage {
-			prompt_cache_hit_tokens?: number
-			prompt_cache_miss_tokens?: number
-		}
-		const deepUsage = usage as DeepSeekUsage
-
-		const inputTokens = deepUsage?.prompt_tokens ?? 0 // sum of cache hits and misses
-		const outputTokens = deepUsage?.completion_tokens || 0
-		const cacheReadTokens = deepUsage?.prompt_cache_hit_tokens || 0
-		const cacheWriteTokens = deepUsage?.prompt_cache_miss_tokens || 0
-		const totalCost = calculateApiCostOpenAI(info, inputTokens, outputTokens, cacheWriteTokens, cacheReadTokens)
-		yield {
-			type: "usage",
-			inputTokens: Math.max(0, inputTokens - cacheReadTokens),
-			outputTokens: outputTokens,
-			cacheWriteTokens: cacheWriteTokens,
-			cacheReadTokens: cacheReadTokens,
-			totalCost: totalCost,
-		}
+		if (!usage) return
+		yield formatOpenAiCompatibleUsage(usage, info)
 	}
 
 	@withRetry()

@@ -15,6 +15,7 @@ import { ApiHandler, CommonApiHandlerOptions } from "../"
 import { withRetry } from "../retry"
 import { createOpenRouterStream } from "../transform/openrouter-stream"
 import { ApiStream, ApiStreamUsageChunk } from "../transform/stream"
+import { formatOpenAiCompatibleUsage } from "../transform/openai-usage"
 import { ToolCallProcessor } from "../transform/tool-call-processor"
 import { OpenRouterErrorResponse } from "./types"
 import { readLocalRouterTimeouts } from "./utils/localRouterTimeouts"
@@ -214,15 +215,7 @@ export class OpenRouterHandler implements ApiHandler {
 			}
 
 			if (!didOutputUsage && chunk.usage) {
-				yield {
-					type: "usage",
-					cacheWriteTokens: (chunk.usage.prompt_tokens_details as any)?.cache_write_tokens || 0,
-					cacheReadTokens: chunk.usage.prompt_tokens_details?.cached_tokens || 0,
-					inputTokens: (chunk.usage.prompt_tokens || 0) - (chunk.usage.prompt_tokens_details?.cached_tokens || 0),
-					outputTokens: chunk.usage.completion_tokens || 0,
-					// @ts-expect-error-next-line
-					totalCost: chunk.usage.cost || 0,
-				}
+				yield formatOpenAiCompatibleUsage(chunk.usage, this.getModel().info)
 				didOutputUsage = true
 			}
 		}
@@ -243,15 +236,18 @@ export class OpenRouterHandler implements ApiHandler {
 				const generationIterator = this.fetchGenerationDetails(this.lastGenerationId)
 				const generation = (await generationIterator.next()).value
 				// Logger.log("OpenRouter generation details:", generation)
-				return {
-					type: "usage",
-					cacheWriteTokens: (generation as any)?.native_tokens_cache_write || 0,
-					cacheReadTokens: generation?.native_tokens_cached || 0,
-					// openrouter generation endpoint fails often
-					inputTokens: (generation?.native_tokens_prompt || 0) - (generation?.native_tokens_cached || 0),
-					outputTokens: generation?.native_tokens_completion || 0,
-					totalCost: generation?.total_cost || 0,
-				}
+				return formatOpenAiCompatibleUsage(
+					{
+						prompt_tokens: generation?.native_tokens_prompt,
+						completion_tokens: generation?.native_tokens_completion,
+						prompt_tokens_details: {
+							cached_tokens: generation?.native_tokens_cached,
+							cache_write_tokens: (generation as any)?.native_tokens_cache_write,
+						},
+						cost: generation?.total_cost,
+					},
+					this.getModel().info,
+				)
 			} catch (error) {
 				// ignore if fails
 				Logger.error("Error fetching OpenRouter generation details:", error)

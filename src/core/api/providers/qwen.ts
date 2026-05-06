@@ -18,7 +18,7 @@ import { withRetry } from "../retry"
 import { convertToOpenAiMessages } from "../transform/openai-format"
 import { convertToR1Format } from "../transform/r1-format"
 import { ApiStream } from "../transform/stream"
-import { calculateApiCostQwen } from "@/utils/cost"
+import { formatOpenAiCompatibleUsage } from "../transform/openai-usage"
 import { getOpenAIToolParams, ToolCallProcessor } from "../transform/tool-call-processor"
 
 interface QwenHandlerOptions extends CommonApiHandlerOptions {
@@ -152,27 +152,7 @@ export class QwenHandler implements ApiHandler {
 			}
 
 			if (chunk.usage) {
-				const inputTokens = chunk.usage.prompt_tokens || 0
-				const outputTokens = chunk.usage.completion_tokens || 0
-				// @ts-expect-error-next-line
-				const cacheReadTokens = chunk.usage.prompt_cache_hit_tokens || 0
-				// @ts-expect-error-next-line
-				const cacheWriteTokens = chunk.usage.prompt_cache_miss_tokens || 0
-				const totalCost = calculateApiCostQwen(
-					this.getModel().info,
-					inputTokens,
-					outputTokens,
-					cacheWriteTokens,
-					cacheReadTokens,
-				)
-				yield {
-					type: "usage",
-					inputTokens: Math.max(0, inputTokens - cacheReadTokens - cacheWriteTokens),
-					outputTokens: outputTokens,
-					cacheReadTokens: cacheReadTokens,
-					cacheWriteTokens: cacheWriteTokens,
-					totalCost: totalCost,
-				}
+				yield formatOpenAiCompatibleUsage(chunk.usage, this.getModel().info)
 			}
 		}
 	}

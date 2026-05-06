@@ -8,7 +8,7 @@ import { withRetry } from "../retry"
 import { convertToOpenAiMessages } from "../transform/openai-format"
 import type { ApiStream } from "../transform/stream"
 import { getOpenAIToolParams, ToolCallProcessor } from "../transform/tool-call-processor"
-import { calculateApiCostOpenAI } from "@/utils/cost"
+import { formatOpenAiCompatibleUsage } from "../transform/openai-usage"
 
 interface LmStudioHandlerOptions extends CommonApiHandlerOptions {
 	lmStudioBaseUrl?: string
@@ -80,25 +80,7 @@ export class LmStudioHandler implements ApiHandler {
 				}
 
 				if (chunk.usage) {
-					const inputTokens = chunk.usage.prompt_tokens || 0
-					const outputTokens = chunk.usage.completion_tokens || 0
-					const cacheReadTokens = chunk.usage.prompt_tokens_details?.cached_tokens || 0
-					const cacheWriteTokens = (chunk.usage as any).prompt_cache_miss_tokens || 0
-					const totalCost = calculateApiCostOpenAI(
-						this.getModel().info,
-						inputTokens,
-						outputTokens,
-						cacheWriteTokens,
-						cacheReadTokens,
-					)
-					yield {
-						type: "usage",
-						inputTokens: Math.max(0, inputTokens - cacheReadTokens - cacheWriteTokens),
-						outputTokens: outputTokens,
-						cacheReadTokens: cacheReadTokens,
-						cacheWriteTokens: cacheWriteTokens,
-						totalCost: totalCost,
-					}
+					yield formatOpenAiCompatibleUsage(chunk.usage, this.getModel().info)
 				}
 			}
 		} catch {
