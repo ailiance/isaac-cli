@@ -382,11 +382,19 @@ export function useSettingsActions({
 	])
 
 	const handleSave = useCallback(
-		(editValue: string) => {
+		async (editValue: string) => {
 			const item = items[selectedIndex]
 			if (!item) return
 
 			switch (item.key) {
+				case "baseUrl": {
+					await applyProviderConfig({
+						providerId: provider,
+						baseUrl: editValue,
+						controller,
+					})
+					break
+				}
 				case "actModelId":
 				case "planModelId": {
 					const apiConfig = stateManager.getApiConfiguration()
@@ -415,7 +423,18 @@ export function useSettingsActions({
 
 			setIsEditing(false)
 		},
-		[items, selectedIndex, separateModels, stateManager, setPreferredLanguage, setIsEditing, rebuildTaskApi],
+		[
+			items,
+			selectedIndex,
+			separateModels,
+			stateManager,
+			setPreferredLanguage,
+			setIsEditing,
+			rebuildTaskApi,
+			provider,
+			controller,
+			refreshModelIds,
+		],
 	)
 
 	const handleProviderSelect = useCallback(

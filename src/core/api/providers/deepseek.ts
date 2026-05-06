@@ -51,11 +51,7 @@ export class DeepSeekHandler implements ApiHandler {
 		// Deepseek reports total input AND cache reads/writes,
 		// see context caching: https://api-docs.deepseek.com/guides/kv_cache)
 		// DeepSeek reports prompt_tokens as the sum of prompt_cache_hit_tokens and prompt_cache_miss_tokens.
-		// We yield the total input tokens to ensure correct cost calculation and UI display.
-		// where the input tokens is the sum of the cache hits/misses, just like OpenAI.
-		// This affects:
-		// 1) context management truncation algorithm, and
-		// 2) cost calculation
+		// We yield the non-cached input tokens to ensure correct UI display and context management.
 
 		// Deepseek usage includes extra fields.
 		// Safely cast the prompt token details section to the appropriate structure.
@@ -65,14 +61,14 @@ export class DeepSeekHandler implements ApiHandler {
 		}
 		const deepUsage = usage as DeepSeekUsage
 
-		const inputTokens = deepUsage?.prompt_cache_miss_tokens ?? deepUsage?.prompt_tokens ?? 0 // sum of cache hits and misses
+		const inputTokens = deepUsage?.prompt_tokens ?? 0 // sum of cache hits and misses
 		const outputTokens = deepUsage?.completion_tokens || 0
 		const cacheReadTokens = deepUsage?.prompt_cache_hit_tokens || 0
 		const cacheWriteTokens = deepUsage?.prompt_cache_miss_tokens || 0
 		const totalCost = calculateApiCostOpenAI(info, inputTokens, outputTokens, cacheWriteTokens, cacheReadTokens)
 		yield {
 			type: "usage",
-			inputTokens: inputTokens,
+			inputTokens: Math.max(0, inputTokens - cacheReadTokens),
 			outputTokens: outputTokens,
 			cacheWriteTokens: cacheWriteTokens,
 			cacheReadTokens: cacheReadTokens,

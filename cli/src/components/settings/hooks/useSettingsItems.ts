@@ -1,5 +1,8 @@
 import { useMemo } from "react"
 import { getProviderLabel } from "../../../utils/providers"
+import { StateManager } from "@/core/storage/StateManager"
+import { ProviderToBaseUrlKeyMap } from "@shared/storage"
+import { ApiProvider } from "@shared/api"
 import { supportsReasoningEffortForModel } from "@/utils/model-utils"
 import { version as CLI_VERSION } from "../../../../package.json"
 import { FEATURE_SETTINGS, type FeatureKey } from "../constants"
@@ -57,14 +60,28 @@ export function useSettingsItems({
 		const showPlanThinkingOption = !providerUsesReasoningEffort && !showPlanReasoningEffort
 
 		switch (currentTab) {
-			case "api":
+			case "api": {
+				const stateManager = StateManager.get()
 				return [
 					{
-						key: "provider",
+						key: "provider" as const,
 						label: "Provider",
 						type: "editable",
 						value: provider ? getProviderLabel(provider) : "not configured",
 					},
+					...(ProviderToBaseUrlKeyMap[provider as ApiProvider]
+						? [
+								{
+									key: "baseUrl",
+									label: "Base URL",
+									type: "editable" as const,
+									value:
+										(stateManager.getGlobalSettingsKey(
+											ProviderToBaseUrlKeyMap[provider as ApiProvider]!,
+										) as string) || "",
+								},
+						  ]
+						: []),
 					...(provider === "openai"
 						? [
 								{
@@ -211,6 +228,7 @@ export function useSettingsItems({
 						value: separateModels,
 					},
 				]
+			}
 
 			case "auto-approve": {
 				const result: ListItem[] = []

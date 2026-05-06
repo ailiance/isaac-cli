@@ -2,27 +2,28 @@
 
 import { Secrets, SettingsKey } from "@shared/storage/state-keys"
 import {
-    ApiProvider,
-    anthropicDefaultModelId,
-    basetenDefaultModelId,
-    bedrockDefaultModelId,
-    deepSeekDefaultModelId,
-    fireworksDefaultModelId,
-    geminiDefaultModelId,
-    groqDefaultModelId,
-    huaweiCloudMaasDefaultModelId,
-    huggingFaceDefaultModelId,
-    internationalQwenDefaultModelId,
-    liteLlmDefaultModelId,
-    minimaxDefaultModelId,
-    moonshotDefaultModelId,
-    nousResearchDefaultModelId,
-    openAiNativeDefaultModelId,
-    openRouterDefaultModelId,
-    requestyDefaultModelId,
-    wandbDefaultModelId,
-    xaiDefaultModelId,
+	ApiProvider,
+	anthropicDefaultModelId,
+	basetenDefaultModelId,
+	bedrockDefaultModelId,
+	deepSeekDefaultModelId,
+	fireworksDefaultModelId,
+	geminiDefaultModelId,
+	groqDefaultModelId,
+	huaweiCloudMaasDefaultModelId,
+	huggingFaceDefaultModelId,
+	internationalQwenDefaultModelId,
+	liteLlmDefaultModelId,
+	minimaxDefaultModelId,
+	moonshotDefaultModelId,
+	nousResearchDefaultModelId,
+	openAiNativeDefaultModelId,
+	openRouterDefaultModelId,
+	requestyDefaultModelId,
+	wandbDefaultModelId,
+	xaiDefaultModelId,
 } from "../api"
+
 
 const ProviderKeyMap: Partial<Record<ApiProvider, string>> = {
 	openrouter: "OpenRouterModelId",
@@ -39,6 +40,20 @@ const ProviderKeyMap: Partial<Record<ApiProvider, string>> = {
 	aihubmix: "AihubmixModelId",
 	nousResearch: "NousResearchModelId",
 	"vercel-ai-gateway": "VercelAiGatewayModelId",
+} as const
+
+
+export const ProviderToBaseUrlKeyMap: Partial<Record<ApiProvider, SettingsKey>> = {
+	openai: "openAiBaseUrl",
+	"openai-native": "openAiBaseUrl",
+	litellm: "liteLlmBaseUrl",
+	lmstudio: "lmStudioBaseUrl",
+	anthropic: "anthropicBaseUrl",
+	gemini: "geminiBaseUrl",
+	requesty: "requestyBaseUrl",
+	dify: "difyBaseUrl",
+	aihubmix: "aihubmixBaseUrl",
+	bedrock: "awsBedrockEndpoint",
 } as const
 
 export const ProviderToApiKeyMap: Partial<Record<ApiProvider, keyof Secrets | (keyof Secrets)[]>> = {

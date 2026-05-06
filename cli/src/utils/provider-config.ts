@@ -4,7 +4,7 @@
  */
 
 import type { ApiProvider } from "@shared/api"
-import { getProviderModelIdKey, ProviderToApiKeyMap } from "@shared/storage"
+import { getProviderModelIdKey, ProviderToApiKeyMap, ProviderToBaseUrlKeyMap } from "@shared/storage"
 import { buildApiHandler } from "@/core/api"
 import type { Controller } from "@/core/controller"
 import { refreshOpenRouterModels } from "@/core/controller/models/refreshOpenRouterModels"
@@ -118,7 +118,7 @@ export async function applyProviderConfig(options: ApplyProviderConfigOptions): 
 	}
 
 	// Add base URL if provided (for OpenAI-compatible providers)
-	if (baseUrl) {
+	if (baseUrl !== undefined) {
 		let normalizedBaseUrl = baseUrl.trim()
 		if (normalizedBaseUrl) {
 			// Normalize URL: strip trailing /chat/completions and trailing slashes
@@ -126,7 +126,14 @@ export async function applyProviderConfig(options: ApplyProviderConfigOptions): 
 			normalizedBaseUrl = normalizedBaseUrl.replace(/\/chat\/completions\/?$/, "")
 			normalizedBaseUrl = normalizedBaseUrl.replace(/\/+$/, "")
 		}
-		config.openAiBaseUrl = normalizedBaseUrl
+
+		const baseUrlKey = ProviderToBaseUrlKeyMap[providerId as ApiProvider]
+		if (baseUrlKey) {
+			config[baseUrlKey] = normalizedBaseUrl
+		} else {
+			// Fallback for generic OpenAI compatible
+			config.openAiBaseUrl = normalizedBaseUrl
+		}
 	}
 
 	// Add Azure API version if provided

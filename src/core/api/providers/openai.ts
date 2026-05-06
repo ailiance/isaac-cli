@@ -10,6 +10,7 @@ import type { ChatTool, WorkerEndpoint } from "@/services/local-router/types"
 import { DiracStorageMessage } from "@/shared/messages/content"
 import { createOpenAIClient, fetch } from "@/shared/net"
 import { Logger } from "@/shared/services/Logger"
+import { calculateApiCostOpenAI } from "@/utils/cost"
 import { ApiHandler, CommonApiHandlerOptions } from "../index"
 import { withRetry } from "../retry"
 import { convertToOpenAiMessages } from "../transform/openai-format"
@@ -271,13 +272,24 @@ export class OpenAiHandler implements ApiHandler {
 			}
 
 			if (chunk.usage) {
+				const inputTokens = chunk.usage.prompt_tokens || 0
+				const outputTokens = chunk.usage.completion_tokens || 0
+				const cacheReadTokens = chunk.usage.prompt_tokens_details?.cached_tokens || 0
+				const cacheWriteTokens = (chunk.usage as any).prompt_cache_miss_tokens || 0
+				const totalCost = calculateApiCostOpenAI(
+					this.getModel().info,
+					inputTokens,
+					outputTokens,
+					cacheWriteTokens,
+					cacheReadTokens,
+				)
 				yield {
 					type: "usage",
-					inputTokens: chunk.usage.prompt_tokens || 0,
-					outputTokens: chunk.usage.completion_tokens || 0,
-					cacheReadTokens: chunk.usage.prompt_tokens_details?.cached_tokens || 0,
-					// @ts-expect-error-next-line
-					cacheWriteTokens: chunk.usage.prompt_cache_miss_tokens || 0,
+					inputTokens: Math.max(0, inputTokens - cacheReadTokens - cacheWriteTokens),
+					outputTokens: outputTokens,
+					cacheReadTokens: cacheReadTokens,
+					cacheWriteTokens: cacheWriteTokens,
+					totalCost: totalCost,
 					stopReason,
 				}
 			}
