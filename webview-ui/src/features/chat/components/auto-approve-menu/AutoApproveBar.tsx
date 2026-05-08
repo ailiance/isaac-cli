@@ -10,7 +10,7 @@ interface AutoApproveBarProps {
 }
 
 const AutoApproveBar = ({ style }: AutoApproveBarProps) => {
-	const { autoApprovalSettings, yoloModeToggled, navigateToSettings } = useSettingsStore()
+	const { autoApprovalSettings, yoloModeToggled, autoApproveAllToggled, navigateToSettings } = useSettingsStore()
 
 	const [isModalVisible, setIsModalVisible] = useState(false)
 	const buttonRef = useRef<HTMLDivElement>(null)
@@ -158,6 +158,7 @@ const AutoApproveBar = ({ style }: AutoApproveBarProps) => {
 				}}
 				ref={buttonRef}
 				tabIndex={0}>
+
 				<div className="flex flex-nowrap items-center gap-1 min-w-0 flex-1">
 					<span className="whitespace-nowrap">Auto-approve:</span>
 					{getEnabledActionsText()}

@@ -5,11 +5,15 @@ import { ActionMetadata } from "@/features/chat/components/auto-approve-menu/typ
 import { useSettingsStore } from "@/features/settings/store/settingsStore"
 
 export function useAutoApproveActions() {
-	const { autoApprovalSettings } = useSettingsStore()
+	const { autoApprovalSettings, autoApproveAllToggled } = useSettingsStore()
 
 	// Check if action is enabled
 	const isChecked = useCallback(
 		(action: ActionMetadata): boolean => {
+			if (autoApproveAllToggled && action.id !== "enableNotifications") {
+				return true
+			}
+
 			switch (action.id) {
 				case "enableNotifications":
 					return autoApprovalSettings.enableNotifications
@@ -17,7 +21,7 @@ export function useAutoApproveActions() {
 					return autoApprovalSettings.actions[action.id] ?? false
 			}
 		},
-		[autoApprovalSettings],
+		[autoApprovalSettings, autoApproveAllToggled],
 	)
 
 	// Update action state

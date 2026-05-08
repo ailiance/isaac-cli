@@ -266,6 +266,9 @@ export async function updateSettings(controller: Controller, request: UpdateSett
 		if (request.writePromptMetadataEnabled !== undefined) {
 			controller.stateManager.setGlobalState("writePromptMetadataEnabled", request.writePromptMetadataEnabled)
 		}
+		if (request.autoApproveAllToggled !== undefined) {
+			controller.stateManager.setGlobalState("autoApproveAllToggled", request.autoApproveAllToggled)
+		}
 
 		if (request.writePromptMetadataDirectory !== undefined) {
 			controller.stateManager.setGlobalState("writePromptMetadataDirectory", request.writePromptMetadataDirectory)

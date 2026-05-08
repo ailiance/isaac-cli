@@ -129,10 +129,6 @@ export class CommandPermissionController {
 	}
 
 	/**
-	 * Save configuration to .dirac/permissions.json
-	 * @param config - The configuration to save
-	 */
-	/**
 	 * Add a new permission rule and save to file.
 	 * @param rule - The rule to add
 	 */
@@ -163,7 +159,7 @@ export class CommandPermissionController {
 		try {
 			await fs.mkdir(diracDir, { recursive: true })
 			await fs.writeFile(configPath, JSON.stringify(config, null, 2), "utf8")
-			
+
 			// Update in-memory config. loadConfig() will be called by file watcher,
 			// but we update it here for immediate effect.
 			const envConfig = this.parseConfigFromEnv()
@@ -175,6 +171,11 @@ export class CommandPermissionController {
 		} catch (error) {
 			throw error
 		}
+	}
+
+	private isConfigEmpty(): boolean {
+		if (!this.config) return true
+		return !(this.config.rules?.length || this.config.allow?.length || this.config.deny?.length)
 	}
 
 	/**
@@ -201,12 +202,12 @@ export class CommandPermissionController {
 	}
 
 	validateTool(tool: string, pattern?: string): PermissionValidationResult {
-		if (!this.config) {
+		if (this.isConfigEmpty()) {
 			return { allowed: true, reason: "no_config" }
 		}
 
 		// Check general rules first
-		if (this.config.rules) {
+		if (this.config?.rules) {
 			// Deny rules take precedence
 			for (const rule of this.config.rules) {
 				if (rule.action === "deny" && this.matchesRule(rule, tool, pattern)) {
@@ -220,7 +221,9 @@ export class CommandPermissionController {
 					// For execute_command, we still need to run full validation (dangerous chars, redirects, etc.)
 					// even if it matches an allow rule.
 					if (tool === "execute_command" && pattern) {
-						const validationResult = this.validateCommand(pattern)
+						// If a rule explicitly allows the command, we allow "dangerous" characters like newlines
+						// because the user has explicitly trusted this pattern.
+						const validationResult = this.validateCommand(pattern, true)
 						// If validationResult is allowed, we return it but with the matchedPattern from our rule
 						if (validationResult.allowed) {
 							return { ...validationResult, matchedPattern: rule.pattern }
@@ -263,19 +266,29 @@ export class CommandPermissionController {
 		}
 	}
 
-	validateCommand(command: string): PermissionValidationResult {
+	/**
+	 * Validate a command against allow/deny rules.
+	 * @param command - The command to validate
+	 * @param allowDangerous - If true, bypasses checks for dangerous characters (newlines, backticks).
+	 *                        Use this only when the command has already matched an explicit allow rule.
+	 * @returns PermissionValidationResult
+	 */
+
+	validateCommand(command: string, allowDangerous = false): PermissionValidationResult {
 		// No config = allow everything (backward compatibility)
-		if (!this.config) {
+		if (this.isConfigEmpty()) {
 			return { allowed: true, reason: "no_config" }
 		}
 
 		// Check for dangerous characters first (backticks in double quotes, newlines outside quotes)
-		const dangerousChar = this.detectDangerousCharsOutsideQuotes(command)
-		if (dangerousChar) {
-			return {
-				allowed: false,
-				reason: "shell_operator_detected",
-				detectedOperator: dangerousChar.operator,
+		if (!allowDangerous) {
+			const dangerousChar = this.detectDangerousCharsOutsideQuotes(command)
+			if (dangerousChar) {
+				return {
+					allowed: false,
+					reason: "shell_operator_detected",
+					detectedOperator: dangerousChar.operator,
+				}
 			}
 		}
 
@@ -514,6 +527,16 @@ export class CommandPermissionController {
 	}
 
 	/**
+	 * Clean up resources when the controller is no longer needed
+	 */
+	async dispose(): Promise<void> {
+		if (this.fileWatcher) {
+			await this.fileWatcher.close()
+			this.fileWatcher = undefined
+		}
+	}
+
+	/**
 	 * Detect dangerous characters outside of quoted strings.
 	 * This includes newlines, carriage returns, unicode line separators, and backticks.
 	 *
@@ -533,17 +556,6 @@ export class CommandPermissionController {
 	 * @param command - The command string to check
 	 * @returns ShellOperatorMatch if dangerous chars found outside appropriate quotes, null otherwise
 	 */
-	/**
-	 * Clean up resources when the controller is no longer needed
-	 */
-	async dispose(): Promise<void> {
-		if (this.fileWatcher) {
-			await this.fileWatcher.close()
-			this.fileWatcher = undefined
-		}
-	}
-
-
 	private detectDangerousCharsOutsideQuotes(command: string): ShellOperatorMatch | null {
 		let inSingleQuote = false
 		let inDoubleQuote = false
