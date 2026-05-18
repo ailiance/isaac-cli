@@ -37,6 +37,12 @@ function resolveProtoc() {
 			.split(/\r?\n/)[0]
 			.trim()
 		if (found) {
+			console.warn(
+				chalk.yellow(
+					`grpc-tools protoc missing; using system protoc at ${found}. ` +
+						`Generated code may differ if its version diverges from grpc-tools.`,
+				),
+			)
 			return found
 		}
 	} catch {
@@ -46,6 +52,7 @@ function resolveProtoc() {
 	// 3. Last resort: trust `protoc` if it answers on the PATH.
 	try {
 		execSync("protoc --version", { stdio: "ignore" })
+		console.warn(chalk.yellow("grpc-tools protoc missing; using `protoc` from PATH."))
 		return "protoc"
 	} catch {
 		// No protoc anywhere.

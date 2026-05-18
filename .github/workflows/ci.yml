@@ -6,10 +6,20 @@ on:
       - master
   pull_request:
 
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least privilege: this workflow only reads the repository.
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Typecheck & Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -25,9 +35,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate Protocol Buffers
-        run: npm run protos
-
+      # `check-types` runs `npm run protos` itself, so protos is not a
+      # separate step here.
       - name: Check types
         run: npm run check-types
 
@@ -35,8 +44,9 @@ jobs:
         run: npm run lint
 
   test:
-    name: Unit Tests
+    name: Unit Tests (non-blocking)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -55,9 +65,9 @@ jobs:
       - name: Generate Protocol Buffers
         run: npm run protos
 
-      # The mocha-based unit suite (`test:unit`) can be flaky in CI (it loads
-      # ts-node + VS Code shims). Keep it non-blocking so it surfaces failures
-      # as a signal without gating typecheck/lint, which run in the `build` job.
+      # The mocha unit suite is currently fragile in CI (ts-node ESM +
+      # VS Code shims). It runs non-blocking so it surfaces failures as a
+      # signal without gating merges; hardening it is tracked separately.
       - name: Run unit tests
         run: npm run test:unit
         continue-on-error: true
