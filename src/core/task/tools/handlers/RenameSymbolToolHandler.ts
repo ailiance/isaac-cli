@@ -1,5 +1,8 @@
+import { setTimeout as setTimeoutPromise } from "node:timers/promises"
 import { ToolUse } from "@core/assistant-message"
 import { resolveWorkspacePath } from "@core/workspace"
+import type { DiffStructure } from "@shared/utils/diff"
+import { computeDiff } from "@shared/utils/diff"
 import { AnchorStateManager } from "@utils/AnchorStateManager"
 import { formatLineWithHash } from "@utils/line-hashing"
 import { getReadablePath } from "@utils/path"
@@ -18,7 +21,6 @@ import type { ToolValidator } from "../ToolValidator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
-import { setTimeout as setTimeoutPromise } from "node:timers/promises"
 
 export class RenameSymbolToolHandler implements IFullyManagedTool {
 	readonly name = DiracDefaultTool.RENAME_SYMBOL
@@ -33,14 +35,26 @@ export class RenameSymbolToolHandler implements IFullyManagedTool {
 	getDescription(block: ToolUse): string {
 		const existingSymbol = block.params.existing_symbol as string
 		const newSymbol = block.params.new_symbol as string
-		const paths = Array.isArray(block.params.paths) ? block.params.paths : (block.params.paths ? [block.params.paths as string] : [])
+		const paths = Array.isArray(block.params.paths)
+			? block.params.paths
+			: block.params.paths
+				? [block.params.paths as string]
+				: []
 		return `[${block.name} for '${existingSymbol}' to '${newSymbol}' in ${paths.map((p) => `'${p}'`).join(", ")}]`
 	}
 
 	async handlePartialBlock(block: ToolUse, uiHelpers: StronglyTypedUIHelpers): Promise<void> {
-		const existingSymbol = uiHelpers.removeClosingTag(block, "existing_symbol", (block.params.existing_symbol as string) || "")
+		const existingSymbol = uiHelpers.removeClosingTag(
+			block,
+			"existing_symbol",
+			(block.params.existing_symbol as string) || "",
+		)
 		const newSymbol = uiHelpers.removeClosingTag(block, "new_symbol", (block.params.new_symbol as string) || "")
-		const paths = Array.isArray(block.params.paths) ? block.params.paths : (block.params.paths ? [block.params.paths as string] : [])
+		const paths = Array.isArray(block.params.paths)
+			? block.params.paths
+			: block.params.paths
+				? [block.params.paths as string]
+				: []
 
 		const config = uiHelpers.getConfig()
 		if (config.isSubagentExecution) {
@@ -69,7 +83,11 @@ export class RenameSymbolToolHandler implements IFullyManagedTool {
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
 		const existingSymbol = block.params.existing_symbol as string
 		const newSymbol = block.params.new_symbol as string
-		const relPaths = Array.isArray(block.params.paths) ? block.params.paths : (block.params.paths ? [block.params.paths as string] : [])
+		const relPaths = Array.isArray(block.params.paths)
+			? block.params.paths
+			: block.params.paths
+				? [block.params.paths as string]
+				: []
 
 		if (!existingSymbol || !newSymbol || relPaths.length === 0) {
 			config.taskState.consecutiveMistakeCount++
@@ -189,22 +207,16 @@ export class RenameSymbolToolHandler implements IFullyManagedTool {
 				// Generate diff blocks for the file
 				const fileDiffs: string[] = []
 				const sortedChangedLines = Array.from(seenLines).sort((a, b) => a - b)
-				
+
 				let i = 0
 				while (i < sortedChangedLines.length) {
-					let start = sortedChangedLines[i]
+					const start = sortedChangedLines[i]
 					let end = start
 					while (i + 1 < sortedChangedLines.length && sortedChangedLines[i + 1] <= end + 3) {
 						end = sortedChangedLines[++i]
 					}
-					
-					const diffBlock = this.getDiffBlock(
-						originalLines,
-						originalHashes,
-						currentLines,
-						start,
-						end
-					)
+
+					const diffBlock = this.getDiffBlock(originalLines, originalHashes, currentLines, start, end)
 					fileDiffs.push(diffBlock)
 					i++
 				}
@@ -229,10 +241,24 @@ export class RenameSymbolToolHandler implements IFullyManagedTool {
 				new_symbol: newSymbol,
 				total_replacements: totalReplacements,
 				files_affected: fileResults.length,
-				editSummaries: fileResults.map((fr) => ({
-					path: fr.displayPath,
-					edits: [{ additions: fr.replacementCount, deletions: fr.replacementCount }],
-				})),
+				editSummaries: fileResults.map((fr) => {
+					let hunks: DiffStructure | undefined
+					if (fr.diff && fr.diff.length <= 500_000) {
+						const computed = computeDiff(fr.diff)
+						hunks = {
+							path: fr.displayPath,
+							totalAdditions: computed.totalAdditions,
+							totalDeletions: computed.totalDeletions,
+							blocks: computed.blocks,
+						}
+					}
+					return {
+						path: fr.displayPath,
+						edits: [{ additions: fr.replacementCount, deletions: fr.replacementCount }],
+						diff: fr.diff,
+						hunks,
+					}
+				}),
 				diff: allDiffs,
 			})
 
@@ -247,12 +273,13 @@ export class RenameSymbolToolHandler implements IFullyManagedTool {
 				showNotificationForApproval(notificationMessage, config.autoApprovalSettings.enableNotifications)
 
 				// Show the diff for all files in the batch
-				await config.services.diffViewProvider.showReview(fileResults.map(fr => ({
-					absolutePath: fr.absolutePath,
-					displayPath: fr.displayPath,
-					content: fr.finalContent
-				})))
-
+				await config.services.diffViewProvider.showReview(
+					fileResults.map((fr) => ({
+						absolutePath: fr.absolutePath,
+						displayPath: fr.displayPath,
+						content: fr.finalContent,
+					})),
+				)
 
 				await config.callbacks.removeLastPartialMessageIfExistsWithType("say", "tool")
 				await config.callbacks.removeLastPartialMessageIfExistsWithType("ask", "tool")
@@ -319,11 +346,13 @@ export class RenameSymbolToolHandler implements IFullyManagedTool {
 				})
 
 				// Update diagnostics for this file
-				const diagnosticsData = [{
-					filePath: fr.absolutePath,
-					content: actualFinalContent,
-				}]
-				
+				const diagnosticsData = [
+					{
+						filePath: fr.absolutePath,
+						content: actualFinalContent,
+					},
+				]
+
 				const providerDiagnostics = await Promise.all(
 					providers.map((p) => p.getDiagnosticsFeedbackForFiles(diagnosticsData, preDiagnostics)),
 				)
@@ -358,7 +387,6 @@ export class RenameSymbolToolHandler implements IFullyManagedTool {
 			})
 
 			return `Successfully renamed symbol '${existingSymbol}' to '${newSymbol}' (${totalReplacements} occurrences in ${fileResults.length} files).\n\n${summaries.join("\n\n")}`
-
 		} catch (error) {
 			config.taskState.consecutiveMistakeCount++
 			const errorMessage = error instanceof Error ? error.message : String(error)

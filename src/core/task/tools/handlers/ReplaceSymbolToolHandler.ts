@@ -20,6 +20,7 @@ import type { ToolValidator } from "../ToolValidator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
+import { computeDiffFromContents, type DiffStructure } from "@shared/utils/diff"
 
 interface Replacement {
 	path: string
@@ -214,12 +215,36 @@ export class ReplaceSymbolToolHandler implements IFullyManagedTool {
 			const allDiffs = fileResults.map((fr) => `*** Update File: ${fr.batch.displayPath}\n\n${fr.diff}`).join("\n\n")
 			const allReplacements = fileResults.flatMap((fr) => fr.replacementsWithDiffs)
 
+			// v0.6 Sprint 1-F: structured hunks per file for unified +/- rendering
+			// in webview/CLI. Computed from originalContent vs finalContent.
+			const editSummaries = fileResults.map((fr) => {
+				let hunks: DiffStructure | undefined
+				if (fr.originalContent.length + fr.finalContent.length <= 1_000_000) {
+					const computed = computeDiffFromContents(fr.originalContent, fr.finalContent)
+					hunks = {
+						path: fr.batch.displayPath,
+						totalAdditions: computed.totalAdditions,
+						totalDeletions: computed.totalDeletions,
+						blocks: computed.blocks,
+					}
+				}
+				return {
+					path: fr.batch.displayPath,
+					diff: fr.diff,
+					edits: hunks
+						? [{ additions: hunks.totalAdditions, deletions: hunks.totalDeletions }]
+						: [],
+					hunks,
+				}
+			})
+
 			const completeMessage = JSON.stringify({
 				tool: "replaceSymbol",
 				path: fileResults.length === 1 ? fileResults[0].batch.displayPath : "Multiple files",
 				symbol: replacements.length === 1 ? replacements[0].symbol : `${replacements.length} symbols`,
 				diff: allDiffs,
 				replacements: allReplacements,
+				editSummaries,
 			})
 
 			const shouldAutoApprove =

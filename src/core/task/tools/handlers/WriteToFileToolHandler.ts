@@ -10,6 +10,7 @@ import { getLastApiReqTotalTokens } from "@shared/getApiMetrics"
 import { stripHashes } from "@utils/line-hashing"
 import { arePathsEqual, getReadablePath, isLocatedInWorkspace } from "@utils/path"
 import { applyPatch } from "diff"
+import { computeDiffFromContents, type DiffStructure } from "@shared/utils/diff"
 import { telemetryService } from "@/services/telemetry"
 import { DiracDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
@@ -161,10 +162,33 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 			}
 			// showOmissionWarning(this.diffViewProvider.originalContent || "", newContent)
 
+			// v0.6 Sprint 1-F: structured hunks for unified +/- rendering in webview/CLI.
+			// Compute from originalContent (empty for new files) and newContent.
+			const originalForDiff = fileExists ? config.services.diffViewProvider.originalContent || "" : ""
+			let editSummaries: DiracSayTool["editSummaries"]
+			// Performance guard mirroring BatchProcessor (skip when buffers are huge)
+			if (originalForDiff.length + newContent.length <= 1_000_000) {
+				const computed = computeDiffFromContents(originalForDiff, newContent)
+				const hunks: DiffStructure = {
+					path: relPath,
+					totalAdditions: computed.totalAdditions,
+					totalDeletions: computed.totalDeletions,
+					blocks: computed.blocks,
+				}
+				editSummaries = [
+					{
+						path: relPath,
+						edits: [{ additions: computed.totalAdditions, deletions: computed.totalDeletions }],
+						hunks,
+					},
+				]
+			}
+
 			const completeMessage = JSON.stringify({
 				...sharedMessageProps,
 				content: content,
 				operationIsLocatedInWorkspace: await isLocatedInWorkspace(relPath),
+				editSummaries,
 			} satisfies DiracSayTool)
 
 			const shouldAutoApprove = await config.callbacks.shouldAutoApproveToolWithPath(block.name, relPath)
