@@ -1,9 +1,9 @@
 import { promises as fs } from "node:fs"
-import { isBinaryFile } from "isbinaryfile"
 import { workspaceResolver } from "@core/workspace"
 import { isDirectory } from "@utils/fs"
 import { arePathsEqual } from "@utils/path"
 import { globby, Options } from "globby"
+import { isBinaryFile } from "isbinaryfile"
 import * as os from "os"
 import * as path from "path"
 import { Logger } from "@/shared/services/Logger"
@@ -74,7 +74,17 @@ function buildIgnorePatterns(absolutePath: string): string[] {
 	})
 }
 
-export async function listFiles(dirPath: string, recursive: boolean, limit: number): Promise<[FileInfo[], boolean]> {
+export async function listFiles(
+	dirPath: string,
+	recursive: boolean,
+	limit: number,
+	abortSignal?: AbortSignal,
+): Promise<[FileInfo[], boolean]> {
+	if (abortSignal?.aborted) {
+		const err = new Error("Aborted")
+		err.name = "AbortError"
+		throw err
+	}
 	const absolutePathResult = workspaceResolver.resolveWorkspacePath(dirPath, "", "Services.glob.listFiles")
 	const absolutePath = typeof absolutePathResult === "string" ? absolutePathResult : absolutePathResult.absolutePath
 
@@ -133,7 +143,7 @@ export async function listFiles(dirPath: string, recursive: boolean, limit: numb
 	}
 
 	const entries = recursive
-		? await globbyLevelByLevel(limit, options)
+		? await globbyLevelByLevel(limit, options, abortSignal)
 		: (await globby("*", options as any)).slice(0, limit)
 
 	const fileInfos: FileInfo[] = await Promise.all(
@@ -177,14 +187,24 @@ Breadth-first traversal of directory structure level by level up to a limit:
    - Potential for loops if symbolic links reference back to parent (we could use followSymlinks: false but that may not be ideal for some projects and it's pointless if they're not using symlinks wrong)
    - Timeout mechanism prevents infinite loops
 */
-async function globbyLevelByLevel(limit: number, options?: Options): Promise<any[]> {
+async function globbyLevelByLevel(limit: number, options?: Options, abortSignal?: AbortSignal): Promise<any[]> {
 	const results: Map<string, any> = new Map()
 	const queue: string[] = ["*"]
 
+	const throwIfAborted = () => {
+		if (abortSignal?.aborted) {
+			const err = new Error("Aborted")
+			err.name = "AbortError"
+			throw err
+		}
+	}
+
 	const globbingProcess = async () => {
 		while (queue.length > 0 && results.size < limit) {
+			throwIfAborted()
 			const pattern = queue.shift()!
 			const entriesAtLevel = (await globby(pattern, options as any)) as any[]
+			throwIfAborted()
 
 			for (const entry of entriesAtLevel) {
 				if (results.size >= limit) {

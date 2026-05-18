@@ -63,8 +63,24 @@ interface FileSearchResult {
 
 const MAX_RESULTS = 30
 
-async function execRipgrep(args: string[]): Promise<string> {
+async function execRipgrep(args: string[], abortSignal?: AbortSignal): Promise<string> {
+	// S2-B: refuse to even resolve the binary if the caller already cancelled.
+	// Cheap fast-path; matters for tests and for callers that abort between
+	// queueing the search and the rg lookup completing.
+	if (abortSignal?.aborted) {
+		const err = new Error("Aborted") as Error & { name: string }
+		err.name = "AbortError"
+		throw err
+	}
+
 	const binPath: string = await getBinaryLocation("rg")
+
+	// Re-check after the (async) binary lookup in case the signal fired meanwhile.
+	if (abortSignal?.aborted) {
+		const err = new Error("Aborted") as Error & { name: string }
+		err.name = "AbortError"
+		throw err
+	}
 
 	return new Promise((resolve, reject) => {
 		const rgProcess = childProcess.spawn(binPath, args)
@@ -73,6 +89,28 @@ async function execRipgrep(args: string[]): Promise<string> {
 			input: rgProcess.stdout,
 			crlfDelay: Number.POSITIVE_INFINITY, // treat \r\n as a single line break even if it's split across chunks. This ensures consistent behavior across different operating systems.
 		})
+
+		// S2-B: bridge AbortSignal to SIGTERM. The listener must be removed
+		// when the process settles (close/error), otherwise long-lived signals
+		// (e.g. one shared across many tool calls in a task) accumulate
+		// listeners and leak memory.
+		let aborted = false
+		const onAbort = () => {
+			aborted = true
+			try {
+				rgProcess.kill("SIGTERM")
+			} catch {
+				// best-effort: process may have already exited
+			}
+		}
+		if (abortSignal) {
+			abortSignal.addEventListener("abort", onAbort, { once: true })
+		}
+		const cleanupAbort = () => {
+			if (abortSignal) {
+				abortSignal.removeEventListener("abort", onAbort)
+			}
+		}
 
 		let output = ""
 		let lineCount = 0
@@ -93,13 +131,19 @@ async function execRipgrep(args: string[]): Promise<string> {
 			errorOutput += data.toString()
 		})
 		rl.on("close", () => {
-			if (errorOutput) {
+			cleanupAbort()
+			if (aborted) {
+				const err = new Error("Aborted") as Error & { name: string }
+				err.name = "AbortError"
+				reject(err)
+			} else if (errorOutput) {
 				reject(new Error(`ripgrep process error: ${errorOutput}`))
 			} else {
 				resolve(output)
 			}
 		})
 		rgProcess.on("error", (error) => {
+			cleanupAbort()
 			reject(new Error(`ripgrep process error: ${error.message}`))
 		})
 	})
@@ -114,7 +158,15 @@ export async function regexSearchFiles(
 	taskId?: string,
 	contextLines?: number,
 	excludeFilePatterns?: string[],
+	abortSignal?: AbortSignal,
 ): Promise<string> {
+	// S2-B: fast-path for already-aborted callers — never even build the args.
+	if (abortSignal?.aborted) {
+		const err = new Error("Aborted") as Error & { name: string }
+		err.name = "AbortError"
+		throw err
+	}
+
 	// Limit context lines to 10
 	const cappedContextLines = Math.max(0, Math.min(10, contextLines || 0))
 	const args = ["--json", "-e", regex, "--glob", filePattern || "*", "--context", cappedContextLines.toString()]
@@ -127,8 +179,12 @@ export async function regexSearchFiles(
 
 	let output: string
 	try {
-		output = await execRipgrep(args)
+		output = await execRipgrep(args, abortSignal)
 	} catch (error) {
+		// S2-B: propagate AbortError verbatim so callers can detect cancellation.
+		if (error instanceof Error && error.name === "AbortError") {
+			throw error
+		}
 		throw Error("Error calling ripgrep", { cause: error })
 	}
 

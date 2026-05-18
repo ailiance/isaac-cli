@@ -6,8 +6,12 @@ import { WorkspacePathAdapter } from "@core/workspace/WorkspacePathAdapter"
 import { MultiCommandState } from "@shared/ExtensionMessage"
 import { telemetryService } from "@/services/telemetry"
 import { truncateHeadTail } from "@/shared/content-limits"
+import { Logger } from "@/shared/services/Logger"
 import { DiracDefaultTool } from "@/shared/tools"
+import { notifyAsyncTool } from "../../AsyncToolNotifier"
 import type { ToolResponse } from "../../index"
+import type { PendingToolEntry, PendingToolRegistry } from "../../PendingToolRegistry"
+import type { TaskMessenger } from "../../TaskMessenger"
 import { showNotificationForApproval } from "../../utils"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
@@ -22,6 +26,13 @@ const DEFAULT_COMMAND_TIMEOUT_SECONDS = 30
 const LONG_RUNNING_COMMAND_TIMEOUT_SECONDS = 300
 const MAX_COMMAND_OUTPUT_SIZE = 10 * 1024 // 10KB limit to avoid context flooding, extra safety layer
 const MAX_PATH_LENGTH = 255 // Linux/macOS single path component limit
+
+// Sprint 2 — task C: async-by-default execute_command.
+// If the command finishes within ASYNC_FAST_PATH_MS we keep the synchronous
+// UX of v0.5 and return stdout inline. Otherwise we return a {task_id, running}
+// payload so the model can keep working and later retrieve the result via
+// get_tool_result (S2-F).
+const ASYNC_FAST_PATH_MS = 500
 
 const LONG_RUNNING_COMMAND_PATTERNS: RegExp[] = [
 	/\b(npm|pnpm|yarn|bun)\s+(install|ci|build|test)\b/i,
@@ -494,40 +505,166 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 			}
 
 			const timeoutSeconds = resolveCommandTimeoutSeconds(actualCommand, true)
+			const onOutputLine = (line: string) => {
+				const currentOutput = cmdState.output || ""
+				if (currentOutput.includes("... [Output truncated")) {
+					return
+				}
+				const newOutput = currentOutput + line + "\n"
+				if (newOutput.length >= MAX_COMMAND_OUTPUT_SIZE) {
+					cmdState.output = truncateHeadTail(newOutput, MAX_COMMAND_OUTPUT_SIZE)
+				} else {
+					cmdState.output = newOutput
+				}
+				throttledUpdate()
+			}
 
-			try {
-				const [userRejected, result] = await config.callbacks.executeCommandTool(finalCommand, timeoutSeconds, {
-					suppressUserInteraction: true,
-					useBackgroundExecution: true,
-					onOutputLine: (line) => {
-						const currentOutput = cmdState.output || ""
-						if (currentOutput.includes("... [Output truncated")) {
+			// Sprint 2-C: if the task exposes a PendingToolRegistry we run the
+			// command async-by-default with a fast-path timer. Otherwise (e.g.
+			// isolated unit-test config) fall back to the original sync flow.
+			const registry: PendingToolRegistry | undefined = config.taskState?.pendingTools
+			let asyncEntry: PendingToolEntry | undefined
+			let abortSignal: AbortSignal | undefined
+			let asyncHandleDispose: (() => void) | undefined
+
+			if (registry) {
+				asyncEntry = registry.register({ toolName: "execute_command", blockId: block.call_id })
+				abortSignal = asyncEntry.abortController.signal
+
+				// Build a minimal messenger adapter from config.callbacks.say so
+				// AsyncToolNotifier can push the running/terminal partials without
+				// requiring a direct TaskMessenger reference inside the handler.
+				const messengerAdapter = {
+					say: (type: any, text?: string, images?: string[], files?: string[], partial?: boolean) =>
+						config.callbacks.say(type, text, images, files, partial),
+				} as unknown as TaskMessenger
+
+				try {
+					const handle = await notifyAsyncTool({
+						messenger: messengerAdapter,
+						registry,
+						entry: asyncEntry,
+						initialPayload: {
+							tool: "executeCommand" as any,
+							command: actualCommand,
+						},
+					})
+					asyncHandleDispose = handle.dispose
+				} catch (err) {
+					Logger.warn(
+						`[ExecuteCommandToolHandler] notifyAsyncTool failed (continuing sync): ${err instanceof Error ? err.message : String(err)}`,
+					)
+				}
+			}
+
+			const execPromise = (async () => {
+				try {
+					const [userRejected, result] = await config.callbacks.executeCommandTool(finalCommand, timeoutSeconds, {
+						suppressUserInteraction: true,
+						useBackgroundExecution: true,
+						onOutputLine,
+						...(abortSignal ? { abortSignal } : {}),
+					})
+					return { kind: "ok" as const, userRejected, result }
+				} catch (error) {
+					return { kind: "error" as const, error }
+				}
+			})()
+
+			let raceResult: { kind: "ok"; userRejected: boolean; result: any } | { kind: "error"; error: unknown } | "timeout"
+			if (registry && asyncEntry) {
+				let timeoutHandle: NodeJS.Timeout | undefined
+				const timeoutPromise = new Promise<"timeout">((resolve) => {
+					timeoutHandle = setTimeout(() => resolve("timeout"), ASYNC_FAST_PATH_MS)
+				})
+				raceResult = await Promise.race([execPromise, timeoutPromise])
+				if (timeoutHandle) {
+					clearTimeout(timeoutHandle)
+				}
+			} else {
+				raceResult = await execPromise
+			}
+
+			if (raceResult === "timeout") {
+				// Slow command: hand it off to the background. The promise keeps
+				// running and will call registry.complete/fail/cancel below.
+				if (updateTimer) {
+					clearTimeout(updateTimer)
+					updateTimer = null
+				}
+				const taskId = asyncEntry!.taskId
+				void execPromise
+					.then((settled) => {
+						if (settled.kind === "error") {
+							const err = settled.error as any
+							if (err?.name === "AbortError") {
+								// already cancelled by registry.cancel — no-op
+								return
+							}
+							registry!.fail(taskId, err instanceof Error ? err.message : String(err))
 							return
 						}
-						const newOutput = currentOutput + line + "\n"
-						if (newOutput.length >= MAX_COMMAND_OUTPUT_SIZE) {
-							cmdState.output = truncateHeadTail(newOutput, MAX_COMMAND_OUTPUT_SIZE)
-						} else {
-							cmdState.output = newOutput
+						if (settled.userRejected) {
+							registry!.fail(taskId, "Command was rejected or interrupted during execution.")
+							return
 						}
-						throttledUpdate()
-					},
-				})
+						const rawOutput =
+							typeof settled.result === "string"
+								? settled.result
+								: Array.isArray(settled.result)
+									? settled.result.map((c: any) => c.text || "").join("\n")
+									: JSON.stringify(settled.result)
+						registry!.complete(taskId, truncateHeadTail(rawOutput, MAX_COMMAND_OUTPUT_SIZE))
+					})
+					.catch((err) => {
+						Logger.warn(
+							`[ExecuteCommandToolHandler] background settlement crashed: ${err instanceof Error ? err.message : String(err)}`,
+						)
+					})
 
-				if (userRejected) {
+				const placeholder =
+					`Command launched in background (exceeded ${ASYNC_FAST_PATH_MS}ms fast-path).\n` +
+					`task_id: ${taskId}\n` +
+					`status: running\n` +
+					`To retrieve the result, call get_tool_result with this task_id.`
+				cmdState.status = "running"
+				cmdState.output = placeholder
+				await updateMessage()
+				results.push(`--- Output for '${displayName}' ---\n${placeholder}`)
+				anySucceeded = true
+				continue
+			}
+
+			// Fast-path: command finished synchronously within the budget (or
+			// no registry available — pure v0.5 behavior).
+			try {
+				if (raceResult.kind === "error") {
+					const err = raceResult.error
+					cmdState.status = "failed"
+					cmdState.output = `Error during execution: ${err instanceof Error ? err.message : String(err)}`
+					await updateMessage()
+					results.push(`--- Output for '${displayName}' ---\n${cmdState.output}`)
+					anyFailed = true
+					if (registry && asyncEntry) {
+						registry.fail(asyncEntry.taskId, err instanceof Error ? err.message : String(err))
+					}
+				} else if (raceResult.userRejected) {
 					config.taskState.didRejectTool = true
 					cmdState.status = "failed"
 					cmdState.output = "Command was rejected or interrupted during execution."
 					await updateMessage()
 					results.push(`--- Output for '${displayName}' ---\nCommand was rejected or interrupted during execution.`)
 					anyFailed = true
+					if (registry && asyncEntry) {
+						registry.fail(asyncEntry.taskId, cmdState.output)
+					}
 				} else {
 					const rawOutput =
-						typeof result === "string"
-							? result
-							: Array.isArray(result)
-								? result.map((c: any) => c.text || "").join("\n")
-								: JSON.stringify(result)
+						typeof raceResult.result === "string"
+							? raceResult.result
+							: Array.isArray(raceResult.result)
+								? raceResult.result.map((c: any) => c.text || "").join("\n")
+								: JSON.stringify(raceResult.result)
 
 					const output = truncateHeadTail(rawOutput, MAX_COMMAND_OUTPUT_SIZE)
 
@@ -537,17 +674,20 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 
 					results.push(`--- Output for '${displayName}' ---\n${output}`)
 					anySucceeded = true
+					if (registry && asyncEntry) {
+						registry.complete(asyncEntry.taskId, output)
+					}
 				}
-			} catch (error) {
-				cmdState.status = "failed"
-				cmdState.output = `Error during execution: ${error instanceof Error ? error.message : String(error)}`
-				await updateMessage()
-				results.push(`--- Output for '${displayName}' ---\n${cmdState.output}`)
-				anyFailed = true
 			} finally {
 				if (updateTimer) {
 					clearTimeout(updateTimer)
 					updateTimer = null
+				}
+				// Detach AsyncToolNotifier listener — it auto-disposes on
+				// terminal transition, but call dispose() defensively in case
+				// the registry never fired (e.g. notifyAsyncTool init failed).
+				if (asyncHandleDispose) {
+					asyncHandleDispose()
 				}
 			}
 		}

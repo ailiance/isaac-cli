@@ -12,13 +12,23 @@ import { resolveWorkspacePath } from "@/core/workspace/WorkspaceResolver"
 import { telemetryService } from "@/services/telemetry"
 import { Logger } from "@/shared/services/Logger"
 import { DiracDefaultTool } from "@/shared/tools"
+import { notifyAsyncTool } from "../../AsyncToolNotifier"
 import type { ToolResponse } from "../../index"
+import type { TaskMessenger } from "../../TaskMessenger"
 import { showNotificationForApproval } from "../../utils"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
+
+// Sprint 2 — task D: async-by-default search_files. Mirrors S2-C
+// (ExecuteCommandToolHandler): if ripgrep finishes within ASYNC_FAST_PATH_MS
+// we keep the synchronous v0.5 UX (approval message embeds results); past
+// that budget we hand the search off to the background, ask approval with an
+// empty preview, and return a {task_id, running} placeholder so the model
+// can call get_tool_result later.
+const ASYNC_FAST_PATH_MS = 500
 
 export class SearchFilesToolHandler implements IFullyManagedTool {
 	readonly name = DiracDefaultTool.SEARCH
@@ -96,6 +106,7 @@ export class SearchFilesToolHandler implements IFullyManagedTool {
 		filePattern: string | undefined,
 		contextLines: number | undefined,
 		excludeFilePatterns?: string[],
+		abortSignal?: AbortSignal,
 	) {
 		try {
 			// Use workspace root for relative path calculation, fallback to cwd
@@ -110,6 +121,7 @@ export class SearchFilesToolHandler implements IFullyManagedTool {
 				config.ulid,
 				contextLines,
 				excludeFilePatterns,
+				abortSignal,
 			)
 
 			// Parse the result count from the first line
@@ -259,7 +271,12 @@ export class SearchFilesToolHandler implements IFullyManagedTool {
 		// These can throw if the workspace configuration is invalid or the
 		// path cannot be resolved, so catch and return a graceful tool error.
 		let anyUsedWorkspaceHint = false
-		const allSearchPaths: Array<{ absolutePath: string; workspaceName?: string; workspaceRoot?: string; originalPath: string }> = []
+		const allSearchPaths: Array<{
+			absolutePath: string
+			workspaceName?: string
+			workspaceRoot?: string
+			originalPath: string
+		}> = []
 
 		try {
 			for (const relPath of relPaths) {
@@ -311,17 +328,212 @@ export class SearchFilesToolHandler implements IFullyManagedTool {
 			)
 		}
 
+		// Sprint 2-D: if the task exposes a PendingToolRegistry we run ripgrep
+		// async-by-default with a fast-path timer. Otherwise (e.g. isolated
+		// unit-test config without a TaskState) fall back to the original sync
+		// flow.
+		const registry = config.taskState?.pendingTools
+		let asyncEntry: ReturnType<typeof registry.register> | undefined
+		let abortSignal: AbortSignal | undefined
+		let asyncHandleDispose: (() => void) | undefined
+
+		if (registry) {
+			asyncEntry = registry.register({ toolName: "search_files", blockId: block.call_id })
+			abortSignal = asyncEntry.abortController.signal
+
+			// Build a minimal messenger adapter from config.callbacks.say so
+			// AsyncToolNotifier can push the running/terminal partials without
+			// requiring a direct TaskMessenger reference inside the handler.
+			const messengerAdapter = {
+				say: (type: any, text?: string, images?: string[], files?: string[], partial?: boolean) =>
+					config.callbacks.say(type, text, images, files, partial),
+			} as unknown as TaskMessenger
+
+			try {
+				const handle = await notifyAsyncTool({
+					messenger: messengerAdapter,
+					registry,
+					entry: asyncEntry,
+					initialPayload: {
+						tool: "searchFiles" as any,
+						paths: relPaths.map((p) => getReadablePath(config.cwd, p)),
+						path: getReadablePath(config.cwd, relPaths[0] || ""),
+						content: "",
+						regex: regex,
+						filePattern: filePattern,
+						contextLines: contextLines,
+						operationIsLocatedInWorkspace: (await Promise.all(relPaths.map((p) => isLocatedInWorkspace(p)))).every(
+							Boolean,
+						),
+					},
+				})
+				asyncHandleDispose = handle.dispose
+			} catch (err) {
+				Logger.warn(
+					`[SearchFilesToolHandler] notifyAsyncTool failed (continuing sync): ${err instanceof Error ? err.message : String(err)}`,
+				)
+			}
+		}
+
 		// Execute searches in all relevant workspaces in parallel
 		const searchPromises = allSearchPaths.map(({ absolutePath, workspaceName, workspaceRoot }) =>
-			this.executeSearch(config, absolutePath, workspaceName, workspaceRoot, regex, filePattern, contextLines, [
-				"!.*",
-				"!**/.*",
-			]),
+			this.executeSearch(
+				config,
+				absolutePath,
+				workspaceName,
+				workspaceRoot,
+				regex,
+				filePattern,
+				contextLines,
+				["!.*", "!**/.*"],
+				abortSignal,
+			),
 		)
 
-		// Wait for all searches to complete
 		const searchStartTime = performance.now()
-		const searchResults = await Promise.all(searchPromises)
+		const searchAllPromise = Promise.all(searchPromises)
+
+		let raceResult: Awaited<typeof searchAllPromise> | "timeout"
+		if (registry && asyncEntry) {
+			let timeoutHandle: NodeJS.Timeout | undefined
+			const timeoutPromise = new Promise<"timeout">((resolve) => {
+				timeoutHandle = setTimeout(() => resolve("timeout"), ASYNC_FAST_PATH_MS)
+			})
+			raceResult = await Promise.race([searchAllPromise, timeoutPromise])
+			if (timeoutHandle) {
+				clearTimeout(timeoutHandle)
+			}
+		} else {
+			raceResult = await searchAllPromise
+		}
+
+		// Slow-path: ripgrep is still running past the fast-path budget. Hand it
+		// off to the background and return a placeholder. Approval (if needed)
+		// is asked with an empty preview since we don't have results yet.
+		if (raceResult === "timeout") {
+			const taskId = asyncEntry!.taskId
+
+			// Background settlement: complete/fail the registry entry so any
+			// later get_tool_result call sees the final payload.
+			void searchAllPromise
+				.then((settledResults) => {
+					try {
+						const formatted = this.formatSearchResults(config, settledResults, allSearchPaths)
+						const anySucceededAsync = settledResults.some((r) => r.success)
+						if (anySucceededAsync) {
+							registry!.complete(taskId, formatted)
+						} else {
+							registry!.fail(taskId, "All workspace searches failed.")
+						}
+					} catch (err) {
+						registry!.fail(taskId, err instanceof Error ? err.message : String(err))
+					}
+				})
+				.catch((err: unknown) => {
+					if ((err as any)?.name === "AbortError") {
+						// already cancelled by registry.cancel — no-op
+						return
+					}
+					registry!.fail(taskId, err instanceof Error ? err.message : String(err))
+				})
+
+			const placeholderContent =
+				`Search for "${regex}" in "${relPaths[0] || ""}" launched in background.\n` +
+				`task_id: ${taskId}\n` +
+				`status: running\n` +
+				`To retrieve the result, call get_tool_result with this task_id.`
+
+			// Emit approval/say with empty content (no results to embed yet).
+			const placeholderMessageProps = {
+				tool: "searchFiles",
+				paths: relPaths.map((p) => getReadablePath(config.cwd, p)),
+				path: getReadablePath(config.cwd, relPaths[0] || ""),
+				content: "",
+				regex: regex,
+				filePattern: filePattern,
+				contextLines: contextLines,
+				operationIsLocatedInWorkspace: (await Promise.all(relPaths.map((p) => isLocatedInWorkspace(p)))).every(Boolean),
+			} satisfies DiracSayTool
+			const placeholderMessage = JSON.stringify(placeholderMessageProps)
+
+			const shouldAutoApproveAsync =
+				config.isSubagentExecution ||
+				(await Promise.all(relPaths.map((p) => config.callbacks.shouldAutoApproveToolWithPath(block.name, p)))).every(
+					Boolean,
+				)
+			if (shouldAutoApproveAsync) {
+				if (!config.isSubagentExecution) {
+					await config.callbacks.removeLastPartialMessageIfExistsWithType("ask", "tool")
+					await config.callbacks.say("tool", placeholderMessage, undefined, undefined, false)
+				}
+				telemetryService.captureToolUsage(
+					config.ulid,
+					block.name,
+					config.api.getModel().id,
+					provider,
+					true,
+					true,
+					workspaceContext,
+					block.isNativeToolCall,
+				)
+			} else {
+				const notificationMessage = `Dirac wants to search files for ${regex}`
+				showNotificationForApproval(notificationMessage, config.autoApprovalSettings.enableNotifications)
+				await config.callbacks.removeLastPartialMessageIfExistsWithType("say", "tool")
+				const { didApprove } = await ToolResultUtils.askApprovalAndPushFeedback("tool", placeholderMessage, config)
+				if (!didApprove) {
+					// User denied: cancel the background search.
+					registry!.cancel(taskId)
+					if (asyncHandleDispose) {
+						asyncHandleDispose()
+					}
+					telemetryService.captureToolUsage(
+						config.ulid,
+						block.name,
+						config.api.getModel().id,
+						provider,
+						false,
+						false,
+						workspaceContext,
+						block.isNativeToolCall,
+					)
+					return formatResponse.toolDenied()
+				}
+				telemetryService.captureToolUsage(
+					config.ulid,
+					block.name,
+					config.api.getModel().id,
+					provider,
+					false,
+					true,
+					workspaceContext,
+					block.isNativeToolCall,
+				)
+			}
+
+			// PreToolUse hook still fires (best-effort) before returning placeholder.
+			try {
+				const { ToolHookUtils } = await import("../utils/ToolHookUtils")
+				await ToolHookUtils.runPreToolUseIfEnabled(config, block)
+			} catch (error) {
+				const { PreToolUseHookCancellationError } = await import("@core/hooks/PreToolUseHookCancellationError")
+				if (error instanceof PreToolUseHookCancellationError) {
+					registry!.cancel(taskId)
+					if (asyncHandleDispose) {
+						asyncHandleDispose()
+					}
+					return formatResponse.toolDenied()
+				}
+				throw error
+			}
+
+			// Note: do NOT touch consecutiveMistakeCount here — final outcome is
+			// not known yet; get_tool_result handler will decide on settlement.
+			return placeholderContent
+		}
+
+		// Fast-path: ripgrep finished within budget. Preserve v0.5 behavior.
+		const searchResults = raceResult
 		const searchDurationMs = performance.now() - searchStartTime
 
 		// Format and combine results
@@ -335,6 +547,18 @@ export class SearchFilesToolHandler implements IFullyManagedTool {
 			config.taskState.consecutiveMistakeCount = 0
 		} else {
 			config.taskState.consecutiveMistakeCount++
+		}
+
+		// Settle the registry entry on the fast-path so the entry doesn't leak.
+		if (registry && asyncEntry) {
+			if (anySucceeded) {
+				registry.complete(asyncEntry.taskId, results)
+			} else {
+				registry.fail(asyncEntry.taskId, "All workspace searches failed.")
+			}
+			if (asyncHandleDispose) {
+				asyncHandleDispose()
+			}
 		}
 
 		// Capture workspace search pattern telemetry

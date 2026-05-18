@@ -365,6 +365,20 @@ export interface CommandExecutionOptions {
 	 * Command output is still captured and returned as the tool result.
 	 */
 	suppressUserInteraction?: boolean
+
+	/**
+	 * Optional WHATWG AbortSignal to cancel this command execution.
+	 *
+	 * Sprint 2 (S2-B): unified cancellation primitive for long-running tools.
+	 * If the signal is already aborted when execute() is called, the call
+	 * rejects immediately with an AbortError (`name === "AbortError"`).
+	 * If the signal fires during execution, the active foreground process is
+	 * terminated (via the existing cancelBackgroundCommand path) and the
+	 * execute() promise rejects with an AbortError.
+	 *
+	 * Backward-compatible: when undefined, behavior is identical to v0.5.
+	 */
+	abortSignal?: AbortSignal
 }
 
 /**

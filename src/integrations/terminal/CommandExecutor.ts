@@ -84,11 +84,21 @@ export class CommandExecutor {
 		}
 	}
 
-		async execute(
+	async execute(
 		command: string,
 		timeoutSeconds: number | undefined,
 		options?: CommandExecutionOptions,
 	): Promise<[boolean, DiracToolResponseContent]> {
+		// S2-B: short-circuit if the caller-provided AbortSignal already fired.
+		// We surface this as an AbortError (name === "AbortError") so callers
+		// can distinguish cancellation from genuine command errors.
+		const abortSignal = options?.abortSignal
+		if (abortSignal?.aborted) {
+			const err = new Error("Aborted") as Error & { name: string }
+			err.name = "AbortError"
+			throw err
+		}
+
 		// Strip leading `cd` to workspace from command
 		const workspaceCdPrefix = `cd ${this.cwd} && `
 		if (command.startsWith(workspaceCdPrefix)) {
@@ -119,38 +129,67 @@ export class CommandExecutor {
 		process.once("completed", clearCurrentProcess)
 		process.once("error", clearCurrentProcess)
 
-		// Use shared orchestration logic
-		// The StandaloneTerminalManager handles background command tracking internally
-		const result = await orchestrateCommandExecution(process, manager, this.callbacks, {
-			command,
-			timeoutSeconds,
-			suppressUserInteraction: options?.suppressUserInteraction,
-			onOutputLine: options?.onOutputLine,
-
-			// When "Proceed While Running" is triggered, track the command in the manager
-			// Returns the log file path so the orchestrator can send it to the UI
-			// existingOutput contains all output lines captured so far
-			onProceedWhileRunning: useStandalone
-				? (existingOutput: string[]) => {
-						const backgroundCmd = this.standaloneManager.trackBackgroundCommand(process, command, existingOutput)
-						return { logFilePath: backgroundCmd.logFilePath }
-					}
-				: undefined,
-			showShellIntegrationSuggestion: this.shouldShowBackgroundTerminalSuggestion(),
-			terminalType: useStandalone ? "standalone" : "vscode",
-		})
-
-		// If the command was cancelled externally (via cancel button), return a clear cancellation message
-		// This ensures the AI agent knows the command was cancelled by the user
-		if (this.wasCancelledExternally) {
-			const outputSoFar =
-				result.outputLines.length > 0
-					? `\nOutput captured before cancellation:\n${manager.processOutput(result.outputLines)}`
-					: ""
-			return [true, `Command was cancelled by the user.${outputSoFar}`]
+		// S2-B: bridge an external AbortSignal to the existing cancellation
+		// machinery. We must always remove the listener in the finally block
+		// below to avoid keeping a strong reference to the executor on the
+		// signal once the command finishes (memory leak otherwise).
+		let abortError: (Error & { name: string }) | undefined
+		const onAbort = () => {
+			abortError = new Error("Aborted") as Error & { name: string }
+			abortError.name = "AbortError"
+			// Reuse the same path the cancel button uses so behavior stays
+			// consistent: terminate process + flag wasCancelledExternally.
+			void this.cancelBackgroundCommand()
+		}
+		if (abortSignal) {
+			abortSignal.addEventListener("abort", onAbort, { once: true })
 		}
 
-		return [result.userRejected, result.result]
+		// Use shared orchestration logic
+		// The StandaloneTerminalManager handles background command tracking internally
+		try {
+			const result = await orchestrateCommandExecution(process, manager, this.callbacks, {
+				command,
+				timeoutSeconds,
+				suppressUserInteraction: options?.suppressUserInteraction,
+				onOutputLine: options?.onOutputLine,
+
+				// When "Proceed While Running" is triggered, track the command in the manager
+				// Returns the log file path so the orchestrator can send it to the UI
+				// existingOutput contains all output lines captured so far
+				onProceedWhileRunning: useStandalone
+					? (existingOutput: string[]) => {
+							const backgroundCmd = this.standaloneManager.trackBackgroundCommand(process, command, existingOutput)
+							return { logFilePath: backgroundCmd.logFilePath }
+						}
+					: undefined,
+				showShellIntegrationSuggestion: this.shouldShowBackgroundTerminalSuggestion(),
+				terminalType: useStandalone ? "standalone" : "vscode",
+			})
+
+			// S2-B: if cancellation came from an AbortSignal (rather than the UI
+			// cancel button), reject with AbortError so callers can detect it
+			// programmatically. The taskState.abort booleen path is unaffected.
+			if (abortError) {
+				throw abortError
+			}
+
+			// If the command was cancelled externally (via cancel button), return a clear cancellation message
+			// This ensures the AI agent knows the command was cancelled by the user
+			if (this.wasCancelledExternally) {
+				const outputSoFar =
+					result.outputLines.length > 0
+						? `\nOutput captured before cancellation:\n${manager.processOutput(result.outputLines)}`
+						: ""
+				return [true, `Command was cancelled by the user.${outputSoFar}`]
+			}
+
+			return [result.userRejected, result.result]
+		} finally {
+			if (abortSignal) {
+				abortSignal.removeEventListener("abort", onAbort)
+			}
+		}
 	}
 
 	/**
