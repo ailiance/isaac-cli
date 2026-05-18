@@ -2,6 +2,7 @@
 
 import chalk from "chalk"
 import { execSync } from "child_process"
+import * as fsSync from "fs"
 import * as fs from "fs/promises"
 import { globby } from "globby"
 import { createRequire } from "module"
@@ -12,7 +13,65 @@ import { main as generateHostBridgeClient } from "./generate-host-bridge-client.
 import { main as generateProtoBusSetup } from "./generate-protobus-setup.mjs"
 
 const require = createRequire(import.meta.url)
-const PROTOC = path.join(require.resolve("grpc-tools"), "../bin/protoc")
+
+// Resolve the `protoc` binary with a fallback chain so the build does not
+// hard-fail when grpc-tools failed to download its bundled binary on install.
+function resolveProtoc() {
+	const isWin = process.platform === "win32"
+
+	// 1. Bundled grpc-tools binary keeps priority for version consistency.
+	try {
+		const grpcToolsDir = path.dirname(require.resolve("grpc-tools/package.json"))
+		const bundled = path.join(grpcToolsDir, "bin", isWin ? "protoc.exe" : "protoc")
+		fsSync.accessSync(bundled, fsSync.constants.X_OK)
+		return bundled
+	} catch {
+		// Fall through to a system protoc.
+	}
+
+	// 2. A `protoc` available on the PATH.
+	const lookup = isWin ? "where" : "which"
+	try {
+		const found = execSync(`${lookup} protoc`, { stdio: ["ignore", "pipe", "ignore"] })
+			.toString()
+			.split(/\r?\n/)[0]
+			.trim()
+		if (found) {
+			console.warn(
+				chalk.yellow(
+					`grpc-tools protoc missing; using system protoc at ${found}. ` +
+						`Generated code may differ if its version diverges from grpc-tools.`,
+				),
+			)
+			return found
+		}
+	} catch {
+		// `which`/`where` found nothing.
+	}
+
+	// 3. Last resort: trust `protoc` if it answers on the PATH.
+	try {
+		execSync("protoc --version", { stdio: "ignore" })
+		console.warn(chalk.yellow("grpc-tools protoc missing; using `protoc` from PATH."))
+		return "protoc"
+	} catch {
+		// No protoc anywhere.
+	}
+
+	console.error(
+		chalk.red(
+			"Could not find a `protoc` binary.\n" +
+				"The grpc-tools bundled binary is missing (its postinstall download likely failed)\n" +
+				"and no `protoc` was found on your PATH.\n" +
+				"Fix this by either:\n" +
+				"  - installing protoc (e.g. `brew install protobuf` or your distro's package), or\n" +
+				"  - reinstalling grpc-tools (`npm install grpc-tools --force`) to restore the bundled binary.",
+		),
+	)
+	process.exit(1)
+}
+
+const PROTOC = resolveProtoc()
 
 const PROTO_DIR = path.resolve("proto")
 const TS_OUT_DIR = path.resolve("src/shared/proto")

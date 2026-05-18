@@ -137,11 +137,7 @@ async function quarantineCorruptMemory(filePath: string, reason: string): Promis
 	try {
 		await fs.rename(filePath, quarantinedPath)
 		const msg = `[ailiance-memory] corrupt memory file quarantined: ${filePath} → ${quarantinedPath} (${reason})`
-		try {
-			Logger.warn(msg)
-		} catch {
-			console.warn(msg)
-		}
+		Logger.warn(msg)
 	} catch {
 		// Quarantine failed (file vanished, permissions, etc.) — silent.
 	}

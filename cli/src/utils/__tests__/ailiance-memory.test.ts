@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import * as fs from "fs/promises"
 import * as path from "path"
-import * as os from "os"
 import {
 	deleteMemory,
 	findMemories,
