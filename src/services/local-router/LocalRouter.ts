@@ -95,14 +95,6 @@ function priorityExtractor(format: ToolCallFormat | undefined): ExtractorKey | n
 	}
 }
 
-function formatToolsAsPromptText(tools: ChatTool[]): string {
-	let out = "## Available tools\n\n"
-	for (const t of tools) {
-		out += `### \`${t.function.name}\`\n${t.function.description ?? ""}\n\nParameters:\n\`\`\`json\n${JSON.stringify(t.function.parameters, null, 2)}\n\`\`\`\n\n`
-	}
-	return out.trim()
-}
-
 export class LocalRouter {
 	private workers = new Map<string, WorkerEndpoint>()
 	private cache = new ResponseCache()
@@ -260,7 +252,13 @@ export class LocalRouter {
 				if (!m) return null
 				try {
 					const parsed = JSON.parse(m[1]) as { name?: string; arguments?: unknown; args?: unknown }
-					if (LocalRouter.acceptToolName(parsed.name, toolNames)) {
+					// Require an arguments/args field so generic JSON objects that
+					// merely carry a "name" key are not misread as tool calls and
+					// do not trigger spurious invalid-tool-name telemetry.
+					if (
+						(parsed.arguments !== undefined || parsed.args !== undefined) &&
+						LocalRouter.acceptToolName(parsed.name, toolNames)
+					) {
 						return {
 							match: m,
 							toolCall: {
@@ -396,11 +394,12 @@ export class LocalRouter {
 		const body: any = { ...req, model: worker.modelId, stream: true }
 		let needsEmulation = false
 
-		// Registry-driven format selection. Backward-compat: a worker advertising
-		// supportsTools:true keeps the native path as long as the profile allows
-		// it (isNative); a worker with supportsTools:false always emulates.
+		// Registry-driven format selection. The worker's supportsTools flag is
+		// the operator's explicit declaration and decides the native path on
+		// its own. The registry profile only picks the emulation format for
+		// workers that do not support tool calls natively.
 		const profile = getToolProfile(worker.modelId)
-		const useNative = profile.isNative && worker.supportsTools
+		const useNative = worker.supportsTools
 		// Format used for emulation prompt rendering AND parser priority.
 		// When the worker is non-native but the profile is native (registry
 		// thinks "deepseek" is OpenAI native but a local worker doesn't
