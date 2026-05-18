@@ -3,6 +3,7 @@ import { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
 import { resolveWorkspacePath } from "@core/workspace"
 import { AnchorStateManager } from "@utils/AnchorStateManager"
+import { contentHash } from "@utils/line-hashing"
 import { isLocatedInWorkspace } from "@utils/path"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -16,6 +17,7 @@ import { ToolResponse } from "../../../index"
 import { showNotificationForApproval } from "../../../utils"
 import { ToolValidator } from "../../ToolValidator"
 import { TaskConfig } from "../../types/TaskConfig"
+import { extractLastKnownHashFromHistory } from "../../utils/extractLastKnownHash"
 import { ToolResultUtils } from "../../utils/ToolResultUtils"
 import { EditExecutor } from "./EditExecutor"
 import { EditFormatter } from "./EditFormatter"
@@ -581,6 +583,55 @@ export class BatchProcessor {
         return { saveResult, finalContent, finalLines, newLineHashes }
     }
 
+    /**
+     * Stale anchor detection.
+     *
+     * Compares the current on-disk hash against the last `[File Hash: ...]`
+     * the model saw via `read_file`. When they differ, the file mutated
+     * between the read and this edit (manual edit, hook, sibling agent, …).
+     * Anchors resolved against the previous content can collide with similar
+     * lines elsewhere or silently miss, so we abort with a re-read prompt
+     * rather than apply edits to outdated context.
+     *
+     * Behaviour A (strict): refuse and ask for a re-read. Behaviour B
+     * (auto-refresh by recomputing line hashes) is intentionally NOT
+     * implemented — semantic drift would let the model edit a wrong region.
+     *
+     * Backward compat: when no `lastKnownHash` is recorded for this path
+     * (legacy history, never-read file, history slicing), the check is
+     * skipped and previous behaviour is preserved.
+     *
+     * `consecutiveMistakeCount` is intentionally NOT incremented — the model
+     * did not misuse the tool, the world changed under it.
+     */
+    private detectStaleAnchorContext(
+        config: TaskConfig,
+        absolutePath: string,
+        displayPath: string,
+        content: string,
+    ): ToolResponse | undefined {
+        const history = config.messageState?.getApiConversationHistory?.() || []
+        if (!history.length) {
+            return undefined
+        }
+        const lastKnownHash = extractLastKnownHashFromHistory(history, displayPath)
+        if (!lastKnownHash) {
+            // No prior read recorded — preserve legacy behaviour.
+            return undefined
+        }
+        const currentHash = contentHash(content)
+        if (currentHash === lastKnownHash) {
+            return undefined
+        }
+        const message =
+            `File ${displayPath} has changed since the last read.\n` +
+            `Previously known hash: ${lastKnownHash}\n` +
+            `Current hash:          ${currentHash}\n` +
+            `Edit aborted to prevent applying anchors to outdated content.\n` +
+            `Suggested action: re-read the file with read_file path="${displayPath}" and re-issue the edit.`
+        return formatResponse.toolError(message)
+    }
+
     async prepareEdits(
         config: TaskConfig,
         absolutePath: string,
@@ -590,6 +641,17 @@ export class BatchProcessor {
         try {
             await HostProvider.workspace.saveOpenDocumentIfDirty({ filePath: absolutePath })
             const content = await fs.readFile(absolutePath, "utf8")
+
+            // Stale anchor detection. If the file has changed since the model's
+            // last `read_file`, abort before resolving anchors against an
+            // outdated mental model. Backward compat: if no prior read is
+            // recorded (legacy histories, fresh session, never-read file),
+            // skip the check.
+            const staleError = this.detectStaleAnchorContext(config, absolutePath, displayPath, content)
+            if (staleError) {
+                return { error: staleError }
+            }
+
             const lines = content.split(/\r?\n/)
             const lineHashes = AnchorStateManager.reconcile(absolutePath, lines, config.ulid)
 
