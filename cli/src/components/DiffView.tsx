@@ -212,9 +212,22 @@ export const DiffView: React.FC<DiffViewProps> = ({ content, contextLines = DEFA
 		return null
 	}
 
+	const { totalAdditions, totalDeletions } = diff
+	const showHeader = totalAdditions > 0 || totalDeletions > 0
 
 	return (
 		<Box flexDirection="column" width="100%">
+			{showHeader && (
+				<Box flexDirection="row">
+					<Text color="green">
+						+{totalAdditions} {totalAdditions === 1 ? "line" : "lines"}
+					</Text>
+					<Text>, </Text>
+					<Text color="red">
+						-{totalDeletions} {totalDeletions === 1 ? "line" : "lines"}
+					</Text>
+				</Box>
+			)}
 			{collapsedBlocks.map((displayLines, blockIdx) => (
 				<React.Fragment key={blockIdx}>
 					{blockIdx > 0 && <BlockSeparator />}

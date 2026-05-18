@@ -1,4 +1,5 @@
 import { DiracMessage, Mode } from "@shared/ExtensionMessage"
+import type { DiffStructure } from "@shared/utils/diff/DiffStructure"
 
 export interface ChatRowProps {
 	message: DiracMessage
@@ -43,4 +44,5 @@ export interface DisplayUnit {
 	symbol?: string // For symbol-related actions (replace_symbol, etc.)
 	hasComponent?: boolean // Whether a specialized component is handling the expansion
 	toolName?: string // The raw tool name for tooltip
+	hunks?: DiffStructure // v0.6 Sprint 1-D: structured diff from host (per-file)
 }
