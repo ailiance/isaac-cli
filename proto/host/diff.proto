@@ -107,3 +107,44 @@ message ContentDiff {
 }
 
 message OpenMultiFileDiffResponse {}
+
+// Structured diff produced by file-edit tool handlers, consumed by the CLI
+// renderer and the webview to display a unified `+`/`-` view without parsing
+// raw patch text.
+enum DiffLineType {
+  DIFF_LINE_UNSPECIFIED = 0;
+  DIFF_LINE_ADD = 1;
+  DIFF_LINE_REMOVE = 2;
+  DIFF_LINE_CONTEXT = 3;
+  DIFF_LINE_SEPARATOR = 4;
+}
+
+message DiffLine {
+  DiffLineType type = 1;
+  string content = 2;
+  // 1-based line numbers; absent for SEPARATOR or when the side does not apply
+  // (e.g. ADD has no old line number).
+  optional int32 old_line_number = 3;
+  optional int32 new_line_number = 4;
+}
+
+message DiffBlock {
+  // Header label rendered above the block (e.g. "@@ -12,4 +12,5 @@" or a
+  // human-readable hunk header).
+  optional string header = 1;
+  repeated DiffLine lines = 2;
+  // Per-block counts (sum to DiffStructure totals).
+  int32 additions = 3;
+  int32 deletions = 4;
+}
+
+// One file's full structured diff. Total counts are the source of truth for
+// the "Added X, removed Y" header rendered by every surface (CLI, webview,
+// VS Code host).
+message DiffStructure {
+  // Absolute or workspace-relative file path.
+  string path = 1;
+  int32 total_additions = 2;
+  int32 total_deletions = 3;
+  repeated DiffBlock blocks = 4;
+}

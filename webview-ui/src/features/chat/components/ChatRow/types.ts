@@ -1,4 +1,5 @@
 import { DiracMessage, Mode } from "@shared/ExtensionMessage"
+import type { DiffStructure } from "@shared/utils/diff/DiffStructure"
 
 export interface ChatRowProps {
 	message: DiracMessage
@@ -45,4 +46,5 @@ export interface DisplayUnit {
 	toolName?: string // The raw tool name for tooltip
 	// v0.6 Sprint 2-G: async tool execution metadata.
 	asyncDurationMs?: number
+	hunks?: DiffStructure // v0.6 Sprint 1-D: structured diff from host (per-file)
 }

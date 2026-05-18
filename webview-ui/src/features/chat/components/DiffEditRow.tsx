@@ -1,4 +1,6 @@
 import { StringRequest } from "@shared/proto/dirac/common"
+import type { DiffBlock, DiffLine as DiffLineStruct } from "@shared/utils/diff/DiffComputer"
+import type { DiffStructure } from "@shared/utils/diff/DiffStructure"
 import { stripHashes } from "@shared/utils/line-hashing"
 import { FilePlus, FileText, FileX, SquareArrowOutUpRightIcon } from "lucide-react"
 import { memo, useEffect, useMemo, useRef, useState } from "react"
@@ -38,16 +40,45 @@ interface DiffEditRowProps {
 	isLoading?: boolean
 	isHeadless?: boolean
 	startLineNumbers?: number[]
+	/**
+	 * v0.6 Sprint 1-D: pre-computed structured diff from the host. When provided,
+	 * the home-grown patch parser is bypassed and rendering reads `blocks[].lines[]`
+	 * directly, with their `oldLineNumber` / `newLineNumber` gutters and typed lines.
+	 * Falls back to `parsePatch(patch, path)` for legacy messages or handlers that
+	 * don't yet populate `hunks` (WriteToFile, ReplaceSymbol, historical chats).
+	 */
+	hunks?: DiffStructure
 }
 
-export const DiffEditRow = memo<DiffEditRowProps>(({ patch, path, isLoading, startLineNumbers, isHeadless }) => {
+export const DiffEditRow = memo<DiffEditRowProps>(({ patch, path, isLoading, startLineNumbers, isHeadless, hunks }) => {
+	const useStructured = !!(hunks && hunks.blocks.length > 0)
+
 	const { parsedFiles, isStreaming } = useMemo(() => {
+		if (useStructured) {
+			return { parsedFiles: [] as Patch[], isStreaming: !!isLoading }
+		}
 		const parsed = parsePatch(patch, path)
 		return {
 			parsedFiles: parsed.parsedFiles,
 			isStreaming: isLoading || parsed.isStreaming,
 		}
-	}, [patch, path, isLoading])
+	}, [patch, path, isLoading, useStructured])
+
+	// Structured path: trust host-side computed diff, no parsing.
+	if (useStructured && hunks) {
+		return (
+			<div className="space-y-4 rounded-xs">
+				<StructuredFileBlock
+					additions={hunks.totalAdditions}
+					blocks={hunks.blocks}
+					deletions={hunks.totalDeletions}
+					isHeadless={isHeadless}
+					isStreaming={!!isLoading}
+					path={hunks.path || path}
+				/>
+			</div>
+		)
+	}
 
 	if (!path) {
 		return null
@@ -205,6 +236,180 @@ const FileBlock = memo<{ file: Patch; isStreaming: boolean; startLineNumber?: nu
 		prev.file.deletions === next.file.deletions &&
 		prev.file.lines === next.file.lines,
 )
+
+/**
+ * Structured renderer (v0.6 Sprint 1-D). Consumes `DiffStructure.blocks` directly
+ * from the host. Lines carry their own `type` and gutter numbers — no string
+ * prefix sniffing, no `startLineNumbers` math.
+ */
+const StructuredFileBlock = memo<{
+	path: string
+	blocks: DiffBlock[]
+	additions: number
+	deletions: number
+	isStreaming: boolean
+	isHeadless?: boolean
+}>(({ path, blocks, additions, deletions, isStreaming, isHeadless }) => {
+	const [isExpanded, setIsExpanded] = useState(isHeadless)
+	const scrollContainerRef = useRef<HTMLDivElement>(null)
+	const shouldFollowRef = useRef(true)
+	const isProgrammaticScrollRef = useRef(false)
+
+	const totalLines = useMemo(() => blocks.reduce((acc, b) => acc + b.lines.length, 0), [blocks])
+
+	useEffect(() => {
+		const container = scrollContainerRef.current
+		if (!isExpanded || !isStreaming || !shouldFollowRef.current || !container) {
+			return
+		}
+		isProgrammaticScrollRef.current = true
+		container.scrollTop = container.scrollHeight - container.clientHeight
+		requestAnimationFrame(() => {
+			isProgrammaticScrollRef.current = false
+		})
+	}, [totalLines, isExpanded, isStreaming])
+
+	const handleScroll = () => {
+		const container = scrollContainerRef.current
+		if (!container || isProgrammaticScrollRef.current) {
+			return
+		}
+		const { scrollTop, scrollHeight, clientHeight } = container
+		shouldFollowRef.current = Math.abs(scrollHeight - clientHeight - scrollTop) < 10
+	}
+
+	const handleOpenFile = (event: React.MouseEvent) => {
+		event.stopPropagation()
+		if (path) {
+			FileServiceClient.openFileRelativePath(StringRequest.create({ value: path })).catch((err) =>
+				console.error("Failed to open file:", err),
+			)
+		}
+	}
+
+	const actionStyle = ACTION_STYLES.default
+	const ActionIcon = actionStyle.icon
+
+	const summary = `Added ${additions} ${additions === 1 ? "line" : "lines"}, removed ${deletions} ${
+		deletions === 1 ? "line" : "lines"
+	}`
+
+	return (
+		<div className={cn("bg-code rounded-xs overflow-hidden", !isHeadless && "border border-editor-group-border")}>
+			{!isHeadless && (
+				<button
+					className="w-full flex items-center gap-2 p-2 bg-code transition-colors justify-between cursor-pointer"
+					onClick={() => setIsExpanded((prev) => !prev)}
+					type="button">
+					<div className="flex items-center gap-3 flex-1 w-full overflow-hidden">
+						<div className={cn("flex items-center gap-2 w-full", actionStyle.borderClass)}>
+							<ActionIcon className={cn("w-5 h-5", actionStyle.iconClass)} />
+							<span
+								className="font-medium truncate hover:underline hover:text-link"
+								onClick={handleOpenFile}
+								title="Open file in editor">
+								{path}
+								{!isExpanded && (
+									<span className="ml-2 opacity-70 font-normal">
+										<DiffStats additions={additions} deletions={deletions} />
+									</span>
+								)}
+							</span>
+						</div>
+					</div>
+					<div className="flex items-center gap-2">
+						{isExpanded && <DiffStats additions={additions} deletions={deletions} />}
+						<span
+							className="p-1 hover:bg-description/20 rounded-xs transition-colors"
+							onClick={handleOpenFile}
+							title="Open file in editor">
+							<SquareArrowOutUpRightIcon className="size-2 text-description hover:text-foreground" />
+						</span>
+					</div>
+				</button>
+			)}
+
+			{isExpanded && (
+				<div
+					className={cn("max-h-80 overflow-y-auto overflow-x-auto", !isHeadless && "border-t border-code-block-background")}
+					onScroll={handleScroll}
+					ref={scrollContainerRef}>
+					<div className="font-mono text-xs w-max min-w-full" data-testid="diff-summary" title={summary}>
+						{blocks.map((block, blockIdx) => (
+							// Each block renders its own lines; a separator row is rendered between blocks.
+							<div key={`block-${blockIdx}`}>
+								{blockIdx > 0 && <StructuredSeparatorRow />}
+								{block.lines.map((line, lineIdx) => (
+									<StructuredDiffLine key={`${blockIdx}-${lineIdx}`} line={line} />
+								))}
+							</div>
+						))}
+					</div>
+				</div>
+			)}
+		</div>
+	)
+})
+
+const StructuredSeparatorRow = memo(() => (
+	<div className="flex text-xs font-mono border-l-4 border-l-transparent text-description/60 select-none">
+		<span className="w-10 min-w-10 text-right pr-2 py-0.5">…</span>
+		<span className="w-4 min-w-4 text-center py-0.5">@</span>
+		<span className="flex-1 pr-2 py-0.5 whitespace-nowrap">@@</span>
+	</div>
+))
+
+const StructuredDiffLine = memo<{ line: DiffLineStruct }>(({ line }) => {
+	if (line.type === "separator") {
+		return <StructuredSeparatorRow />
+	}
+	const isAddition = line.type === "add"
+	const isDeletion = line.type === "remove"
+	const code = stripHashes(line.content)
+	const prefix = isAddition ? "+" : isDeletion ? "-" : " "
+	// Gutter shows the new line number for additions/context, old for deletions.
+	const gutter = isDeletion ? line.oldLineNumber : line.newLineNumber
+
+	return (
+		<div
+			className={cn(
+				"flex text-xs font-mono",
+				isAddition && "bg-green-500/10",
+				isDeletion && "bg-red-500/10",
+				isAddition && "border-l-4 border-l-green-500",
+				isDeletion && "border-l-4 border-l-red-500",
+				!isAddition && !isDeletion && "border-l-4 border-l-transparent",
+			)}>
+			<span
+				className={cn(
+					"w-10 min-w-10 text-right pr-2 py-0.5 select-none border-r border-code-block-background/50 font-light opacity-60",
+					isAddition && "text-green-400/60",
+					isDeletion && "text-red-400/60",
+					!isAddition && !isDeletion && "text-description/50",
+				)}>
+				{gutter ?? ""}
+			</span>
+			<span
+				className={cn(
+					"w-4 min-w-4 text-center py-0.5 select-none",
+					isAddition && "text-green-400",
+					isDeletion && "text-red-400",
+					!isAddition && !isDeletion && "text-description/50",
+				)}>
+				{prefix}
+			</span>
+			<span
+				className={cn(
+					"flex-1 pr-2 py-0.5 whitespace-nowrap",
+					isAddition && "text-green-400",
+					isDeletion && "text-red-400",
+					!isAddition && !isDeletion && "text-editor-foreground",
+				)}>
+				{code}
+			</span>
+		</div>
+	)
+})
 
 const DiffStats = memo<{ additions: number; deletions: number }>(({ additions, deletions }) => (
 	<div className="text-xs text-gray-500 flex">

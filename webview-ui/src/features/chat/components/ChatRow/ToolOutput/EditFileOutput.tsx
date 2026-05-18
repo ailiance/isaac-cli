@@ -21,6 +21,7 @@ export const EditFileOutput = ({ tool, unit, message, backgroundEditEnabled }: E
 			<div className="flex flex-col gap-2">
 				{tool.content && (
 					<DiffEditRow
+						hunks={unit.hunks}
 						isLoading={message.partial}
 						patch={tool.content}
 						isHeadless={true}
@@ -38,7 +39,7 @@ export const EditFileOutput = ({ tool, unit, message, backgroundEditEnabled }: E
 			<div className="flex flex-col gap-1 min-w-0">
 				{diff && (
 					<div className="mt-1">
-						<DiffEditRow patch={diff} path={unit.path || tool.path!} isHeadless={true} />
+						<DiffEditRow hunks={unit.hunks} patch={diff} path={unit.path || tool.path!} isHeadless={true} />
 					</div>
 				)}
 			</div>
@@ -51,7 +52,7 @@ export const EditFileOutput = ({ tool, unit, message, backgroundEditEnabled }: E
 			<div className="flex flex-col gap-1 min-w-0">
 				{diff && (
 					<div className="mt-1">
-						<DiffEditRow patch={diff} path={unit.path || tool.path!} isHeadless={true} />
+						<DiffEditRow hunks={unit.hunks} patch={diff} path={unit.path || tool.path!} isHeadless={true} />
 					</div>
 				)}
 			</div>

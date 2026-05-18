@@ -210,12 +210,32 @@ export class Controller {
 		})
 
 		if (historyItem) {
-			this.task.resumeTaskFromHistory()
+			this.task.resumeTaskFromHistory().catch((err) => this.notifyTaskFailure("resumeTaskFromHistory", err))
 		} else if (task || images || files) {
-			this.task.startTask(task, images, files)
+			this.task.startTask(task, images, files).catch((err) => this.notifyTaskFailure("startTask", err))
 		}
 
 		return this.task.taskId
+	}
+
+	/**
+	 * Surfaces a background task-launch failure to both the logs and the user-visible
+	 * window. Previously, errors thrown from fire-and-forget `startTask` /
+	 * `resumeTaskFromHistory` calls would fall through to the global
+	 * `unhandledRejection` handler and only end up in a log file, leaving the user
+	 * with a session that appeared frozen. See PR #19 critic finding.
+	 */
+	private notifyTaskFailure(origin: "startTask" | "resumeTaskFromHistory", err: unknown): void {
+		const message = err instanceof Error ? err.message : String(err)
+		Logger.error(`[Controller] ${origin} failed: ${message}`)
+		try {
+			HostProvider.window.showMessage({
+				type: ShowMessageType.ERROR,
+				message: `Task failed to ${origin === "startTask" ? "start" : "resume"}: ${message}`,
+			})
+		} catch (notifyErr) {
+			Logger.error("[Controller] Failed to surface task failure to webview:", notifyErr)
+		}
 	}
 
 	async reinitExistingTaskFromId(taskId: string) {
