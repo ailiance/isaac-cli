@@ -24,12 +24,20 @@ From the repository root:
 # Install all dependencies first
 npm run install:all
 
-# Ensure protos are generated
+# Ensure protos are generated — REQUIRED before any build, typecheck,
+# or test (cli/, webview-ui/, root). Skipping this step causes ~36
+# vitest failures in cli/ with "Cannot find module
+# '@/shared/proto/dirac/common'" because the generated TypeScript
+# sources live under src/generated/ and src/shared/proto/.
 npm run protos
 
 # Build and link the CLI globally
 npm run cli:link
 ```
+
+> **Tip:** running `npm test` or `npm run typecheck` from `cli/` in
+> isolation will fail until `npm run protos` has been executed at
+> the repo root at least once.
 
 ## Usage
 
