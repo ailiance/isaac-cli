@@ -39,6 +39,25 @@ export interface ChatRequest {
 	temperature?: number
 	stream?: boolean
 	tools?: ChatTool[]
+	/**
+	 * Optional caller-supplied AbortSignal. When aborted, LocalRouter cancels
+	 * the underlying fetch + SSE reader. Composed with internal timeout
+	 * signals; caller-driven aborts surface as AbortError, timeout-driven
+	 * aborts surface as LocalRouterTimeoutError.
+	 */
+	signal?: AbortSignal
+	/**
+	 * Total wall-clock timeout for the streaming response, in milliseconds.
+	 * Overrides the LocalRouter default (60_000). When exceeded, the stream
+	 * aborts with a LocalRouterTimeoutError{kind:"total"}.
+	 */
+	timeoutMs?: number
+	/**
+	 * Idle (heartbeat) timeout — abort if no SSE chunk is received for this
+	 * many milliseconds. Overrides the LocalRouter default (20_000). Surfaces
+	 * as LocalRouterTimeoutError{kind:"idle"}.
+	 */
+	idleTimeoutMs?: number
 }
 
 export interface ChatResponse {

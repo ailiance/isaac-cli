@@ -16,6 +16,7 @@ import { convertToOpenAiMessages } from "../transform/openai-format"
 import { addReasoningContent, convertToR1Format } from "../transform/r1-format"
 import { ApiStream } from "../transform/stream"
 import { getOpenAIToolParams, ToolCallProcessor } from "../transform/tool-call-processor"
+import { readLocalRouterTimeouts } from "./utils/localRouterTimeouts"
 
 interface OpenAiHandlerOptions extends CommonApiHandlerOptions {
 	openAiApiKey?: string
@@ -120,6 +121,10 @@ export class OpenAiHandler implements ApiHandler {
 			try {
 				const textOnly = messages.every((m) => typeof m.content === "string")
 				if (textOnly) {
+					// SSE timeouts from user settings; tolerates uninitialized
+					// StateManager (CLI bootstrap, tests) — LocalRouter then
+					// applies its built-in defaults.
+					const { timeoutMs, idleTimeoutMs } = readLocalRouterTimeouts()
 					for await (const chunk of this.localRouter.chatStream({
 						messages: [
 							{ role: "system", content: systemPrompt },
@@ -129,6 +134,8 @@ export class OpenAiHandler implements ApiHandler {
 						temperature: 1,
 						stream: true,
 						tools: tools as ChatTool[] | undefined,
+						timeoutMs,
+						idleTimeoutMs,
 					})) {
 						if (chunk.type === "text") {
 							yield { type: "text", text: chunk.text }

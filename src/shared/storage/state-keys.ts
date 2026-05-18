@@ -122,6 +122,11 @@ const API_HANDLER_SETTINGS_FIELDS = {
 	// Default ON for the ailiance gateway — routes to local stack first, falls back to HTTP.
 	useLocalRouter: { default: true as boolean },
 	localRouterWorkers: { default: undefined as WorkerEndpoint[] | undefined },
+	// LocalRouter SSE timeouts (Sprint 4 task B)
+	// Total timeout: max wall-clock for an entire streaming response.
+	// Idle timeout: heartbeat — abort if no chunk received for this many ms.
+	localRouterTimeoutMs: { default: 60_000 as number },
+	localRouterIdleTimeoutMs: { default: 20_000 as number },
 
 	// Plan mode configurations
 	planModeApiModelId: { default: undefined as string | undefined },

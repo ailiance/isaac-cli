@@ -1,6 +1,9 @@
+import { reportInvalidToolName, validateToolName } from "@core/task/tools/validateToolName"
 import { Logger } from "@shared/services/Logger"
+import { renderEmulationPrompt } from "./EmulationPrompts"
 import { estimateTokens } from "./estimateTokens"
 import { HealthMonitor } from "./HealthMonitor"
+import { getToolProfile, type ToolCallFormat } from "./ModelRegistry"
 import { PromptClassifier } from "./PromptClassifier"
 import { ResponseCache } from "./ResponseCache"
 import { routingObserver } from "./RoutingObserver"
@@ -10,12 +13,86 @@ export type ChatStreamChunk =
 	| { type: "text"; text: string }
 	| { type: "tool_call"; id: string; name: string; argumentsRaw: string }
 
-function formatToolsAsPromptText(tools: ChatTool[]): string {
-	let out = "## Available tools\n\n"
-	for (const t of tools) {
-		out += `### \`${t.function.name}\`\n${t.function.description ?? ""}\n\nParameters:\n\`\`\`json\n${JSON.stringify(t.function.parameters, null, 2)}\n\`\`\`\n\n`
+/**
+ * Thrown when the SSE stream from a local worker exceeds the configured
+ * timeout. Distinguishes between total wall-clock ("total") and heartbeat
+ * silence ("idle") so callers can pick a sensible fallback strategy.
+ */
+export class LocalRouterTimeoutError extends Error {
+	readonly kind: "total" | "idle"
+	readonly workerId: string
+	readonly timeoutMs: number
+	constructor(kind: "total" | "idle", workerId: string, timeoutMs: number) {
+		const what = kind === "total" ? "did not finish streaming" : "produced no chunk"
+		super(`LocalRouter timeout: worker ${workerId} ${what} within ${timeoutMs}ms (${kind}).`)
+		this.name = "LocalRouterTimeoutError"
+		this.kind = kind
+		this.workerId = workerId
+		this.timeoutMs = timeoutMs
 	}
-	return out.trim()
+}
+
+/**
+ * Build an internal AbortController whose abort() also fires when any of the
+ * provided external signals abort. Caller is responsible for invoking the
+ * returned `dispose()` to detach listeners (preventing leaks when the same
+ * external signal is shared across many requests).
+ */
+function combineAbortSignals(signals: (AbortSignal | undefined)[]): {
+	controller: AbortController
+	dispose: () => void
+} {
+	const controller = new AbortController()
+	const detachers: Array<() => void> = []
+	for (const s of signals) {
+		if (!s) continue
+		if (s.aborted) {
+			controller.abort(s.reason)
+			break
+		}
+		const onAbort = () => controller.abort(s.reason)
+		s.addEventListener("abort", onAbort, { once: true })
+		detachers.push(() => s.removeEventListener("abort", onAbort))
+	}
+	return {
+		controller,
+		dispose: () => {
+			for (const d of detachers) d()
+		},
+	}
+}
+
+/**
+ * Default SSE timeouts (mirrors localRouterTimeoutMs / localRouterIdleTimeoutMs
+ * in state-keys.ts). Kept local so this module stays buildable from contexts
+ * where StateManager isn't initialized (unit tests, CLI bootstrap).
+ */
+const DEFAULT_LOCAL_ROUTER_TOTAL_TIMEOUT_MS = 60_000
+const DEFAULT_LOCAL_ROUTER_IDLE_TIMEOUT_MS = 20_000
+
+function sanitizeTimeout(v: number | undefined, fallback: number): number {
+	return typeof v === "number" && Number.isFinite(v) && v > 0 ? v : fallback
+}
+
+/** Pattern keys that tryExtract knows how to handle, in their default order. */
+type ExtractorKey = "tool_fence" | "xml" | "json_fence" | "json_inline" | "bash_fence" | "plain_func"
+
+const DEFAULT_EXTRACTOR_ORDER: ExtractorKey[] = ["tool_fence", "xml", "json_fence", "json_inline", "bash_fence", "plain_func"]
+
+/** Map a profile format to the extractor key that should be tried first. */
+function priorityExtractor(format: ToolCallFormat | undefined): ExtractorKey | null {
+	switch (format) {
+		case "markdown_fence":
+			return "tool_fence"
+		case "xml":
+			return "xml"
+		case "json_inline":
+			return "json_inline"
+		case "plain_function":
+			return "plain_func"
+		default:
+			return null
+	}
 }
 
 export class LocalRouter {
@@ -130,107 +207,135 @@ export class LocalRouter {
 
 	/**
 	 * Try to extract a tool call from the accumulated text buffer.
-	 * Accepts five formats in priority order:
-	 *   1. ```tool\n{...}\n```  (preferred few-shot format)
-	 *   2. <tool_call>{...}</tool_call>
-	 *   3. ```json\n{...}\n```  (JSON fence with a "name" field)
-	 *   4. ```bash|sh|shell|console\n<cmd>\n```  → execute_command (only when listed in tools)
-	 *   5. plain function-call syntax: read_file("foo.txt") or read_file(path="foo.txt")
+	 * Six extractors are tried; their order can be reshuffled by passing
+	 * `priority` (the format the worker was instructed to use). Falls back
+	 * to the default order on failure. Parsed tool names are validated by
+	 * the shared validateToolName whitelist before being accepted.
 	 */
 	private static tryExtract(
 		buf: string,
 		tools: ChatTool[],
+		priority?: ExtractorKey | null,
 	): { match: RegExpMatchArray; toolCall: { name: string; arguments: Record<string, unknown> } } | null {
 		const toolNames = new Set(tools.map((t) => t.function.name))
 
-		// 1. ```tool fence (preferred)
-		const toolFence = buf.match(/```tool\s*(\{[\s\S]*?\})\s*```/)
-		if (toolFence) {
-			try {
-				const parsed = JSON.parse(toolFence[1]) as { name?: string; arguments?: unknown; args?: unknown }
-				if (parsed.name && toolNames.has(parsed.name)) {
-					return {
-						match: toolFence,
-						toolCall: {
-							name: parsed.name,
-							arguments: (parsed.arguments ?? parsed.args ?? {}) as Record<string, unknown>,
-						},
-					}
-				}
-			} catch {
-				// malformed JSON — fall through
-			}
-		}
+		// Build the extractor sequence: priority key first (if provided),
+		// then the default order minus the duplicate.
+		const order: ExtractorKey[] = priority
+			? [priority, ...DEFAULT_EXTRACTOR_ORDER.filter((k) => k !== priority)]
+			: DEFAULT_EXTRACTOR_ORDER
 
-		// 2. <tool_call>{...}</tool_call>
-		const xml = buf.match(/<tool_call>\s*(\{[\s\S]*?\})\s*<\/tool_call>/)
-		if (xml) {
-			try {
-				const parsed = JSON.parse(xml[1]) as { name?: string; arguments?: unknown; args?: unknown }
-				if (parsed.name && toolNames.has(parsed.name)) {
-					return {
-						match: xml,
-						toolCall: {
-							name: parsed.name,
-							arguments: (parsed.arguments ?? parsed.args ?? {}) as Record<string, unknown>,
-						},
-					}
-				}
-			} catch {
-				// malformed JSON — fall through
-			}
+		for (const key of order) {
+			const hit = LocalRouter.runExtractor(key, buf, tools, toolNames)
+			if (hit) return hit
 		}
-
-		// 3. ```json fence with name field
-		const jsonFence = buf.match(/```json\s*(\{[\s\S]*?\})\s*```/)
-		if (jsonFence) {
-			try {
-				const parsed = JSON.parse(jsonFence[1]) as { name?: string; arguments?: unknown; args?: unknown }
-				if (parsed.name && toolNames.has(parsed.name)) {
-					return {
-						match: jsonFence,
-						toolCall: {
-							name: parsed.name,
-							arguments: (parsed.arguments ?? parsed.args ?? {}) as Record<string, unknown>,
-						},
-					}
-				}
-			} catch {
-				// malformed JSON — fall through
-			}
-		}
-
-		// 4. ```bash | ```sh | ```shell | ```console → execute_command
-		if (toolNames.has("execute_command")) {
-			const bashFence = buf.match(/```(?:bash|sh|shell|console)\s*([\s\S]*?)```/)
-			if (bashFence) {
-				const command = bashFence[1].trim()
-				if (command) {
-					return {
-						match: bashFence,
-						toolCall: { name: "execute_command", arguments: { command, requires_approval: false } },
-					}
-				}
-			}
-		}
-
-		// 5. Plain function-call syntax: read_file("foo.txt") or read_file(path="foo.txt")
-		for (const toolName of toolNames) {
-			const re = new RegExp(`\\b${toolName}\\s*\\(([^)]*)\\)`)
-			const m = buf.match(re)
-			if (m) {
-				const argsStr = m[1].trim()
-				const args = LocalRouter.parsePlainArgs(
-					argsStr,
-					tools.find((t) => t.function.name === toolName),
-				)
-				if (args !== null) {
-					return { match: m, toolCall: { name: toolName, arguments: args } }
-				}
-			}
-		}
-
 		return null
+	}
+
+	private static runExtractor(
+		key: ExtractorKey,
+		buf: string,
+		tools: ChatTool[],
+		toolNames: Set<string>,
+	): { match: RegExpMatchArray; toolCall: { name: string; arguments: Record<string, unknown> } } | null {
+		switch (key) {
+			case "tool_fence":
+				return LocalRouter.extractJsonByRegex(buf, /```tool\s*(\{[\s\S]*?\})\s*```/, toolNames)
+			case "xml":
+				return LocalRouter.extractJsonByRegex(buf, /<tool_call>\s*(\{[\s\S]*?\})\s*<\/tool_call>/, toolNames)
+			case "json_fence":
+				return LocalRouter.extractJsonByRegex(buf, /```json\s*(\{[\s\S]*?\})\s*```/, toolNames)
+			case "json_inline": {
+				// Bare top-level JSON object on its own (not inside a fence we
+				// already tried). Match a balanced-looking object with a "name".
+				const m = buf.match(/(?:^|\n)\s*(\{\s*"name"\s*:\s*"[^"]+"[\s\S]*?\})\s*(?:\n|$)/)
+				if (!m) return null
+				try {
+					const parsed = JSON.parse(m[1]) as { name?: string; arguments?: unknown; args?: unknown }
+					// Require an arguments/args field so generic JSON objects that
+					// merely carry a "name" key are not misread as tool calls and
+					// do not trigger spurious invalid-tool-name telemetry.
+					if (
+						(parsed.arguments !== undefined || parsed.args !== undefined) &&
+						LocalRouter.acceptToolName(parsed.name, toolNames)
+					) {
+						return {
+							match: m,
+							toolCall: {
+								name: parsed.name as string,
+								arguments: (parsed.arguments ?? parsed.args ?? {}) as Record<string, unknown>,
+							},
+						}
+					}
+				} catch {
+					// fall through
+				}
+				return null
+			}
+			case "bash_fence": {
+				if (!toolNames.has("execute_command")) return null
+				const bashFence = buf.match(/```(?:bash|sh|shell|console)\s*([\s\S]*?)```/)
+				if (!bashFence) return null
+				const command = bashFence[1].trim()
+				if (!command) return null
+				return {
+					match: bashFence,
+					toolCall: { name: "execute_command", arguments: { command, requires_approval: false } },
+				}
+			}
+			case "plain_func": {
+				for (const toolName of toolNames) {
+					const re = new RegExp(`\\b${toolName}\\s*\\(([^)]*)\\)`)
+					const m = buf.match(re)
+					if (!m) continue
+					const args = LocalRouter.parsePlainArgs(
+						m[1].trim(),
+						tools.find((t) => t.function.name === toolName),
+					)
+					if (args !== null) return { match: m, toolCall: { name: toolName, arguments: args } }
+				}
+				return null
+			}
+		}
+	}
+
+	private static extractJsonByRegex(
+		buf: string,
+		re: RegExp,
+		toolNames: Set<string>,
+	): { match: RegExpMatchArray; toolCall: { name: string; arguments: Record<string, unknown> } } | null {
+		const m = buf.match(re)
+		if (!m) return null
+		try {
+			const parsed = JSON.parse(m[1]) as { name?: string; arguments?: unknown; args?: unknown }
+			if (LocalRouter.acceptToolName(parsed.name, toolNames)) {
+				return {
+					match: m,
+					toolCall: {
+						name: parsed.name as string,
+						arguments: (parsed.arguments ?? parsed.args ?? {}) as Record<string, unknown>,
+					},
+				}
+			}
+		} catch {
+			// malformed JSON — fall through
+		}
+		return null
+	}
+
+	/**
+	 * Validate a parsed tool name against the whitelist using the
+	 * shared validator. Logs + reports telemetry on rejection so we can
+	 * see when models persist with hallucinated names like
+	 * `digikey:search`.
+	 */
+	private static acceptToolName(name: unknown, toolNames: ReadonlySet<string>): name is string {
+		const result = validateToolName(name, toolNames)
+		if (result.valid) return true
+		const displayName = typeof name === "string" ? name : "<non-string>"
+		Logger.warn(`[LocalRouter] Rejected tool name "${displayName}": ${result.reason}`)
+		reportInvalidToolName(displayName, result.reason)
+		return false
 	}
 
 	/**
@@ -289,58 +394,34 @@ export class LocalRouter {
 		const body: any = { ...req, model: worker.modelId, stream: true }
 		let needsEmulation = false
 
+		// Registry-driven format selection. The worker's supportsTools flag is
+		// the operator's explicit declaration and decides the native path on
+		// its own. The registry profile only picks the emulation format for
+		// workers that do not support tool calls natively.
+		const profile = getToolProfile(worker.modelId)
+		const useNative = worker.supportsTools
+		// Format used for emulation prompt rendering AND parser priority.
+		// When the worker is non-native but the profile is native (registry
+		// thinks "deepseek" is OpenAI native but a local worker doesn't
+		// expose it), fall back to markdown_fence which is the safest
+		// emulated format.
+		const emulationFormat: ToolCallFormat = profile.isNative ? "markdown_fence" : profile.format
+		const extractorPriority = priorityExtractor(emulationFormat)
+
+		// Strip transport-only fields that should never hit the wire.
+		delete body.signal
+		delete body.timeoutMs
+		delete body.idleTimeoutMs
+
 		if (req.tools && req.tools.length > 0) {
-			if (worker.supportsTools) {
+			if (useNative) {
 				// Pass tools natively to the worker
 				body.tools = req.tools
 				body.tool_choice = "auto"
 			} else {
-				// Emulate via system prompt injection
+				// Emulate via system prompt injection — template chosen by format.
 				needsEmulation = true
-				const toolDescriptions = formatToolsAsPromptText(req.tools)
-				const emulationPreamble = `
-
-${toolDescriptions}
-
-You have access to the following tools to interact with files and execute commands. To call a tool, respond with EXACTLY this format (a single fenced JSON block):
-
-\`\`\`tool
-{"name": "tool_name", "arguments": {"key": "value"}}
-\`\`\`
-
-EXAMPLES:
-
-User: read the file foo.txt
-Assistant:
-\`\`\`tool
-{"name": "read_file", "arguments": {"path": "foo.txt"}}
-\`\`\`
-
-User: list files in src/
-Assistant:
-\`\`\`tool
-{"name": "list_files", "arguments": {"path": "src/", "recursive": false}}
-\`\`\`
-
-User: write "hello world" to greeting.txt
-Assistant:
-\`\`\`tool
-{"name": "write_to_file", "arguments": {"path": "greeting.txt", "content": "hello world"}}
-\`\`\`
-
-User: run "ls -la"
-Assistant:
-\`\`\`tool
-{"name": "execute_command", "arguments": {"command": "ls -la", "requires_approval": false}}
-\`\`\`
-
-RULES:
-- One tool call per response. Wait for the result.
-- Use the exact tool name (no variations like "readFile" or "fs.read").
-- Always use the \`\`\`tool fence (not bash, json, python, or other).
-- Do NOT explain what you will do BEFORE calling. Just call the tool.
-
-`
+				const emulationPreamble = renderEmulationPrompt(emulationFormat, req.tools)
 				const sysIdx = body.messages.findIndex((m: { role: string }) => m.role === "system")
 				if (sysIdx >= 0) {
 					body.messages[sysIdx] = {
@@ -355,19 +436,70 @@ RULES:
 		}
 
 		const url = worker.url.replace(/\/$/, "")
-		const res = await fetch(`${url}/chat/completions`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Accept: "text/event-stream",
-			},
-			body: JSON.stringify(body),
-		})
+
+		// Resolve timeouts: per-request override → built-in default.
+		// Callers (e.g. providers/litellm.ts) read user settings via StateManager
+		// and pass them through req.timeoutMs / req.idleTimeoutMs; LocalRouter
+		// stays free of any storage dependency so it can run in tests/CLI bootstrap.
+		const totalTimeoutMs = sanitizeTimeout(req.timeoutMs, DEFAULT_LOCAL_ROUTER_TOTAL_TIMEOUT_MS)
+		const idleTimeoutMs = sanitizeTimeout(req.idleTimeoutMs, DEFAULT_LOCAL_ROUTER_IDLE_TIMEOUT_MS)
+
+		// Compose internal abort controller with caller's signal (if any).
+		const { controller, dispose: detachSignals } = combineAbortSignals([req.signal])
+
+		// Track which side fired so we can wrap AbortError → LocalRouterTimeoutError.
+		let timeoutKind: "total" | "idle" | null = null
+		const totalTimer: ReturnType<typeof setTimeout> = setTimeout(() => {
+			timeoutKind = "total"
+			controller.abort(new LocalRouterTimeoutError("total", worker.id, totalTimeoutMs))
+		}, totalTimeoutMs)
+
+		let lastChunkAt = Date.now()
+		// Idle check fires at most ~4×/s, never more often than once per second.
+		const idleInterval = Math.max(1000, Math.floor(idleTimeoutMs / 4))
+		const idleTimer: ReturnType<typeof setInterval> = setInterval(() => {
+			if (Date.now() - lastChunkAt > idleTimeoutMs) {
+				timeoutKind = "idle"
+				controller.abort(new LocalRouterTimeoutError("idle", worker.id, idleTimeoutMs))
+			}
+		}, idleInterval)
+
+		const cleanup = () => {
+			clearTimeout(totalTimer)
+			clearInterval(idleTimer)
+			detachSignals()
+			if (!controller.signal.aborted) controller.abort()
+		}
+
+		let res: Response
+		try {
+			res = await fetch(`${url}/chat/completions`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Accept: "text/event-stream",
+				},
+				body: JSON.stringify(body),
+				signal: controller.signal,
+			})
+		} catch (err) {
+			cleanup()
+			if (timeoutKind) {
+				throw new LocalRouterTimeoutError(
+					timeoutKind,
+					worker.id,
+					timeoutKind === "total" ? totalTimeoutMs : idleTimeoutMs,
+				)
+			}
+			throw err
+		}
 		if (!res.ok) {
+			cleanup()
 			const errText = await res.text().catch(() => "")
 			throw new Error(`[LocalRouter] worker ${worker.id} returned ${res.status}: ${errText.slice(0, 200)}`)
 		}
 		if (!res.body) {
+			cleanup()
 			throw new Error("[LocalRouter] worker did not return a body for streaming")
 		}
 
@@ -382,6 +514,7 @@ RULES:
 			while (true) {
 				const { value, done } = await reader.read()
 				if (done) break
+				lastChunkAt = Date.now()
 				lineBuffer += decoder.decode(value, { stream: true })
 				let nl: number
 				// biome-ignore lint/suspicious/noAssignInExpressions: SSE parser idiom
@@ -396,7 +529,7 @@ RULES:
 							yield { type: "text", text: textBuffer }
 						} else if (textBuffer && needsEmulation) {
 							// Emulation: try one last parse, then flush remaining as text
-							const extracted = LocalRouter.tryExtract(textBuffer, req.tools ?? [])
+							const extracted = LocalRouter.tryExtract(textBuffer, req.tools ?? [], extractorPriority)
 							if (extracted) {
 								const { match, toolCall } = extracted
 								const before = textBuffer.slice(0, match.index!)
@@ -437,7 +570,7 @@ RULES:
 								textBuffer += delta.content
 								// Extract complete tool call blocks (XML, json fence, bash fence)
 								for (;;) {
-									const extracted = LocalRouter.tryExtract(textBuffer, req.tools ?? [])
+									const extracted = LocalRouter.tryExtract(textBuffer, req.tools ?? [], extractorPriority)
 									if (!extracted) break
 									const { match, toolCall } = extracted
 									const before = textBuffer.slice(0, match.index!)
@@ -491,7 +624,7 @@ RULES:
 			}
 			// Final flush of any remaining buffered text
 			if (textBuffer) {
-				const extracted = LocalRouter.tryExtract(textBuffer, req.tools ?? [])
+				const extracted = LocalRouter.tryExtract(textBuffer, req.tools ?? [], extractorPriority)
 				if (extracted) {
 					const { match, toolCall } = extracted
 					const before = textBuffer.slice(0, match.index!)
@@ -509,12 +642,26 @@ RULES:
 					yield { type: "text", text: textBuffer }
 				}
 			}
+		} catch (err) {
+			// If a timeout fired, the underlying reader.read() rejects with an
+			// AbortError. Translate that into the typed timeout error so callers
+			// can fallback. Otherwise, surface the original error untouched —
+			// caller-driven aborts (req.signal) keep their AbortError shape.
+			if (timeoutKind) {
+				throw new LocalRouterTimeoutError(
+					timeoutKind,
+					worker.id,
+					timeoutKind === "total" ? totalTimeoutMs : idleTimeoutMs,
+				)
+			}
+			throw err
 		} finally {
 			try {
 				reader.releaseLock()
 			} catch {
 				// ignore
 			}
+			cleanup()
 		}
 	}
 }

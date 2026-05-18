@@ -17,6 +17,7 @@ import { createOpenRouterStream } from "../transform/openrouter-stream"
 import { ApiStream, ApiStreamUsageChunk } from "../transform/stream"
 import { ToolCallProcessor } from "../transform/tool-call-processor"
 import { OpenRouterErrorResponse } from "./types"
+import { readLocalRouterTimeouts } from "./utils/localRouterTimeouts"
 
 interface OpenRouterHandlerOptions extends CommonApiHandlerOptions {
 	openRouterApiKey?: string
@@ -75,6 +76,10 @@ export class OpenRouterHandler implements ApiHandler {
 			try {
 				const textOnly = messages.every((m) => typeof m.content === "string")
 				if (textOnly) {
+					// SSE timeouts from user settings; tolerates uninitialized
+					// StateManager (CLI bootstrap, tests) — LocalRouter then
+					// applies its built-in defaults.
+					const { timeoutMs, idleTimeoutMs } = readLocalRouterTimeouts()
 					for await (const chunk of this.localRouter.chatStream({
 						messages: [
 							{ role: "system", content: systemPrompt },
@@ -84,6 +89,8 @@ export class OpenRouterHandler implements ApiHandler {
 						temperature: 1,
 						stream: true,
 						tools: tools as ChatTool[] | undefined,
+						timeoutMs,
+						idleTimeoutMs,
 					})) {
 						if (chunk.type === "text") {
 							yield { type: "text", text: chunk.text }

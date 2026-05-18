@@ -16,6 +16,7 @@ import { withRetry } from "../retry"
 import { convertToOpenAiMessages } from "../transform/openai-format"
 import { ApiStream } from "../transform/stream"
 import { getOpenAIToolParams, ToolCallProcessor } from "../transform/tool-call-processor"
+import { readLocalRouterTimeouts } from "./utils/localRouterTimeouts"
 
 interface LiteLlmHandlerOptions extends CommonApiHandlerOptions {
 	liteLlmApiKey?: string
@@ -258,11 +259,14 @@ export class LiteLlmHandler implements ApiHandler {
 									: (m.content as Array<{ type: string; text: string }>).map((b) => b.text).join(""),
 						})),
 					]
+					const timeouts = readLocalRouterTimeouts()
 					for await (const chunk of this.localRouter.chatStream({
 						messages: routerMessages,
 						max_tokens: this.options.liteLlmModelInfo?.maxTokens,
 						temperature: 1,
 						stream: true,
+						timeoutMs: timeouts.timeoutMs,
+						idleTimeoutMs: timeouts.idleTimeoutMs,
 					})) {
 						// tools are never passed here (guard above), so only text chunks expected
 						if (chunk.type === "text") {
