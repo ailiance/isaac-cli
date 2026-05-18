@@ -19,9 +19,26 @@ export interface ResolvedEdit {
 	edit: Edit
 }
 
+export interface FuzzyCandidate {
+	/** Which side of the edit this candidate is for. */
+	type: "anchor" | "end_anchor"
+	/** Anchor name (e.g. "Banana") that triggered the lookup. */
+	anchorName: string
+	/** Content the model provided alongside the anchor. */
+	provided: string
+	/** 0-based index of the actual line the file currently has. */
+	actualLineIdx: number
+	/** Actual content at `actualLineIdx`. */
+	actualContent: string
+	/** Levenshtein-normalized similarity in [0, 1]. */
+	similarity: number
+}
+
 export interface FailedEdit {
 	edit: Edit
 	error: string
+	/** Per-anchor fuzzy match candidates (≥ threshold). At most one per side. */
+	fuzzyCandidates?: FuzzyCandidate[]
 }
 
 export interface AppliedEdit {

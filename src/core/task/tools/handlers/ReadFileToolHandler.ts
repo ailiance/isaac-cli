@@ -1,5 +1,5 @@
-import path from "node:path"
 import fs from "node:fs/promises"
+import path from "node:path"
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
 import { resolveWorkspacePath } from "@core/workspace"
@@ -8,7 +8,7 @@ import { contentHash, hashLines, stripHashes } from "@utils/line-hashing"
 import { arePathsEqual, getReadablePath, isLocatedInWorkspace } from "@utils/path"
 import { telemetryService } from "@/services/telemetry"
 import { DiracSayTool } from "@/shared/ExtensionMessage"
-import { DiracAssistantToolUseBlock, DiracStorageMessage, DiracUserToolResultContentBlock } from "@/shared/messages"
+import { DiracStorageMessage } from "@/shared/messages"
 import { DiracDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import { showNotificationForApproval } from "../../utils"
@@ -16,9 +16,27 @@ import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
+import { extractLastKnownHashFromHistory } from "../utils/extractLastKnownHash"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
+import { sliceContentLines } from "./readFilePagination"
 
-const MAX_FILE_READ_SIZE = 50 * 1024 // 50KB limit for full file reads
+const DEFAULT_MAX_FILE_READ_SIZE = 50_000 // 50KB default for full file reads
+const ABSOLUTE_MAX_FILE_READ_SIZE = 5_000_000 // 5MB hard cap regardless of user setting
+// Backwards-compatible export kept for tooling that imported the old name.
+export const MAX_FILE_READ_SIZE = DEFAULT_MAX_FILE_READ_SIZE
+
+function resolveMaxFileReadSize(config: TaskConfig): number {
+	let configured: number | undefined
+	try {
+		configured = config.services.stateManager.getGlobalSettingsKey("readFileMaxSize" as any) as number | undefined
+	} catch {
+		configured = undefined
+	}
+	const value =
+		typeof configured === "number" && Number.isFinite(configured) && configured > 0 ? configured : DEFAULT_MAX_FILE_READ_SIZE
+	return Math.min(value, ABSOLUTE_MAX_FILE_READ_SIZE)
+}
+
 export class ReadFileToolHandler implements IFullyManagedTool {
 	readonly name = DiracDefaultTool.FILE_READ
 
@@ -68,87 +86,60 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 	}
 
 	private extractLastKnownHashFromHistory(history: DiracStorageMessage[], targetPath: string): string | undefined {
-		const normalizeForComparison = (value: string): string => {
-			const normalized = path.normalize(value)
-			return normalized.startsWith(`.${path.sep}`) ? normalized.slice(2) : normalized
-		}
-
-		const doesPathMatch = (candidatePath: unknown): candidatePath is string => {
-			if (typeof candidatePath !== "string") {
-				return false
-			}
-
-			return (
-				candidatePath === targetPath ||
-				arePathsEqual(candidatePath, targetPath) ||
-				normalizeForComparison(candidatePath) === normalizeForComparison(targetPath)
-			)
-		}
-
-		// Iterate backwards to find the most recent read_file for this path, allowing for normalized equivalents
-		for (let i = history.length - 1; i >= 0; i--) {
-			const message = history[i]
-
-			// Find assistant messages containing tool calls
-			if (message.role === "assistant" && Array.isArray(message.content)) {
-				for (const block of message.content) {
-					if (block.type === "tool_use") {
-						const toolUseBlock = block as unknown as DiracAssistantToolUseBlock
-						const input = toolUseBlock.input as any
-						const matchingPath = [input?.path, ...(Array.isArray(input?.paths) ? input.paths : [])].find((candidatePath) =>
-							doesPathMatch(candidatePath),
-						)
-						if (toolUseBlock.name === this.name && matchingPath) {
-							const toolUseId = toolUseBlock.id
-
-							// The tool_result is almost always in the immediately following 'user' message
-							const nextMessage = history[i + 1]
-							if (nextMessage && nextMessage.role === "user" && Array.isArray(nextMessage.content)) {
-								const resultBlock = nextMessage.content.find(
-									(c) =>
-										c.type === "tool_result" &&
-										(c as unknown as DiracUserToolResultContentBlock).tool_use_id === toolUseId,
-								)
-
-								if (resultBlock && resultBlock.type === "tool_result") {
-									// Extract text content from the result block
-									const text =
-										typeof resultBlock.content === "string"
-											? resultBlock.content
-											: Array.isArray(resultBlock.content)
-												? (resultBlock.content.find((c: any) => c.type === "text") as any)?.text
-												: undefined
-
-									if (text) {
-										// Match the exact hash string we output, considering potentially multiple files
-										// If it's a multi-file read, we need to find the specific section for this path
-										let sectionText = text
-										if (text.includes(`--- ${matchingPath} ---`)) {
-											const parts = text.split(`--- ${matchingPath} ---`)
-											if (parts.length > 1) {
-												sectionText = parts[1].split("\n--- ")[0]
-											}
-										}
-
-										const match = sectionText.match(/\[File Hash: ([a-f0-9]+)\]/)
-										if (match) {
-											return match[1]
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		return undefined
+		return extractLastKnownHashFromHistory(history, targetPath, this.name)
 	}
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
-		const relPaths = Array.isArray(block.params.paths) ? block.params.paths : (block.params.paths ? [block.params.paths as string] : [])
+		const relPaths = Array.isArray(block.params.paths)
+			? block.params.paths
+			: block.params.paths
+				? [block.params.paths as string]
+				: []
 		const startLineNum = block.params.start_line ? Number.parseInt(String(block.params.start_line)) : undefined
 		const endLineNum = block.params.end_line ? Number.parseInt(String(block.params.end_line)) : undefined
+		const rawOffset = (block.params as any).offset
+		const rawLimit = (block.params as any).limit
+		const offsetNum = rawOffset !== undefined && rawOffset !== "" ? Number.parseInt(String(rawOffset)) : undefined
+		const limitNum = rawLimit !== undefined && rawLimit !== "" ? Number.parseInt(String(rawLimit)) : undefined
+
+		const hasLineRange = startLineNum !== undefined || endLineNum !== undefined
+		const hasOffsetLimit = offsetNum !== undefined || limitNum !== undefined
+		const maxFileReadSize = resolveMaxFileReadSize(config)
+
+		const emitParamError = async (error: string) => {
+			config.taskState.consecutiveMistakeCount++
+			const sharedMessageProps = {
+				tool: "readFile",
+				paths: relPaths.map((p) => getReadablePath(config.cwd, p)),
+				content: error,
+				operationIsLocatedInWorkspace: true,
+				path: relPaths[0],
+				startLine: block.params.start_line?.toString(),
+				endLine: block.params.end_line?.toString(),
+				readFileResults: relPaths.map((p) => ({
+					path: getReadablePath(config.cwd, p),
+					status: "error" as const,
+					label: "Invalid parameters",
+				})),
+			} satisfies DiracSayTool
+			await config.callbacks.removeLastPartialMessageIfExistsWithType("ask", "tool")
+			await config.callbacks.removeLastPartialMessageIfExistsWithType("say", "tool")
+			await config.callbacks.say("tool", JSON.stringify(sharedMessageProps), undefined, undefined, false)
+			return formatResponse.toolError(error)
+		}
+
+		if (hasLineRange && hasOffsetLimit) {
+			return await emitParamError(
+				"Cannot combine start_line/end_line with offset/limit. Choose one pagination style: start_line/end_line (1-based inclusive) OR offset/limit (0-based).",
+			)
+		}
+
+		if (offsetNum !== undefined && (Number.isNaN(offsetNum) || offsetNum < 0)) {
+			return await emitParamError("Invalid offset. Must be a non-negative integer.")
+		}
+		if (limitNum !== undefined && (Number.isNaN(limitNum) || limitNum <= 0)) {
+			return await emitParamError("Invalid limit. Must be a positive integer.")
+		}
 
 		if ((block.params.start_line && isNaN(startLineNum!)) || (block.params.end_line && isNaN(endLineNum!))) {
 			config.taskState.consecutiveMistakeCount++
@@ -255,20 +246,24 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 				})
 
 				// 3. Safety check: prevent reading files too large
-				if (!startLineNum && !endLineNum) {
+				if (!hasLineRange && !hasOffsetLimit) {
 					const stats = await fs.stat(absolutePath)
 					const ext = path.extname(absolutePath).toLowerCase()
 					const isImage = [".png", ".jpg", ".jpeg", ".webp"].includes(ext)
-					if (stats.isFile() && !isImage && stats.size > MAX_FILE_READ_SIZE) {
-						results.push(
-							`${header}The file size is ${Math.round(
-								stats.size / 1024,
-							)}KB, which exceeds the ${MAX_FILE_READ_SIZE / 1024}KB limit for full file reads. Reading this file will likely flood the context window. Please use more surgical means or specify a line range using 'start_line' and 'end_line' parameters.`,
-						)
+					if (stats.isFile() && !isImage && stats.size > maxFileReadSize) {
+						const estimatedLines = Math.max(1, Math.ceil(stats.size / 80))
+						const message =
+							`File ${displayPath} is ${stats.size} bytes which exceeds the read limit (${maxFileReadSize} bytes).\n` +
+							`To read this file, use one of:\n` +
+							`  - start_line / end_line (1-based, inclusive): read_file path="${displayPath}" start_line=1 end_line=200\n` +
+							`  - offset / limit (0-based): read_file path="${displayPath}" offset=0 limit=200\n` +
+							`  - Or increase the readFileMaxSize setting if the full file is needed.\n` +
+							`File has approximately ${estimatedLines} lines (estimated).`
+						results.push(`${header}${message}`)
 						readFileResults.push({
 							path: displayPath,
 							status: "error",
-							label: `File too large (> ${MAX_FILE_READ_SIZE / 1024}KB)`,
+							label: `File too large (> ${maxFileReadSize} bytes)`,
 						})
 						anyFailed = true
 						continue
@@ -290,22 +285,22 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 
 				const currentHash = contentHash(fileContent.text)
 
-				if (providedHash === currentHash && !startLineNum && !endLineNum) {
+				if (providedHash === currentHash && !hasLineRange && !hasOffsetLimit) {
 					results.push(`${header}no changes have been made to the file since your last read (Hash: ${providedHash})`)
 				} else {
-					let hashedContent = hashLines(fileContent.text, absolutePath, config.ulid)
-					if (startLineNum || endLineNum) {
-						const lines = hashedContent.split("\n")
-						const start = Math.max(0, (startLineNum || 1) - 1)
-						const end = Math.min(lines.length, endLineNum || lines.length)
-						hashedContent = lines.slice(start, end).join("\n")
-					}
+					const hashedContent = sliceContentLines(hashLines(fileContent.text, absolutePath, config.ulid), {
+						startLineNum,
+						endLineNum,
+						offsetNum,
+						limitNum,
+					})
 					results.push(`${header}[File Hash: ${currentHash}]\n${hashedContent}`)
 				}
 
-				const range =
-					startLineNum || endLineNum
-						? `lines ${startLineNum || 1} to ${endLineNum || "end"}`
+				const range = hasLineRange
+					? `lines ${startLineNum || 1} to ${endLineNum || "end"}`
+					: hasOffsetLimit
+						? `offset ${offsetNum ?? 0} limit ${limitNum ?? "all"}`
 						: "full file"
 				readFileResults.push({
 					path: displayPath,

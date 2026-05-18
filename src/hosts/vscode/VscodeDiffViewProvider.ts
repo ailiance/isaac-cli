@@ -306,6 +306,26 @@ export class VscodeDiffViewProvider extends DiffViewProvider {
 		await vscode.window.showTextDocument(uri, { preview: false })
 	}
 
+	/**
+	 * Save through the VS Code editor pipeline (not Node `fs.writeFile` nor
+	 * `atomicWriteFile` from `@utils/fs`). Rationale:
+	 *
+	 * - The standalone/CLI path (`FileEditProvider`) uses `atomicWriteFile`
+	 *   (tmp + rename) for crash-safety on direct disk writes.
+	 * - Here we route through `WorkspaceEdit` + `document.save()` so that
+	 *   format-on-save, dirty-buffer tracking, file watchers, and other
+	 *   editor-side extensions see a single coherent save event. Bypassing
+	 *   that with a tmp+rename would break format-on-save and could race
+	 *   with VS Code's in-memory document model (the editor would still
+	 *   hold the pre-rename buffer).
+	 * - The `vscode.workspace.fs.writeFile` call below is only a stub to
+	 *   materialize an empty file before `openTextDocument` — content is
+	 *   replaced by the WorkspaceEdit immediately after, so atomicity of
+	 *   that stub is not load-bearing.
+	 *
+	 * Atomicity guarantee is therefore: covered on the CLI path, delegated
+	 * to VS Code's save pipeline on the editor path.
+	 */
 	override async applyAndSaveSilently(
 		absolutePath: string,
 		content: string,

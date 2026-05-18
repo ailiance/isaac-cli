@@ -1,5 +1,5 @@
 import { DiffViewProvider } from "@integrations/editor/DiffViewProvider"
-import * as fs from "fs/promises"
+import { atomicWriteFile, ensureParentDirectory } from "@utils/fs"
 import { Logger } from "@/shared/services/Logger"
 
 /**
@@ -11,7 +11,7 @@ import { Logger } from "@/shared/services/Logger"
  * This makes it suitable for headless or non-interactive environments.
  */
 export class FileEditProvider extends DiffViewProvider {
-	private documentContent?: string
+	protected documentContent?: string
 
 	constructor() {
 		super()
@@ -113,7 +113,12 @@ export class FileEditProvider extends DiffViewProvider {
 			// Always use UTF-8 for writing - it's the modern standard and handles all characters
 			// including emojis. The detected fileEncoding was used for reading to preserve
 			// compatibility, but writing as UTF-8 ensures no character corruption.
-			await fs.writeFile(this.absolutePath, this.documentContent, { encoding: "utf8" })
+			//
+			// Ensure the parent directory exists, then write atomically (tmp +
+			// rename) so a crash mid-write can never replace the previous file
+			// contents with a half-written buffer.
+			await ensureParentDirectory(this.absolutePath)
+			await atomicWriteFile(this.absolutePath, this.documentContent, "utf8")
 			return true
 		} catch (error) {
 			Logger.error(`Failed to save document to ${this.absolutePath}:`, error)

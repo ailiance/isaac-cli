@@ -119,6 +119,84 @@ export async function writeFile(
 	}
 }
 
+/** Maximum number of nested directories `ensureParentDirectory` will create. */
+export const MKDIR_MAX_DEPTH = 10
+
+/**
+ * Ensures the parent directory of `filePath` exists, creating intermediate directories
+ * if needed. Throws a clear error if the parent cannot be created (permissions, etc.)
+ * or if the depth of missing directories to create exceeds {@link MKDIR_MAX_DEPTH}.
+ */
+export async function ensureParentDirectory(filePath: string): Promise<void> {
+	const normalized = path.normalize(filePath)
+	const parent = path.dirname(normalized)
+
+	// Walk up to find missing directories (cap depth to avoid pathological inputs)
+	let cursor = parent
+	let missing = 0
+	while (!(await fileExistsAtPath(cursor))) {
+		missing++
+		if (missing > MKDIR_MAX_DEPTH) {
+			throw new Error(
+				`Cannot create parent directory ${parent}: refusing to create more than ${MKDIR_MAX_DEPTH} nested directories.`,
+			)
+		}
+		const next = path.dirname(cursor)
+		if (next === cursor) {
+			break
+		}
+		cursor = next
+	}
+
+	if (missing === 0) {
+		return
+	}
+
+	try {
+		await fs.mkdir(parent, { recursive: true })
+	} catch (error: any) {
+		throw new Error(`Cannot create parent directory ${parent}: ${error?.message ?? String(error)}`)
+	}
+}
+
+/**
+ * Atomically writes `content` to `filePath` using a temp-file + rename strategy:
+ *
+ *   1. Write to `<filePath>.tmp.<pid>.<random>` first.
+ *   2. `fs.rename` to the final path (atomic on the same filesystem on POSIX).
+ *   3. On failure, attempt to remove the tmp file.
+ *
+ * The parent directory must already exist — call {@link ensureParentDirectory}
+ * before this if needed.
+ */
+export async function atomicWriteFile(
+	filePath: string,
+	content: string | Uint8Array,
+	encoding: BufferEncoding = "utf8",
+): Promise<void> {
+	const random = Math.floor(Math.random() * 0xffffff)
+		.toString(16)
+		.padStart(6, "0")
+	const tmpPath = `${filePath}.tmp.${process.pid}.${random}`
+
+	try {
+		if (content instanceof Uint8Array) {
+			await fs.writeFile(tmpPath, content)
+		} else {
+			await fs.writeFile(tmpPath, content, encoding)
+		}
+		await fs.rename(tmpPath, filePath)
+	} catch (error) {
+		// Best-effort cleanup; swallow ENOENT (tmp may not exist yet)
+		try {
+			await fs.unlink(tmpPath)
+		} catch {
+			/* ignore */
+		}
+		throw error
+	}
+}
+
 // Common OS-generated files that would appear in an otherwise clean directory
 const OS_GENERATED_FILES = [
 	".DS_Store", // macOS Finder

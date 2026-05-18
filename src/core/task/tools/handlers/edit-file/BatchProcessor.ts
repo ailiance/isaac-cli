@@ -5,6 +5,7 @@ import { resolveWorkspacePath } from "@core/workspace"
 import type { DiffStructure } from "@shared/utils/diff"
 import { computeDiff } from "@shared/utils/diff"
 import { AnchorStateManager } from "@utils/AnchorStateManager"
+import { contentHash } from "@utils/line-hashing"
 import { isLocatedInWorkspace } from "@utils/path"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -17,10 +18,11 @@ import { ToolResponse } from "../../../index"
 import { showNotificationForApproval } from "../../../utils"
 import { ToolValidator } from "../../ToolValidator"
 import { TaskConfig } from "../../types/TaskConfig"
+import { extractLastKnownHashFromHistory } from "../../utils/extractLastKnownHash"
 import { ToolResultUtils } from "../../utils/ToolResultUtils"
 import { EditExecutor } from "./EditExecutor"
 import { EditFormatter } from "./EditFormatter"
-import { FileEdit, PreparedEdits, PreparedFileBatch } from "./types"
+import { FailedEdit, FileEdit, FuzzyCandidate, PreparedEdits, PreparedFileBatch, ResolvedEdit } from "./types"
 
 export class BatchProcessor {
 	constructor(
@@ -630,6 +632,55 @@ export class BatchProcessor {
 		return { saveResult, finalContent, finalLines, newLineHashes }
 	}
 
+	/**
+	 * Stale anchor detection.
+	 *
+	 * Compares the current on-disk hash against the last `[File Hash: ...]`
+	 * the model saw via `read_file`. When they differ, the file mutated
+	 * between the read and this edit (manual edit, hook, sibling agent, …).
+	 * Anchors resolved against the previous content can collide with similar
+	 * lines elsewhere or silently miss, so we abort with a re-read prompt
+	 * rather than apply edits to outdated context.
+	 *
+	 * Behaviour A (strict): refuse and ask for a re-read. Behaviour B
+	 * (auto-refresh by recomputing line hashes) is intentionally NOT
+	 * implemented — semantic drift would let the model edit a wrong region.
+	 *
+	 * Backward compat: when no `lastKnownHash` is recorded for this path
+	 * (legacy history, never-read file, history slicing), the check is
+	 * skipped and previous behaviour is preserved.
+	 *
+	 * `consecutiveMistakeCount` is intentionally NOT incremented — the model
+	 * did not misuse the tool, the world changed under it.
+	 */
+	private detectStaleAnchorContext(
+		config: TaskConfig,
+		absolutePath: string,
+		displayPath: string,
+		content: string,
+	): ToolResponse | undefined {
+		const history = config.messageState?.getApiConversationHistory?.() || []
+		if (!history.length) {
+			return undefined
+		}
+		const lastKnownHash = extractLastKnownHashFromHistory(history, displayPath)
+		if (!lastKnownHash) {
+			// No prior read recorded — preserve legacy behaviour.
+			return undefined
+		}
+		const currentHash = contentHash(content)
+		if (currentHash === lastKnownHash) {
+			return undefined
+		}
+		const message =
+			`File ${displayPath} has changed since the last read.\n` +
+			`Previously known hash: ${lastKnownHash}\n` +
+			`Current hash:          ${currentHash}\n` +
+			`Edit aborted to prevent applying anchors to outdated content.\n` +
+			`Suggested action: re-read the file with read_file path="${displayPath}" and re-issue the edit.`
+		return formatResponse.toolError(message)
+	}
+
 	async prepareEdits(
 		config: TaskConfig,
 		absolutePath: string,
@@ -639,13 +690,37 @@ export class BatchProcessor {
 		try {
 			await HostProvider.workspace.saveOpenDocumentIfDirty({ filePath: absolutePath })
 			const content = await fs.readFile(absolutePath, "utf8")
+
+			// Stale anchor detection. If the file has changed since the model's
+			// last `read_file`, abort before resolving anchors against an
+			// outdated mental model. Backward compat: if no prior read is
+			// recorded (legacy histories, fresh session, never-read file),
+			// skip the check.
+			const staleError = this.detectStaleAnchorContext(config, absolutePath, displayPath, content)
+			if (staleError) {
+				return { error: staleError }
+			}
+
 			const lines = content.split(/\r?\n/)
 			const lineHashes = AnchorStateManager.reconcile(absolutePath, lines, config.ulid)
 
 			const { resolvedEdits, failedEdits } = this.executor.resolveEdits(blocks, lines, lineHashes)
 
+			// Fuzzy fallback: for each failed edit that has a high-confidence
+			// Levenshtein candidate, request user approval. On approval, promote
+			// to resolved; on refusal, keep as failed (per-anchor granularity,
+			// never penalises sibling edits).
+			const { promotedEdits, remainingFailedEdits } = await this.requestFuzzyApprovals(
+				config,
+				displayPath,
+				failedEdits,
+				lineHashes.map((h) => h.trim()),
+				lines,
+			)
+			resolvedEdits.push(...promotedEdits)
+
 			if (resolvedEdits.length === 0) {
-				const failureMessages = failedEdits.map((f) => this.executor.formatFailureMessage(f.edit, f.error))
+				const failureMessages = remainingFailedEdits.map((f) => this.executor.formatFailureMessage(f.edit, f.error))
 				return { error: formatResponse.toolError(failureMessages.join("\n\n")) }
 			}
 
@@ -654,7 +729,7 @@ export class BatchProcessor {
 				finalContent: content, // Placeholder
 				diff: "", // Placeholder
 				resolvedEdits,
-				failedEdits,
+				failedEdits: remainingFailedEdits,
 				appliedEdits: [], // Placeholder
 				lines,
 				lineHashes,
@@ -665,6 +740,95 @@ export class BatchProcessor {
 			const errorMessage = error instanceof Error ? error.message : String(error)
 			return { error: formatResponse.toolError(`Error preparing edits: ${errorMessage}`) }
 		}
+	}
+
+	/**
+	 * Fuzzy fallback approval loop.
+	 *
+	 * For each FailedEdit carrying a high-confidence Levenshtein candidate
+	 * (`fuzzyCandidates` populated by EditExecutor), prompt the user once per
+	 * candidate. On approval, re-resolve the edit with the candidate's
+	 * actualLineIdx pinned and add to `promotedEdits`. On refusal, leave the
+	 * edit in `remainingFailedEdits` with its original diagnostic.
+	 *
+	 * Granularity is per-anchor: refusing a fuzzy match only skips that one
+	 * edit, never affects sibling edits in the same batch.
+	 */
+	private async requestFuzzyApprovals(
+		config: TaskConfig,
+		displayPath: string,
+		failedEdits: FailedEdit[],
+		normalizedLineHashes: string[],
+		lines: string[],
+	): Promise<{ promotedEdits: ResolvedEdit[]; remainingFailedEdits: FailedEdit[] }> {
+		const promotedEdits: ResolvedEdit[] = []
+		const remainingFailedEdits: FailedEdit[] = []
+
+		for (const failed of failedEdits) {
+			const candidates = failed.fuzzyCandidates
+			if (!candidates || candidates.length === 0) {
+				remainingFailedEdits.push(failed)
+				continue
+			}
+
+			// Ask once per fuzzy side. If any side is refused, the whole edit
+			// stays failed (we can't apply with a half-approved range).
+			const approvedCandidates = new Map<"anchor" | "end_anchor", FuzzyCandidate>()
+			let anyRefused = false
+			for (const candidate of candidates) {
+				const approved = await this.askFuzzyApproval(config, displayPath, candidate)
+				if (approved) {
+					approvedCandidates.set(candidate.type, candidate)
+				} else {
+					anyRefused = true
+					break
+				}
+			}
+
+			if (anyRefused) {
+				remainingFailedEdits.push(failed)
+				continue
+			}
+
+			const promoted = this.executor.resolveFuzzyEdit(failed, approvedCandidates, normalizedLineHashes, lines)
+			if (promoted) {
+				promotedEdits.push(promoted)
+			} else {
+				// Fuzzy approval succeeded but the edit still has unrelated
+				// diagnostics (range error, etc.) — keep the original failure.
+				remainingFailedEdits.push(failed)
+			}
+		}
+
+		return { promotedEdits, remainingFailedEdits }
+	}
+
+	/**
+	 * Issue a single per-anchor fuzzy-match approval prompt. Returns true iff
+	 * the user clicked the equivalent of "yes". Auto-approved when the
+	 * workspace already auto-approves edits for this path (no double prompt).
+	 */
+	private async askFuzzyApproval(config: TaskConfig, displayPath: string, candidate: FuzzyCandidate): Promise<boolean> {
+		// Subagent / fully auto-approved workspace: skip the prompt.
+		if (config.isSubagentExecution) return true
+		const autoApproved = await config.callbacks.shouldAutoApproveToolWithPath(DiracDefaultTool.EDIT_FILE, displayPath)
+		if (autoApproved) return true
+
+		const message = {
+			tool: "editFile",
+			path: displayPath,
+			fuzzyMatch: {
+				anchor: candidate.anchorName,
+				anchorType: candidate.type,
+				provided: candidate.provided,
+				actualLine: candidate.actualLineIdx + 1,
+				actualContent: candidate.actualContent,
+				similarity: Number(candidate.similarity.toFixed(2)),
+			},
+			hint: `Anchor "${candidate.anchorName}" did not match exactly. Apply on the similar line?`,
+		}
+		const { response } = await config.callbacks.ask("tool", JSON.stringify(message), false)
+		return response === "yesButtonClicked"
 	}
 
 	async saveAndTrackChanges(

@@ -3,7 +3,15 @@ import { after, describe, it } from "mocha"
 import * as os from "os"
 import * as path from "path"
 import "should"
-import { createDirectoriesForFile, fileExistsAtPath, isDirectory, readDirectory } from "./fs"
+import {
+	atomicWriteFile,
+	createDirectoriesForFile,
+	ensureParentDirectory,
+	fileExistsAtPath,
+	isDirectory,
+	MKDIR_MAX_DEPTH,
+	readDirectory,
+} from "./fs"
 
 describe("Filesystem Utilities", () => {
 	const tmpDir = path.join(os.tmpdir(), "dirac-test-" + Math.random().toString(36).slice(2))
@@ -312,5 +320,102 @@ describe("Filesystem Utilities", () => {
 		const rootOnlyFiles = [path.resolve(diracrulesDirPath, "config.json"), path.resolve(diracrulesDirPath, "settings.js")]
 
 		multiExcludeFiles.sort().should.deepEqual(rootOnlyFiles.sort())
+	})
+
+	describe("atomicWriteFile", () => {
+		it("should write content to a new file", async () => {
+			await fs.mkdir(tmpDir, { recursive: true })
+			const target = path.join(tmpDir, "atomic-new.txt")
+			await atomicWriteFile(target, "hello atomic")
+
+			const written = await fs.readFile(target, "utf8")
+			written.should.equal("hello atomic")
+		})
+
+		it("should overwrite an existing file", async () => {
+			await fs.mkdir(tmpDir, { recursive: true })
+			const target = path.join(tmpDir, "atomic-overwrite.txt")
+			await fs.writeFile(target, "old content")
+
+			await atomicWriteFile(target, "new content")
+
+			const written = await fs.readFile(target, "utf8")
+			written.should.equal("new content")
+		})
+
+		it("should support Uint8Array content", async () => {
+			await fs.mkdir(tmpDir, { recursive: true })
+			const target = path.join(tmpDir, "atomic-bytes.bin")
+			await atomicWriteFile(target, new Uint8Array([1, 2, 3, 4]))
+
+			const written = await fs.readFile(target)
+			Array.from(written).should.deepEqual([1, 2, 3, 4])
+		})
+
+		it("should not leave a temp file behind on success", async () => {
+			await fs.mkdir(tmpDir, { recursive: true })
+			const target = path.join(tmpDir, "atomic-clean.txt")
+			await atomicWriteFile(target, "clean")
+
+			const entries = await fs.readdir(tmpDir)
+			entries.some((e) => e.startsWith("atomic-clean.txt.tmp.")).should.be.false()
+		})
+
+		it("should clean up the temp file and throw when the rename target is invalid", async () => {
+			await fs.mkdir(tmpDir, { recursive: true })
+			// A path whose parent does not exist makes the final rename fail.
+			const target = path.join(tmpDir, "missing-dir", "atomic-fail.txt")
+
+			let threw = false
+			try {
+				await atomicWriteFile(target, "should fail")
+			} catch {
+				threw = true
+			}
+			threw.should.be.true()
+
+			// The temp file is created next to the (missing) target, so its
+			// directory also does not exist — no orphan temp file leaks.
+			const exists = await fileExistsAtPath(target)
+			exists.should.be.false()
+		})
+	})
+
+	describe("ensureParentDirectory", () => {
+		it("should create a missing parent directory", async () => {
+			await fs.mkdir(tmpDir, { recursive: true })
+			const target = path.join(tmpDir, "ensure-parent", "file.txt")
+
+			await ensureParentDirectory(target)
+
+			const parentExists = await isDirectory(path.dirname(target))
+			parentExists.should.be.true()
+		})
+
+		it("should be a no-op when the parent already exists", async () => {
+			await fs.mkdir(tmpDir, { recursive: true })
+			const target = path.join(tmpDir, "already-here.txt")
+
+			// Should not throw and should leave the existing directory intact.
+			await ensureParentDirectory(target)
+
+			const parentExists = await isDirectory(tmpDir)
+			parentExists.should.be.true()
+		})
+
+		it("should reject when the missing depth exceeds MKDIR_MAX_DEPTH", async () => {
+			await fs.mkdir(tmpDir, { recursive: true })
+			const segments = Array.from({ length: MKDIR_MAX_DEPTH + 2 }, (_, i) => `d${i}`)
+			const target = path.join(tmpDir, ...segments, "file.txt")
+
+			let threw = false
+			try {
+				await ensureParentDirectory(target)
+			} catch (error) {
+				threw = true
+				;(error as Error).message.should.match(/nested directories/)
+			}
+			threw.should.be.true()
+		})
 	})
 })
