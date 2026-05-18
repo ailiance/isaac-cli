@@ -222,6 +222,67 @@ export async function findMemories(query: string): Promise<Memory[]> {
 	)
 }
 
+// Minimal bilingual (EN + FR) stop-word list for memory relevance scoring.
+// Kept short on purpose: aggressive stop-word filtering throws away signal
+// on a small corpus. Tokens shorter than 3 chars are also dropped by the
+// tokenizer, so most function words ("a", "an", "le", "la", "de") never
+// reach the filter — this list catches the longer ones.
+const MEMORY_STOPWORDS = new Set<string>([
+	// English
+	"the", "and", "for", "with", "from", "this", "that", "these", "those",
+	"are", "was", "were", "have", "has", "had", "but", "not", "you", "your",
+	"yours", "they", "them", "their", "what", "when", "where", "which",
+	"who", "whom", "how", "why", "into", "over", "under", "than", "then",
+	"there", "here", "about", "would", "could", "should", "will", "shall",
+	// French
+	"les", "des", "une", "aux", "que", "qui", "quoi", "dont", "pour", "par",
+	"mais", "donc", "car", "avec", "sans", "sous", "sur", "vers", "chez",
+	"être", "etre", "avoir", "fait", "faire", "cette", "cela", "ceux",
+	"leur", "leurs", "nous", "vous", "ils", "elles", "elle",
+])
+
+/**
+ * Tokenize a string for memory relevance scoring: lowercase, split on
+ * non-alphanumeric (Unicode letters + digits), drop tokens shorter than
+ * 3 chars and stop-words. Pure / no side effects.
+ */
+export function tokenizeForRelevance(text: string): string[] {
+	if (!text) return []
+	const lowered = text.toLowerCase()
+	// \p{L}+ catches accented French letters; \d+ catches digits.
+	const raw = lowered.split(/[^\p{L}\d]+/u).filter(Boolean)
+	const out: string[] = []
+	for (const tok of raw) {
+		if (tok.length < 3) continue
+		if (MEMORY_STOPWORDS.has(tok)) continue
+		out.push(tok)
+	}
+	return out
+}
+
+/**
+ * Score a memory against a tokenized user prompt. Returns a value in
+ * [0, 1]: the number of distinct prompt tokens that appear in the
+ * memory's (description + body), normalized by the prompt token count.
+ * Returns 0 when the prompt is empty (caller should fall back to date
+ * sort in that case).
+ */
+export function scoreMemoryRelevance(memory: Memory, promptTokens: string[]): number {
+	if (promptTokens.length === 0) return 0
+	const memTokens = new Set(tokenizeForRelevance(memory.description + " " + memory.body))
+	if (memTokens.size === 0) return 0
+	let hits = 0
+	const seen = new Set<string>()
+	for (const tok of promptTokens) {
+		if (seen.has(tok)) continue
+		seen.add(tok)
+		if (memTokens.has(tok)) hits += 1
+	}
+	// Normalize by distinct prompt tokens; gives a clean [0, 1] score
+	// that's comparable across memories of different sizes.
+	return hits / seen.size
+}
+
 /**
  * Rebuild the human-readable MEMORY.md index. One line per memory:
  * `- [name](relative-path) — description (type, scope)`.
@@ -285,7 +346,10 @@ const MEMORY_BUDGET_CHARS = 8_000 // ~2000 tokens at ~4 chars/token average
  * placeholder mechanism in PromptBuilder leaves the section empty so
  * the system prompt does not show a stale "USER MEMORIES" header.
  */
-export async function loadRelevantMemories(cwd?: string): Promise<{
+export async function loadRelevantMemories(
+	cwd?: string,
+	userPrompt?: string,
+): Promise<{
 	memories: Memory[]
 	totalChars: number
 	truncated: boolean
@@ -295,8 +359,33 @@ export async function loadRelevantMemories(cwd?: string): Promise<{
 	const projectList = projectScope ? await listMemories({ scope: projectScope }) : []
 	// Project memories rank higher than global; both sub-lists are
 	// already newest-first from listMemories().
-	const combined = [...projectList, ...globalList]
+	let combined = [...projectList, ...globalList]
 	if (combined.length === 0) return null
+	// When a user prompt is provided, re-rank by token-overlap relevance.
+	// Project-vs-global bucket bias is preserved by adding a small bonus
+	// to project-scoped memories so a barely-matching global doesn't jump
+	// ahead of an equally-matching project memory. When no memory matches
+	// at all (max score == 0), we fall back gracefully to the original
+	// project-first / newest-first order.
+	const promptTokens = userPrompt ? tokenizeForRelevance(userPrompt) : []
+	if (promptTokens.length > 0) {
+		const scored = combined.map((m, idx) => {
+			const base = scoreMemoryRelevance(m, promptTokens)
+			const projectBonus = m.scope !== "global" ? 0.05 : 0
+			return { m, score: base + projectBonus, base, idx }
+		})
+		const anyHit = scored.some((s) => s.base > 0)
+		if (anyHit) {
+			scored.sort((a, b) => {
+				if (b.score !== a.score) return b.score - a.score
+				// Tie-break: keep the original combined-list order, which is
+				// project-first then newest-first within each bucket.
+				return a.idx - b.idx
+			})
+			combined = scored.map((s) => s.m)
+		}
+		// else: leave combined as-is (project-first, newest-first)
+	}
 	const included: Memory[] = []
 	let totalChars = 0
 	let truncated = false

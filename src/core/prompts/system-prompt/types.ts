@@ -51,6 +51,13 @@ export interface SystemPromptContext {
 	readonly activeShellIsPosix?: boolean
 	readonly availableCores?: number
 	readonly shouldCompact?: boolean
+	/**
+	 * The user's prompt text for the current turn, if available. Currently
+	 * consumed by the memory auto-injector (loadRelevantMemories) to rank
+	 * stored memories by relevance to what the user is asking. Optional —
+	 * when absent, memories fall back to date-sorted order.
+	 */
+	readonly userPromptText?: string
 }
 
 
