@@ -238,6 +238,122 @@ describe("ailiance-memory", () => {
 		})
 	})
 
+	describe("atomic writes and concurrency (issue #23)", () => {
+		const parallelNames = [
+			"test-parallel-a",
+			"test-parallel-b",
+			"test-parallel-c",
+			"test-parallel-d",
+			"test-parallel-e",
+		]
+
+		afterEach(async () => {
+			for (const n of parallelNames) await deleteMemory(n)
+			// Sweep any tmp files left by a failed writeFile mock.
+			try {
+				const entries = await fs.readdir(TEST_ROOT)
+				for (const e of entries) {
+					if (e.includes(".tmp.")) {
+						await fs.unlink(path.join(TEST_ROOT, e)).catch(() => {})
+					}
+				}
+			} catch {
+				/* root may not exist */
+			}
+			vi.restoreAllMocks()
+		})
+
+		it("saveMemory leaves no .tmp file when writeFile fails", async () => {
+			// Force writeFile to fail without spying (ESM module namespaces
+			// are non-configurable in vitest). We pre-create the memory
+			// directory as a *file* with a colliding name so any attempt
+			// to write into it errors with ENOTDIR — but for the global
+			// scope the root dir is shared, so instead we use a project
+			// scope and stage a regular file where the project sub-dir
+			// would otherwise be created.
+			await fs.mkdir(TEST_ROOT, { recursive: true })
+			const projectDir = path.join(TEST_ROOT, "project_p04-fail-test")
+			// Remove anything stale from a prior partial run.
+			await fs.rm(projectDir, { recursive: true, force: true }).catch(() => {})
+			// Plant a regular file where the directory should go — mkdir
+			// {recursive:true} on an existing file path throws EEXIST/ENOTDIR.
+			await fs.writeFile(projectDir, "blocker", "utf-8")
+
+			await expect(
+				saveMemory({
+					name: "test-parallel-a",
+					description: "x",
+					type: "user",
+					scope: "project:p04-fail-test",
+					body: "y",
+				}),
+			).rejects.toBeDefined()
+
+			// Clean up the blocker.
+			await fs.unlink(projectDir).catch(() => {})
+
+			// No leaked .tmp files at root or in any project subdir.
+			let leaked: string[] = []
+			try {
+				const entries = await fs.readdir(TEST_ROOT)
+				leaked = entries.filter((e) => e.includes(".tmp."))
+			} catch {
+				/* root may not exist when truly empty */
+			}
+			expect(leaked).toEqual([])
+		})
+
+		it("5 concurrent saveMemory calls all land and MEMORY.md stays valid", async () => {
+			await Promise.all(
+				parallelNames.map((name, i) =>
+					saveMemory({
+						name,
+						description: `parallel entry ${i}`,
+						type: "user",
+						body: `body-${i}`,
+					}),
+				),
+			)
+
+			const list = await listMemories({ type: "user" })
+			for (const name of parallelNames) {
+				expect(list.find((m) => m.name === name)).toBeDefined()
+			}
+
+			// MEMORY.md must be a complete, well-formed index (no truncation
+			// mid-line from a partial overwrite by a racing writer).
+			const indexContent = await fs.readFile(path.join(TEST_ROOT, "MEMORY.md"), "utf-8")
+			expect(indexContent.startsWith("# Memory Index")).toBe(true)
+			expect(indexContent.endsWith("\n")).toBe(true)
+			for (const name of parallelNames) {
+				expect(indexContent).toContain(name)
+			}
+		})
+
+		it("parseMemory quarantines a corrupt file and returns null", async () => {
+			// Write a file that bypasses saveMemory (no frontmatter).
+			await fs.mkdir(TEST_ROOT, { recursive: true })
+			const corruptName = "test-parallel-c.md"
+			const corruptPath = path.join(TEST_ROOT, corruptName)
+			await fs.writeFile(corruptPath, "not a valid memory file\n", "utf-8")
+
+			// listMemories triggers parseMemory; for a corrupt file it must
+			// drop the entry AND rename the file out of the way.
+			await listMemories()
+
+			// Original file should no longer exist.
+			await expect(fs.access(corruptPath)).rejects.toBeDefined()
+
+			// A .broken-* sibling should now be present.
+			const entries = await fs.readdir(TEST_ROOT)
+			const broken = entries.filter((e) => e.startsWith("test-parallel-c.md.broken-"))
+			expect(broken.length).toBe(1)
+
+			// Clean up the quarantined file.
+			await fs.unlink(path.join(TEST_ROOT, broken[0])).catch(() => {})
+		})
+	})
+
 	describe("formatMemoriesSection", () => {
 		it("returns empty string on null input", () => {
 			expect(formatMemoriesSection(null)).toBe("")

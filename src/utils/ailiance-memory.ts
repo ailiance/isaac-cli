@@ -32,6 +32,7 @@
 import * as fs from "fs/promises"
 import * as path from "path"
 import * as os from "os"
+import { Logger } from "@/shared/services/Logger"
 
 export type MemoryType = "user" | "feedback" | "project" | "reference"
 export type MemoryScope = "global" | `project:${string}`
@@ -77,10 +78,19 @@ function memoryFilePath(name: string, scope: MemoryScope): string {
  * Returns null when the file is missing, malformed, or missing required fields.
  */
 async function parseMemory(filePath: string): Promise<Memory | null> {
+	let raw: string
 	try {
-		const raw = await fs.readFile(filePath, "utf-8")
+		raw = await fs.readFile(filePath, "utf-8")
+	} catch {
+		// Missing / unreadable — silently skip; not a corruption signal.
+		return null
+	}
+	try {
 		const match = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/)
-		if (!match) return null
+		if (!match) {
+			await quarantineCorruptMemory(filePath, "frontmatter delimiters not found")
+			return null
+		}
 		const [, frontmatterRaw, body] = match
 		const fm: Partial<MemoryFrontmatter> = {}
 		for (const line of frontmatterRaw.split("\n")) {
@@ -96,6 +106,7 @@ async function parseMemory(filePath: string): Promise<Memory | null> {
 			else if (key === "created") fm.created = value
 		}
 		if (!fm.name || !fm.description || !fm.type || !fm.scope || !fm.created) {
+			await quarantineCorruptMemory(filePath, "missing required frontmatter fields")
 			return null
 		}
 		return {
@@ -107,8 +118,32 @@ async function parseMemory(filePath: string): Promise<Memory | null> {
 			body: body.trim(),
 			filePath,
 		}
-	} catch {
+	} catch (err) {
+		await quarantineCorruptMemory(filePath, `unexpected parse error: ${(err as Error).message}`)
 		return null
+	}
+}
+
+/**
+ * Quarantine a corrupt memory file by renaming it to `<name>.broken-<ts>`
+ * so subsequent reads no longer re-parse it in a loop. Logs a warning so
+ * the user has a chance to inspect / recover. Best-effort: failures here
+ * are swallowed (we'd rather degrade gracefully than mask the caller's
+ * original error). See issue #23.
+ */
+async function quarantineCorruptMemory(filePath: string, reason: string): Promise<void> {
+	const ts = Date.now()
+	const quarantinedPath = `${filePath}.broken-${ts}`
+	try {
+		await fs.rename(filePath, quarantinedPath)
+		const msg = `[ailiance-memory] corrupt memory file quarantined: ${filePath} → ${quarantinedPath} (${reason})`
+		try {
+			Logger.warn(msg)
+		} catch {
+			console.warn(msg)
+		}
+	} catch {
+		// Quarantine failed (file vanished, permissions, etc.) — silent.
 	}
 }
 
@@ -142,9 +177,91 @@ export async function saveMemory(input: {
 		input.body.trim(),
 		"",
 	].join("\n")
-	await fs.writeFile(filePath, frontmatter, "utf-8")
+	await atomicWriteFile(filePath, frontmatter)
 	await rebuildIndex()
 	return filePath
+}
+
+/**
+ * Write a file atomically by staging into `<path>.tmp.<pid>.<rand>` then
+ * renaming. POSIX `rename(2)` on the same filesystem is atomic, which
+ * guarantees readers see either the previous content or the new content,
+ * never a half-written file. Unique tmp suffix prevents collisions when
+ * two writers race on the same target. On failure, the tmp file is
+ * removed before the error propagates so we do not leak stale tmp files.
+ */
+async function atomicWriteFile(targetPath: string, data: string): Promise<void> {
+	const tmpPath = `${targetPath}.tmp.${process.pid}.${Math.random().toString(36).slice(2, 10)}`
+	try {
+		await fs.writeFile(tmpPath, data, "utf-8")
+		await fs.rename(tmpPath, targetPath)
+	} catch (err) {
+		// Best-effort cleanup; ignore if the tmp file is already gone.
+		try {
+			await fs.unlink(tmpPath)
+		} catch {
+			// nothing to clean up
+		}
+		throw err
+	}
+}
+
+/**
+ * Cross-process advisory lock for serializing `rebuildIndex` calls.
+ *
+ * Uses `fs.mkdir` with no `recursive` flag as the atomic "create or
+ * fail" primitive (POSIX `mkdir(2)` is atomic; the directory either
+ * exists or we created it). Stale locks (> LOCK_STALE_MS old) are
+ * forcibly removed so a crashed writer does not deadlock the store.
+ *
+ * Inside the same process we also hold a Promise chain so concurrent
+ * `await rebuildIndex()` calls serialize without any disk poll.
+ */
+const LOCK_DIR = path.join(MEMORY_ROOT, ".rebuild.lock")
+const LOCK_STALE_MS = 30_000
+const LOCK_RETRY_DELAY_MS = 100
+const LOCK_RETRY_MAX = 50 // ~5s total — keep above typical rebuild duration
+
+let inProcessLock: Promise<void> = Promise.resolve()
+
+async function acquireRebuildLock(): Promise<() => Promise<void>> {
+	for (let attempt = 0; attempt < LOCK_RETRY_MAX; attempt++) {
+		try {
+			await fs.mkdir(LOCK_DIR)
+			// Drop a PID file inside for diagnostics — best-effort.
+			try {
+				await fs.writeFile(
+					path.join(LOCK_DIR, "owner"),
+					JSON.stringify({ pid: process.pid, ts: Date.now() }),
+					"utf-8",
+				)
+			} catch {
+				// ignore
+			}
+			return async () => {
+				try {
+					await fs.rm(LOCK_DIR, { recursive: true, force: true })
+				} catch {
+					// ignore — best-effort release
+				}
+			}
+		} catch (err: any) {
+			if (err?.code !== "EEXIST") throw err
+			// Check staleness — clear and retry if the holder is long-dead.
+			try {
+				const stat = await fs.stat(LOCK_DIR)
+				if (Date.now() - stat.mtimeMs > LOCK_STALE_MS) {
+					await fs.rm(LOCK_DIR, { recursive: true, force: true })
+					continue
+				}
+			} catch {
+				// race: somebody removed it; retry immediately
+				continue
+			}
+			await new Promise((resolve) => setTimeout(resolve, LOCK_RETRY_DELAY_MS))
+		}
+	}
+	throw new Error(`ailiance-memory: could not acquire rebuild lock after ${LOCK_RETRY_MAX} attempts`)
 }
 
 /**
@@ -162,6 +279,7 @@ export async function listMemories(filter?: {
 		const entries = await fs.readdir(MEMORY_ROOT)
 		for (const entry of entries) {
 			if (!entry.endsWith(".md") || entry === "MEMORY.md") continue
+			if (entry.includes(".tmp.") || entry.includes(".broken-")) continue
 			const m = await parseMemory(path.join(MEMORY_ROOT, entry))
 			if (m) memories.push(m)
 		}
@@ -177,6 +295,7 @@ export async function listMemories(filter?: {
 			const subEntries = await fs.readdir(subdir)
 			for (const sub of subEntries) {
 				if (!sub.endsWith(".md")) continue
+				if (sub.includes(".tmp.") || sub.includes(".broken-")) continue
 				const m = await parseMemory(path.join(subdir, sub))
 				if (m) memories.push(m)
 			}
@@ -228,23 +347,38 @@ export async function findMemories(query: string): Promise<Memory[]> {
  * Called after every save/delete so the index never drifts.
  */
 async function rebuildIndex(): Promise<void> {
-	const memories = await listMemories()
-	const lines: string[] = [
-		"# Memory Index",
-		"",
-		`_Generated ${new Date().toISOString()} — do not edit by hand._`,
-		"",
-	]
-	if (memories.length === 0) {
-		lines.push("_No memories yet. Use `/remember <topic>` to add one._")
-	} else {
-		for (const m of memories) {
-			const rel = path.relative(MEMORY_ROOT, m.filePath)
-			lines.push(`- [${m.name}](${rel}) — ${m.description} (${m.type}, ${m.scope})`)
+	// Serialize in-process callers via a Promise chain so concurrent
+	// saveMemory() calls do not race on the lock + filesystem.
+	const run = async () => {
+		await ensureMemoryRoot()
+		const release = await acquireRebuildLock()
+		try {
+			const memories = await listMemories()
+			const lines: string[] = [
+				"# Memory Index",
+				"",
+				`_Generated ${new Date().toISOString()} — do not edit by hand._`,
+				"",
+			]
+			if (memories.length === 0) {
+				lines.push("_No memories yet. Use `/remember <topic>` to add one._")
+			} else {
+				for (const m of memories) {
+					const rel = path.relative(MEMORY_ROOT, m.filePath)
+					lines.push(`- [${m.name}](${rel}) — ${m.description} (${m.type}, ${m.scope})`)
+				}
+			}
+			lines.push("")
+			await atomicWriteFile(INDEX_FILE, lines.join("\n"))
+		} finally {
+			await release()
 		}
 	}
-	lines.push("")
-	await fs.writeFile(INDEX_FILE, lines.join("\n"), "utf-8")
+	const next = inProcessLock.then(run, run)
+	// Keep the chain alive but swallow rejection so one failure does not
+	// poison subsequent callers.
+	inProcessLock = next.catch(() => {})
+	await next
 }
 
 /**
