@@ -30,20 +30,41 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      # --ignore-scripts: the `cli` workspace has a `prepare` script that
-      # builds (and typechecks) on install, which fails before protos are
-      # generated. Install deps only, then generate protos, then build.
-      - name: Install dependencies
-        run: npm install --ignore-scripts
+      # Phase 1: install root deps only, skipping workspace packages entirely.
+      # npm --ignore-scripts does NOT suppress `prepare` for local workspace
+      # packages (known npm v7+ behaviour). --workspaces=false avoids linking
+      # the `cli` workspace so its prepare script never runs here.
+      - name: Install root dependencies
+        run: npm install --workspaces=false --ignore-scripts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # grpc-tools postinstall is skipped above; provide a system protoc
-      # for build-proto.mjs to fall back to.
+      # as the fallback in build-proto.mjs.
       - name: Install protoc
         run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
 
-      # `check-types` runs `npm run protos` itself before the tsc passes.
+      # Phase 2: generate protos before the cli workspace is installed so
+      # that cli's prepare (tsc) can resolve the generated types.
+      - name: Generate Protocol Buffers
+        run: npm run protos
+
+      # Phase 3: install the cli workspace. Its prepare script now runs
+      # successfully because the generated proto files already exist.
+      - name: Install cli workspace
+        run: npm install --workspace=cli
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Phase 4: webview-ui is not a declared workspace; install its deps
+      # so that `check-types` can run `tsc --noEmit` inside it.
+      - name: Install webview-ui dependencies
+        run: cd webview-ui && npm install
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # check-types re-runs protos (idempotent) then runs tsc for root,
+      # webview-ui, and cli.
       - name: Check types
         run: npm run check-types
 
@@ -64,8 +85,8 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm install --ignore-scripts
+      - name: Install root dependencies
+        run: npm install --workspaces=false --ignore-scripts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -74,6 +95,11 @@ jobs:
 
       - name: Generate Protocol Buffers
         run: npm run protos
+
+      - name: Install cli workspace
+        run: npm install --workspace=cli
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # The mocha unit suite is currently fragile in CI (ts-node ESM +
       # VS Code shims). It runs non-blocking so it surfaces failures as a
