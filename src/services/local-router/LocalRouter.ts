@@ -1,6 +1,8 @@
 import { Logger } from "@shared/services/Logger"
+import { renderEmulationPrompt } from "./EmulationPrompts"
 import { estimateTokens } from "./estimateTokens"
 import { HealthMonitor } from "./HealthMonitor"
+import { getToolProfile, type ToolCallFormat } from "./ModelRegistry"
 import { PromptClassifier } from "./PromptClassifier"
 import { ResponseCache } from "./ResponseCache"
 import { routingObserver } from "./RoutingObserver"
@@ -9,6 +11,67 @@ import type { ChatRequest, ChatResponse, ChatTool, WorkerEndpoint } from "./type
 export type ChatStreamChunk =
 	| { type: "text"; text: string }
 	| { type: "tool_call"; id: string; name: string; argumentsRaw: string }
+
+/**
+ * Thrown when the SSE stream from a local worker exceeds the configured
+ * timeout. Distinguishes between total wall-clock ("total") and heartbeat
+ * silence ("idle") so callers can pick a sensible fallback strategy.
+ */
+export class LocalRouterTimeoutError extends Error {
+	readonly kind: "total" | "idle"
+	readonly workerId: string
+	readonly timeoutMs: number
+	constructor(kind: "total" | "idle", workerId: string, timeoutMs: number) {
+		const what = kind === "total" ? "did not finish streaming" : "produced no chunk"
+		super(`LocalRouter timeout: worker ${workerId} ${what} within ${timeoutMs}ms (${kind}).`)
+		this.name = "LocalRouterTimeoutError"
+		this.kind = kind
+		this.workerId = workerId
+		this.timeoutMs = timeoutMs
+	}
+}
+
+/**
+ * Build an internal AbortController whose abort() also fires when any of the
+ * provided external signals abort. Caller is responsible for invoking the
+ * returned `dispose()` to detach listeners (preventing leaks when the same
+ * external signal is shared across many requests).
+ */
+function combineAbortSignals(signals: (AbortSignal | undefined)[]): {
+	controller: AbortController
+	dispose: () => void
+} {
+	const controller = new AbortController()
+	const detachers: Array<() => void> = []
+	for (const s of signals) {
+		if (!s) continue
+		if (s.aborted) {
+			controller.abort(s.reason)
+			break
+		}
+		const onAbort = () => controller.abort(s.reason)
+		s.addEventListener("abort", onAbort, { once: true })
+		detachers.push(() => s.removeEventListener("abort", onAbort))
+	}
+	return {
+		controller,
+		dispose: () => {
+			for (const d of detachers) d()
+		},
+	}
+}
+
+/**
+ * Default SSE timeouts (mirrors localRouterTimeoutMs / localRouterIdleTimeoutMs
+ * in state-keys.ts). Kept local so this module stays buildable from contexts
+ * where StateManager isn't initialized (unit tests, CLI bootstrap).
+ */
+const DEFAULT_LOCAL_ROUTER_TOTAL_TIMEOUT_MS = 60_000
+const DEFAULT_LOCAL_ROUTER_IDLE_TIMEOUT_MS = 20_000
+
+function sanitizeTimeout(v: number | undefined, fallback: number): number {
+	return typeof v === "number" && Number.isFinite(v) && v > 0 ? v : fallback
+}
 
 function formatToolsAsPromptText(tools: ChatTool[]): string {
 	let out = "## Available tools\n\n"
@@ -289,58 +352,31 @@ export class LocalRouter {
 		const body: any = { ...req, model: worker.modelId, stream: true }
 		let needsEmulation = false
 
+		// Registry-driven format selection. Backward-compat: a worker advertising
+		// supportsTools:true keeps the native path as long as the profile allows
+		// it (isNative); a worker with supportsTools:false always emulates.
+		const profile = getToolProfile(worker.modelId)
+		const useNative = profile.isNative && worker.supportsTools
+		// Format used for emulation prompt rendering. When the worker is
+		// non-native but the profile is native (registry thinks "deepseek" is
+		// OpenAI native but a local worker doesn't expose it), fall back to
+		// markdown_fence which is the safest emulated format.
+		const emulationFormat: ToolCallFormat = profile.isNative ? "markdown_fence" : profile.format
+
+		// Strip transport-only fields that should never hit the wire.
+		delete body.signal
+		delete body.timeoutMs
+		delete body.idleTimeoutMs
+
 		if (req.tools && req.tools.length > 0) {
-			if (worker.supportsTools) {
+			if (useNative) {
 				// Pass tools natively to the worker
 				body.tools = req.tools
 				body.tool_choice = "auto"
 			} else {
-				// Emulate via system prompt injection
+				// Emulate via system prompt injection — template chosen by format.
 				needsEmulation = true
-				const toolDescriptions = formatToolsAsPromptText(req.tools)
-				const emulationPreamble = `
-
-${toolDescriptions}
-
-You have access to the following tools to interact with files and execute commands. To call a tool, respond with EXACTLY this format (a single fenced JSON block):
-
-\`\`\`tool
-{"name": "tool_name", "arguments": {"key": "value"}}
-\`\`\`
-
-EXAMPLES:
-
-User: read the file foo.txt
-Assistant:
-\`\`\`tool
-{"name": "read_file", "arguments": {"path": "foo.txt"}}
-\`\`\`
-
-User: list files in src/
-Assistant:
-\`\`\`tool
-{"name": "list_files", "arguments": {"path": "src/", "recursive": false}}
-\`\`\`
-
-User: write "hello world" to greeting.txt
-Assistant:
-\`\`\`tool
-{"name": "write_to_file", "arguments": {"path": "greeting.txt", "content": "hello world"}}
-\`\`\`
-
-User: run "ls -la"
-Assistant:
-\`\`\`tool
-{"name": "execute_command", "arguments": {"command": "ls -la", "requires_approval": false}}
-\`\`\`
-
-RULES:
-- One tool call per response. Wait for the result.
-- Use the exact tool name (no variations like "readFile" or "fs.read").
-- Always use the \`\`\`tool fence (not bash, json, python, or other).
-- Do NOT explain what you will do BEFORE calling. Just call the tool.
-
-`
+				const emulationPreamble = renderEmulationPrompt(emulationFormat, req.tools)
 				const sysIdx = body.messages.findIndex((m: { role: string }) => m.role === "system")
 				if (sysIdx >= 0) {
 					body.messages[sysIdx] = {
@@ -355,19 +391,70 @@ RULES:
 		}
 
 		const url = worker.url.replace(/\/$/, "")
-		const res = await fetch(`${url}/chat/completions`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Accept: "text/event-stream",
-			},
-			body: JSON.stringify(body),
-		})
+
+		// Resolve timeouts: per-request override → built-in default.
+		// Callers (e.g. providers/litellm.ts) read user settings via StateManager
+		// and pass them through req.timeoutMs / req.idleTimeoutMs; LocalRouter
+		// stays free of any storage dependency so it can run in tests/CLI bootstrap.
+		const totalTimeoutMs = sanitizeTimeout(req.timeoutMs, DEFAULT_LOCAL_ROUTER_TOTAL_TIMEOUT_MS)
+		const idleTimeoutMs = sanitizeTimeout(req.idleTimeoutMs, DEFAULT_LOCAL_ROUTER_IDLE_TIMEOUT_MS)
+
+		// Compose internal abort controller with caller's signal (if any).
+		const { controller, dispose: detachSignals } = combineAbortSignals([req.signal])
+
+		// Track which side fired so we can wrap AbortError → LocalRouterTimeoutError.
+		let timeoutKind: "total" | "idle" | null = null
+		const totalTimer: ReturnType<typeof setTimeout> = setTimeout(() => {
+			timeoutKind = "total"
+			controller.abort(new LocalRouterTimeoutError("total", worker.id, totalTimeoutMs))
+		}, totalTimeoutMs)
+
+		let lastChunkAt = Date.now()
+		// Idle check fires at most ~4×/s, never more often than once per second.
+		const idleInterval = Math.max(1000, Math.floor(idleTimeoutMs / 4))
+		const idleTimer: ReturnType<typeof setInterval> = setInterval(() => {
+			if (Date.now() - lastChunkAt > idleTimeoutMs) {
+				timeoutKind = "idle"
+				controller.abort(new LocalRouterTimeoutError("idle", worker.id, idleTimeoutMs))
+			}
+		}, idleInterval)
+
+		const cleanup = () => {
+			clearTimeout(totalTimer)
+			clearInterval(idleTimer)
+			detachSignals()
+			if (!controller.signal.aborted) controller.abort()
+		}
+
+		let res: Response
+		try {
+			res = await fetch(`${url}/chat/completions`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Accept: "text/event-stream",
+				},
+				body: JSON.stringify(body),
+				signal: controller.signal,
+			})
+		} catch (err) {
+			cleanup()
+			if (timeoutKind) {
+				throw new LocalRouterTimeoutError(
+					timeoutKind,
+					worker.id,
+					timeoutKind === "total" ? totalTimeoutMs : idleTimeoutMs,
+				)
+			}
+			throw err
+		}
 		if (!res.ok) {
+			cleanup()
 			const errText = await res.text().catch(() => "")
 			throw new Error(`[LocalRouter] worker ${worker.id} returned ${res.status}: ${errText.slice(0, 200)}`)
 		}
 		if (!res.body) {
+			cleanup()
 			throw new Error("[LocalRouter] worker did not return a body for streaming")
 		}
 
@@ -382,6 +469,7 @@ RULES:
 			while (true) {
 				const { value, done } = await reader.read()
 				if (done) break
+				lastChunkAt = Date.now()
 				lineBuffer += decoder.decode(value, { stream: true })
 				let nl: number
 				// biome-ignore lint/suspicious/noAssignInExpressions: SSE parser idiom
@@ -509,12 +597,26 @@ RULES:
 					yield { type: "text", text: textBuffer }
 				}
 			}
+		} catch (err) {
+			// If a timeout fired, the underlying reader.read() rejects with an
+			// AbortError. Translate that into the typed timeout error so callers
+			// can fallback. Otherwise, surface the original error untouched —
+			// caller-driven aborts (req.signal) keep their AbortError shape.
+			if (timeoutKind) {
+				throw new LocalRouterTimeoutError(
+					timeoutKind,
+					worker.id,
+					timeoutKind === "total" ? totalTimeoutMs : idleTimeoutMs,
+				)
+			}
+			throw err
 		} finally {
 			try {
 				reader.releaseLock()
 			} catch {
 				// ignore
 			}
+			cleanup()
 		}
 	}
 }
