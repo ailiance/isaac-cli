@@ -4,7 +4,6 @@ import { WorkspaceRoot } from "@shared/multi-root/types"
 import type { Environment } from "../config"
 import { AutoApprovalSettings } from "./AutoApprovalSettings"
 import { ApiConfiguration } from "./api"
-import { SkillMetadata } from "./skills"
 import { BrowserSettings } from "./BrowserSettings"
 import { DiracFeatureSetting } from "./DiracFeatureSetting"
 import { BannerCardData } from "./dirac/banner"
@@ -12,6 +11,7 @@ import { DiracRulesToggles } from "./dirac-rules"
 import { HistoryItem } from "./HistoryItem"
 import { DiracMessageModelInfo } from "./messages"
 import { OnboardingModelGroup } from "./proto/dirac/state"
+import { SkillMetadata } from "./skills"
 import { isOpenaiReasoningEffort, Mode, OPENAI_REASONING_EFFORT_OPTIONS, OpenaiReasoningEffort } from "./storage/types"
 export type { Mode, OpenaiReasoningEffort }
 export { OPENAI_REASONING_EFFORT_OPTIONS, isOpenaiReasoningEffort }
@@ -113,14 +113,13 @@ export interface ExtensionState {
 	githubCopilotIsAuthenticated?: boolean
 	githubCopilotEmail?: string
 	githubCopilotModels?: Record<string, any>
-
 }
 
 export interface DiracMessage {
 	ts: number
 	type: "ask" | "say"
 	ask?: DiracAsk
-	reasoningTokens?: number,
+	reasoningTokens?: number
 	say?: DiracSay
 	text?: string
 	reasoning?: string
@@ -135,7 +134,6 @@ export interface DiracMessage {
 	conversationHistoryDeletedRange?: [number, number] // for when conversation history is truncated for API requests
 	modelInfo?: DiracMessageModelInfo
 	multiCommandState?: MultiCommandState
-
 }
 
 export type DiracAsk =
@@ -198,48 +196,47 @@ export interface ReadFileResult {
 	label: string
 }
 
-
 export interface DiracSayTool {
 	tool:
-	| "editedExistingFile"
-	| "newFileCreated"
-	| "fileDeleted"
-	| "readFile"
-	| "read_file"
-	| "readLineRange"
-	| "read_line_range"
-	| "listFilesTopLevel"
-	| "list_files_top_level"
-	| "listFilesRecursive"
-	| "list_files_recursive"
-	| "listCodeDefinitionNames"
-	| "searchFiles"
-	| "search_files"
-	| "summarizeTask"
-	| "useSkill"
-	| "listSkills"
-	| "editFile"
-	| "edit_file"
-	| "getFunction"
-	| "get_function"
-	| "getFileSkeleton"
-	| "get_file_skeleton"
-	| "findSymbolReferences"
-	| "find_symbol_references"
-	| "renameSymbol"
-	| "rename_symbol"
-	| "replaceSymbol"
-	| "replace_symbol"
-	| "subagent"
-	| "browser_action"
-	| "browser_action_result"
-	| "diagnosticsScan"
-	| "diagnostics_scan"
-	| "executeCommand"
-	| "execute_command"
+		| "editedExistingFile"
+		| "newFileCreated"
+		| "fileDeleted"
+		| "readFile"
+		| "read_file"
+		| "readLineRange"
+		| "read_line_range"
+		| "listFilesTopLevel"
+		| "list_files_top_level"
+		| "listFilesRecursive"
+		| "list_files_recursive"
+		| "listCodeDefinitionNames"
+		| "searchFiles"
+		| "search_files"
+		| "summarizeTask"
+		| "useSkill"
+		| "listSkills"
+		| "editFile"
+		| "edit_file"
+		| "getFunction"
+		| "get_function"
+		| "getFileSkeleton"
+		| "get_file_skeleton"
+		| "findSymbolReferences"
+		| "find_symbol_references"
+		| "renameSymbol"
+		| "rename_symbol"
+		| "replaceSymbol"
+		| "replace_symbol"
+		| "subagent"
+		| "browser_action"
+		| "browser_action_result"
+		| "diagnosticsScan"
+		| "diagnostics_scan"
+		| "executeCommand"
+		| "execute_command"
 
-	script?: string;
-	language?: string;
+	script?: string
+	language?: string
 
 	path?: string
 	paths?: string[]
@@ -282,6 +279,9 @@ export interface DiracSayTool {
 		diff?: string
 		edits: Array<{ additions: number; deletions: number }>
 		diagnostics?: { fixedCount: number; newProblemsMessage?: string }
+		// v0.6 Sprint 1-C: structured diff (hunks + counts) computed host-side
+		// so CLI and webview render unified +/- views from a single source.
+		hunks?: import("./utils/diff/DiffStructure").DiffStructure
 	}>
 	command?: string
 	action?: BrowserAction
@@ -412,7 +412,7 @@ export interface DiracApiReqInfo {
 	tokensIn?: number
 	tokensOut?: number
 	cacheWrites?: number
-	reasoningTokens?: number,
+	reasoningTokens?: number
 	cacheReads?: number
 	cost?: number
 	contextWindow?: number
