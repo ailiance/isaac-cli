@@ -9,6 +9,7 @@ import { find_symbol_references } from "./find_symbol_references"
 
 import { get_file_skeleton } from "./get_file_skeleton"
 import { get_function } from "./get_function"
+import { get_tool_result } from "./get_tool_result"
 import { list_files } from "./list_files"
 import { new_task } from "./new_task"
 import { plan_mode_respond } from "./plan_mode_respond"
@@ -40,6 +41,7 @@ export function registerDiracToolSets(): void {
 		// generate_explanation,
 		get_function,
 		get_file_skeleton,
+		get_tool_result,
 		find_symbol_references,
 
 		list_files,

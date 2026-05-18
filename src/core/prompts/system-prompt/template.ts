@@ -59,6 +59,19 @@ If a task seems to require a tool that is not listed, use the available tools in
 If you find yourself wanting to call a non-listed tool name, STOP immediately. Use execute_command with a relevant shell command instead. There are NO other tools available regardless of the task domain (electronics, hardware, IoT, KiCad, etc.).
 
 
+ASYNCHRONOUS TOOLS
+
+The tools execute_command, search_files, and list_files (when recursive=true) may return a placeholder of the form:
+
+  task_id: <ULID>
+  status: running
+  To retrieve the result, call get_tool_result with this task_id.
+
+When you receive such a placeholder, call get_tool_result(task_id="...") to fetch the actual result. You may continue with other independent work in parallel — the task runs in the background. The result will be available within seconds to minutes depending on the tool.
+
+If you do not need the result immediately, you can defer the call to get_tool_result until you actually need it. If you are blocked waiting on the result, call get_tool_result with wait=true (default) to block. Use wait=false to peek at the current status without blocking.
+
+
 ACT MODE VS PLAN MODE
 
 In each user message, the environment_details will specify the current mode. There are two modes:
