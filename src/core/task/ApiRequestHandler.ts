@@ -144,6 +144,36 @@ export class ApiRequestHandler {
 
 		const shellInfo = detectBestShell()
 
+		// Extract the user's first prompt text for the current task so the
+		// memory auto-injector (loadRelevantMemories) can rank stored
+		// memories by relevance. Only meaningful at turn-1 (single user
+		// message in history); on subsequent turns the prompt is the same
+		// task intent so re-using the first message remains a reasonable
+		// proxy for relevance. Best-effort: failures fall back to undefined
+		// and memories sort by date.
+		let firstUserPromptText: string | undefined
+		try {
+			const history = this.ctx.messageStateHandler.getApiConversationHistory()
+			const firstUser = history.find((m) => m.role === "user")
+			if (firstUser) {
+				const c: any = firstUser.content
+				if (typeof c === "string") {
+					firstUserPromptText = c
+				} else if (Array.isArray(c)) {
+					const parts: string[] = []
+					for (const block of c) {
+						if (block && typeof block === "object" && (block as any).type === "text") {
+							const t = (block as any).text
+							if (typeof t === "string") parts.push(t)
+						}
+					}
+					if (parts.length > 0) firstUserPromptText = parts.join(" ")
+				}
+			}
+		} catch {
+			// best-effort; leave undefined
+		}
+
 		const promptContext: SystemPromptContext = {
 			cwd: this.ctx.cwd,
 			ide,
@@ -175,6 +205,7 @@ export class ApiRequestHandler {
 			activeShellIsPosix: shellInfo.isPosix,
 			availableCores: getAvailableCores(),
 			shouldCompact,
+			userPromptText: firstUserPromptText,
 		}
 
 		// Notify user if any conditional rules were applied for this request

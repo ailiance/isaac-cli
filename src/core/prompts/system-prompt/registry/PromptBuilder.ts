@@ -50,7 +50,7 @@ export class PromptBuilder {
 		placeholders["MEMORIES_SECTION"] = ""
 		if (!this.context.isTesting) {
 			try {
-				const loaded = await loadRelevantMemories(this.context.cwd)
+				const loaded = await loadRelevantMemories(this.context.cwd, this.context.userPromptText)
 				placeholders["MEMORIES_SECTION"] = formatMemoriesSection(loaded)
 			} catch {
 				// best-effort; never break system-prompt assembly

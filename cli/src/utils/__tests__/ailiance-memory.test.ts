@@ -400,4 +400,87 @@ describe("ailiance-memory", () => {
 			expect(out).toContain("(some memories truncated")
 		})
 	})
+
+	describe("loadRelevantMemories prompt-aware ranking", () => {
+		// Uses only the 4 shared names from the outer beforeEach/afterEach
+		// cleanup so tests stay hermetic.
+
+		it("ranks a matching memory ahead of a more recent non-matching one (case A)", async () => {
+			await saveMemory({
+				name: "another-memory",
+				description: "kubernetes deployment notes",
+				type: "reference",
+				body: "Use kubectl apply -f manifests/ then kubectl rollout status.",
+			})
+			await new Promise((resolve) => setTimeout(resolve, 10))
+			await saveMemory({
+				name: "test-user-pref",
+				description: "prefers French",
+				type: "user",
+				body: "Always reply in French.",
+			})
+			const loaded = await loadRelevantMemories(
+				"/tmp/test-relevance-A",
+				"How do I deploy a kubernetes service?",
+			)
+			expect(loaded).not.toBeNull()
+			const names = loaded!.memories.map((m) => m.name)
+			const matchIdx = names.indexOf("another-memory")
+			const recentIdx = names.indexOf("test-user-pref")
+			expect(matchIdx).toBeGreaterThanOrEqual(0)
+			expect(recentIdx).toBeGreaterThanOrEqual(0)
+			expect(matchIdx).toBeLessThan(recentIdx)
+		})
+
+		it("preserves date sort when no userPrompt is provided (case B, non-regression)", async () => {
+			await saveMemory({
+				name: "another-memory",
+				description: "older entry",
+				type: "user",
+				body: "kubernetes manifest tips",
+			})
+			await new Promise((resolve) => setTimeout(resolve, 10))
+			await saveMemory({
+				name: "test-user-pref",
+				description: "newer entry",
+				type: "user",
+				body: "totally unrelated content",
+			})
+			const loaded = await loadRelevantMemories("/tmp/test-relevance-B")
+			expect(loaded).not.toBeNull()
+			const names = loaded!.memories.map((m) => m.name)
+			const newerIdx = names.indexOf("test-user-pref")
+			const olderIdx = names.indexOf("another-memory")
+			expect(newerIdx).toBeGreaterThanOrEqual(0)
+			expect(olderIdx).toBeGreaterThanOrEqual(0)
+			expect(newerIdx).toBeLessThan(olderIdx)
+		})
+
+		it("falls back to date sort when no memory matches the prompt (case C)", async () => {
+			await saveMemory({
+				name: "another-memory",
+				description: "older unrelated entry",
+				type: "user",
+				body: "pumpkin recipe ingredients list",
+			})
+			await new Promise((resolve) => setTimeout(resolve, 10))
+			await saveMemory({
+				name: "test-user-pref",
+				description: "newer unrelated entry",
+				type: "user",
+				body: "knitting pattern notes",
+			})
+			const loaded = await loadRelevantMemories(
+				"/tmp/test-relevance-C",
+				"explain quantum entanglement to me",
+			)
+			expect(loaded).not.toBeNull()
+			const names = loaded!.memories.map((m) => m.name)
+			const newerIdx = names.indexOf("test-user-pref")
+			const olderIdx = names.indexOf("another-memory")
+			expect(newerIdx).toBeGreaterThanOrEqual(0)
+			expect(olderIdx).toBeGreaterThanOrEqual(0)
+			expect(newerIdx).toBeLessThan(olderIdx)
+		})
+	})
 })
