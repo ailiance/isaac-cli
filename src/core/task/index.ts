@@ -539,6 +539,14 @@ export class Task {
 		} catch (_err) {
 			// non-fatal — tracing must never break abort
 		}
+		// Sprint 2 (Lot C) — cancel any background async tools so they
+		// cannot outlive the task. AbortController.abort() is propagated
+		// to their underlying I/O via PendingToolEntry.abortController.
+		try {
+			this.taskState.pendingTools.cancelAll()
+		} catch (_err) {
+			// non-fatal — abort must never be blocked by registry teardown
+		}
 		// Disconnect MCP servers; no-op if none were connected.
 		mcpClientManager.disconnectAll().catch((_err) => {
 			// non-fatal — MCP cleanup must never block abort
