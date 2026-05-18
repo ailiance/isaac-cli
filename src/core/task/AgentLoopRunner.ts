@@ -597,8 +597,15 @@ export class AgentLoopRunner {
 			}
 
 			return didEndLoop
-		} catch (_error) {
-			return true
+		} catch (error) {
+			// ailiance-agent fork: do NOT swallow uncaught exceptions as
+			// "task finished successfully". Previously this catch returned
+			// true unconditionally, masking programming bugs, network
+			// panics, JSON parse errors and silently terminating tasks
+			// as if they had completed. Re-throw so initiateLoop and
+			// the controller can surface the failure.
+			Logger.error(`[Task ${this.ctx.taskId}] makeRequest aborted by unhandled error: ${error}`)
+			throw error
 		}
 	}
 
