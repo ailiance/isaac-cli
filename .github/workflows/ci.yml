@@ -30,13 +30,20 @@ jobs:
           node-version: 20
           cache: 'npm'
 
+      # --ignore-scripts: the `cli` workspace has a `prepare` script that
+      # builds (and typechecks) on install, which fails before protos are
+      # generated. Install deps only, then generate protos, then build.
       - name: Install dependencies
-        run: npm install
+        run: npm install --ignore-scripts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # `check-types` runs `npm run protos` itself, so protos is not a
-      # separate step here.
+      # grpc-tools postinstall is skipped above; provide a system protoc
+      # for build-proto.mjs to fall back to.
+      - name: Install protoc
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
+      # `check-types` runs `npm run protos` itself before the tsc passes.
       - name: Check types
         run: npm run check-types
 
@@ -58,9 +65,12 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --ignore-scripts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install protoc
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
 
       - name: Generate Protocol Buffers
         run: npm run protos
