@@ -113,7 +113,7 @@ export async function initializeCli(options: InitOptions): Promise<CliContext> {
 	const controller = webview.controller as any
 
 	await telemetryService.captureExtensionActivated()
-	await telemetryService.captureHostEvent("dirac_cli", "initialized")
+	await telemetryService.captureHostEvent("isaac_cli", "initialized")
 
 	// =============== Symbol Index Service ===============
 	// Initialize symbol index for the project in background

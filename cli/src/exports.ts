@@ -1,18 +1,18 @@
 /**
- * Dirac Library Exports
+ * ISAAC Library Exports
  *
- * This file exports the public API for programmatic use of Dirac.
- * Use these classes and types to embed Dirac into your applications.
+ * This file exports the public API for programmatic use of ISAAC.
+ * Use these classes and types to embed ISAAC into your applications.
  *
  * @example
  * ```typescript
- * import { DiracAgent } from "dirac"
+ * import { DiracAgent } from "isaac-cli"
  *
  * const agent = new DiracAgent()
  * await agent.initialize({ clientCapabilities: {} })
  * const session = await agent.newSession({ cwd: process.cwd() })
  * ```
- * @module dirac
+ * @module isaac-cli
  */
 
 export { DiracAgent } from "./agent/DiracAgent.js"

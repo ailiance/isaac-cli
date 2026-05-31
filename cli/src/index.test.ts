@@ -14,7 +14,7 @@ describe("CLI Commands", () => {
 	beforeEach(() => {
 		// Create a fresh program instance for each test
 		program = new Command()
-		program.name("dirac").description("Dirac CLI - AI coding assistant").version("0.0.0")
+		program.name("isaac").description("ISAAC — Intelligence Souveraine Ailiance Agent Codeur").version("0.0.0")
 		program.enablePositionalOptions()
 
 		// Define commands matching index.ts
@@ -67,11 +67,6 @@ describe("CLI Commands", () => {
 			.option("--config <path>", "Configuration directory")
 			.action(() => {})
 
-		program
-			.command("kanban")
-			.description("Run npx kanban --agent dirac")
-			.action(() => {})
-
 		// Default command for interactive mode
 		program
 			.argument("[prompt]", "Task prompt")
@@ -86,7 +81,6 @@ describe("CLI Commands", () => {
 			.option("--auto-condense", "Enable AI-powered context compaction instead of mechanical truncation")
 			.option("--hooks-dir <path>", "Additional hooks directory")
 			.option("--auto-approve-all", "Enable auto-approve all")
-			.option("--kanban", "Run npx kanban --agent dirac")
 			.action(() => {})
 	})
 
@@ -280,13 +274,6 @@ describe("CLI Commands", () => {
 		})
 	})
 
-	describe("kanban command", () => {
-		it("should parse kanban command", () => {
-			const args = ["node", "cli", "kanban"]
-			program.parse(args)
-		})
-	})
-
 	describe("auth command", () => {
 		it("should parse auth command", () => {
 			const args = ["node", "cli", "auth"]
@@ -382,10 +369,6 @@ describe("CLI Commands", () => {
 			expect(program.opts().autoApproveAll).toBe(true)
 		})
 
-		it("should parse --kanban flag", () => {
-			program.parse(["node", "cli", "--kanban"])
-			expect(program.opts().kanban).toBe(true)
-		})
 	})
 
 	describe("command structure", () => {
@@ -395,7 +378,6 @@ describe("CLI Commands", () => {
 			expect(commandNames).toContain("history")
 			expect(commandNames).toContain("config")
 			expect(commandNames).toContain("auth")
-			expect(commandNames).toContain("kanban")
 		})
 
 		it("should have correct aliases", () => {

@@ -1,7 +1,7 @@
 /**
  * Context for tracking stdin raw mode support
  * Used to conditionally disable input handling when stdin doesn't support raw mode
- * (e.g., when input is piped: echo "..." | diracdev)
+ * (e.g., when input is piped: echo "..." | isaac)
  */
 
 import { useStdin } from "ink"

@@ -4,9 +4,9 @@ import * as fs from "node:fs"
  * Read piped input from stdin (non-blocking)
  *
  * This function is designed to work with piped input, including chained commands:
- *   git diff | dirac 'explain' | dirac 'summarize'
+ *   git diff | isaac 'explain' | isaac 'summarize'
  *
- * The challenge is that when chaining dirac commands, the first command may take
+ * The challenge is that when chaining isaac commands, the first command may take
  * several seconds to complete, so we can't use a short timeout. Instead, we wait
  * for EOF which signals that the previous command has finished writing.
  */

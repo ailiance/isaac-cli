@@ -1,11 +1,11 @@
-# Dirac CLI
+# ISAAC CLI
 
-The official CLI for Dirac. Run Dirac tasks directly from the terminal with the same underlying functionality as the VS Code extension.
+The official CLI for ISAAC. Run ISAAC tasks directly from the terminal with the same underlying functionality as the VS Code extension.
 
 ## Features
 
 - **Reuses Core Codebase**: Shares the same Controller, Task, and API handling as the VS Code extension
-- **Terminal Output**: Displays Dirac messages directly in your terminal with colored output
+- **Terminal Output**: Displays ISAAC messages directly in your terminal with colored output
 - **Task History**: Access your task history from the command line
 - **Configurable**: Use custom configuration directories and working directories
 - **Image Support**: Attach images to your prompts using file paths or inline references
@@ -14,7 +14,7 @@ The official CLI for Dirac. Run Dirac tasks directly from the terminal with the 
 
 - Node.js 20.x or later
 - npm or yarn
-- The parent Dirac project dependencies installed
+- The parent ISAAC project dependencies installed
 
 ## Installation
 
@@ -43,17 +43,17 @@ npm run cli:link
 
 ### Interactive Mode (Default)
 
-When you run `dirac` without any command, it launches an interactive welcome prompt:
+When you run `isaac` without any command, it launches an interactive welcome prompt:
 
 ```bash
 # Launch interactive mode
-dirac
+isaac
 
 # Or run a task directly
-dirac "Create a hello world function in Python"
+isaac "Create a hello world function in Python"
 
 # With options
-dirac -v --thinking "Analyze this codebase"
+isaac -v --thinking "Analyze this codebase"
 ```
 
 ### Commands
@@ -63,8 +63,8 @@ dirac -v --thinking "Analyze this codebase"
 Run a new task with a prompt.
 
 ```bash
-dirac task "Create a hello world function in Python"
-dirac t "Create a hello world function"
+isaac task "Create a hello world function in Python"
+isaac t "Create a hello world function"
 ```
 
 **Options:**
@@ -78,29 +78,29 @@ dirac t "Create a hello world function"
 | `-i, --images <paths...>` | Image file paths to include with the task |
 | `-v, --verbose` | Show verbose output including reasoning |
 | `-c, --cwd <path>` | Working directory for the task |
-| `--config <path>` | Path to Dirac configuration directory |
+| `--config <path>` | Path to ISAAC configuration directory |
 | `-t, --thinking` | Enable extended thinking (1024 token budget) |
 
 **Examples:**
 
 ```bash
 # Run in plan mode with verbose output
-dirac task -p -v "Design a REST API"
+isaac task -p -v "Design a REST API"
 
 # Use a specific model with yolo mode
-dirac task -m claude-sonnet-4-5-20250929 -y "Refactor this function"
+isaac task -m claude-sonnet-4-5-20250929 -y "Refactor this function"
 
 # Include images with your prompt
-dirac task -i screenshot.png diagram.jpg "Fix the UI based on these images"
+isaac task -i screenshot.png diagram.jpg "Fix the UI based on these images"
 
 # Or use inline image references in the prompt
-dirac task "Fix the layout shown in @./screenshot.png"
+isaac task "Fix the layout shown in @./screenshot.png"
 
 # Enable extended thinking for complex tasks
-dirac task -t "Architect a microservices system"
+isaac task -t "Architect a microservices system"
 
 # Specify working directory
-dirac task -c /path/to/project "Add unit tests"
+isaac task -c /path/to/project "Add unit tests"
 ```
 
 #### `history` (alias: `h`)
@@ -108,8 +108,8 @@ dirac task -c /path/to/project "Add unit tests"
 List task history with pagination support.
 
 ```bash
-dirac history
-dirac h
+isaac history
+isaac h
 ```
 
 **Options:**
@@ -118,19 +118,19 @@ dirac h
 |--------|-------------|
 | `-n, --limit <number>` | Number of tasks to show (default: 10) |
 | `-p, --page <number>` | Page number, 1-based (default: 1) |
-| `--config <path>` | Path to Dirac configuration directory |
+| `--config <path>` | Path to ISAAC configuration directory |
 
 **Examples:**
 
 ```bash
 # Show last 10 tasks (default)
-dirac history
+isaac history
 
 # Show 20 tasks
-dirac history -n 20
+isaac history -n 20
 
 # Show page 2 with 5 tasks per page
-dirac history -n 5 -p 2
+isaac history -n 5 -p 2
 ```
 
 #### `config`
@@ -138,21 +138,21 @@ dirac history -n 5 -p 2
 Show current configuration including global and workspace state.
 
 ```bash
-dirac config
+isaac config
 ```
 
 **Options:**
 
 | Option | Description |
 |--------|-------------|
-| `--config <path>` | Path to Dirac configuration directory |
+| `--config <path>` | Path to ISAAC configuration directory |
 
 #### `auth`
 
 Authenticate a provider and configure what model is used.
 
 ```bash
-dirac auth
+isaac auth
 ```
 
 **Options:**
@@ -165,22 +165,22 @@ dirac auth
 | `-b, --baseurl <url>` | Base URL (optional, only for openai provider) |
 | `-v, --verbose` | Show verbose output |
 | `-c, --cwd <path>` | Working directory for the task |
-| `--config <path>` | Path to Dirac configuration directory |
+| `--config <path>` | Path to ISAAC configuration directory |
 
 **Examples:**
 
 ```bash
 # Interactive authentication
-dirac auth
+isaac auth
 
 # Quick setup with provider and API key
-dirac auth -p anthropic -k sk-ant-xxxxx
+isaac auth -p anthropic -k sk-ant-xxxxx
 
 # Full quick setup with model
-dirac auth -p openai-native -k sk-xxxxx -m gpt-4o
+isaac auth -p openai-native -k sk-xxxxx -m gpt-4o
 
 # OpenAI-compatible provider with custom base URL
-dirac auth -p openai -k your-api-key -b https://api.example.com/v1
+isaac auth -p openai -k your-api-key -b https://api.example.com/v1
 ```
 
 ### Global Options
@@ -191,7 +191,7 @@ These options are available for the default command (running a task directly):
 |--------|-------------|
 | `-v, --verbose` | Show verbose output |
 | `-c, --cwd <path>` | Working directory |
-| `--config <path>` | Configuration directory |
+| `--config <path>` | ISAAC configuration directory |
 | `--thinking` | Enable extended thinking (1024 token budget) |
 
 ## Development
@@ -202,11 +202,11 @@ These options are available for the default command (running a task directly):
 # 1. Install all dependencies (root, webview-ui, cli)
 npm run install:all
 
-# 2. Build and link globally so you can run `dirac` from anywhere
+# 2. Build and link globally so you can run `isaac` from anywhere
 npm run cli:link
 
 # 3. Test it
-dirac --help
+isaac --help
 ```
 
 ### Scripts
@@ -218,8 +218,8 @@ Run these from the repository root:
 | `npm run install:all` | Install deps for root, webview-ui, and cli |
 | `npm run cli:build` | Generate protos and build CLI |
 | `npm run cli:build:production` | Production build (minified) |
-| `npm run cli:link` | Build and `npm link` so you can run `dirac` from anywhere |
-| `npm run cli:unlink` | Remove the global `dirac` symlink |
+| `npm run cli:link` | Build and `npm link` so you can run `isaac` from anywhere |
+| `npm run cli:unlink` | Remove the global `isaac` symlink |
 | `npm run cli:dev` | Link + watch mode for development |
 | `npm run cli:watch` | Watch mode only (no initial build) |
 | `npm run cli:test` | Run CLI tests |
@@ -229,7 +229,7 @@ Run these from the repository root:
 1. Run `npm run cli:dev` - this links the CLI globally and starts watch mode
 2. Make changes to files in `cli/src/`
 3. The build automatically rebuilds on save
-4. Test your changes by running `dirac` in another terminal
+4. Test your changes by running `isaac` in another terminal
 5. When done, run `npm run cli:unlink` to clean up
 
 ### Proto Generation
@@ -352,7 +352,7 @@ npm run protos
 npm run cli:build
 ```
 
-### "command not found: dirac"
+### "command not found: isaac"
 
 The CLI isn't linked globally. Run:
 
