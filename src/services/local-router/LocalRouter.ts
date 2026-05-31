@@ -67,6 +67,12 @@ function combineAbortSignals(signals: (AbortSignal | undefined)[]): {
  * in state-keys.ts). Kept local so this module stays buildable from contexts
  * where StateManager isn't initialized (unit tests, CLI bootstrap).
  */
+// Escape a string for safe interpolation into a RegExp — tool names with regex
+// metacharacters (e.g. "file.write") would otherwise corrupt the pattern.
+function escapeRegExp(s: string): string {
+	return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
 const DEFAULT_LOCAL_ROUTER_TOTAL_TIMEOUT_MS = 60_000
 const DEFAULT_LOCAL_ROUTER_IDLE_TIMEOUT_MS = 20_000
 
@@ -307,13 +313,17 @@ export class LocalRouter {
 				const command = bashFence[1].trim()
 				if (!command) return null
 				return {
+					// requires_approval: true — a command parsed out of a model's
+					// markdown fence is untrusted; it must go through the approval
+					// gate (e.g. `rm -rf` should never auto-run). Auto-approval modes
+					// downstream can still bypass this; the safe default does not.
 					match: bashFence,
-					toolCall: { name: "execute_command", arguments: { command, requires_approval: false } },
+					toolCall: { name: "execute_command", arguments: { command, requires_approval: true } },
 				}
 			}
 			case "plain_func": {
 				for (const toolName of toolNames) {
-					const re = new RegExp(`\\b${toolName}\\s*\\(([^)]*)\\)`)
+					const re = new RegExp(`\\b${escapeRegExp(toolName)}\\s*\\(([^)]*)\\)`)
 					const m = buf.match(re)
 					if (!m) continue
 					const args = LocalRouter.parsePlainArgs(

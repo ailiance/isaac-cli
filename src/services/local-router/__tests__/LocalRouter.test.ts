@@ -395,7 +395,9 @@ describe("LocalRouter", () => {
 		assert.strictEqual(tc.name, "execute_command")
 		const args = JSON.parse(tc.argumentsRaw) as { command: string; requires_approval: boolean }
 		assert.strictEqual(args.command, "ls -la /tmp")
-		assert.strictEqual(args.requires_approval, false)
+		// Commands parsed from a model's markdown fence must default to requiring
+		// approval — they are untrusted and must hit the approval gate.
+		assert.strictEqual(args.requires_approval, true)
 		router.dispose()
 	})
 
