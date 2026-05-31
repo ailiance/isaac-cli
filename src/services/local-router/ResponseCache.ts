@@ -44,9 +44,17 @@ export class ResponseCache {
 
 	set(key: string, value: ChatResponse): void {
 		if (this.map.size >= this.maxSize && !this.map.has(key)) {
-			// evict oldest
-			const firstKey = this.map.keys().next().value
-			if (firstKey) this.map.delete(firstKey)
+			// First reclaim expired entries — otherwise a full cache of stale
+			// entries would evict a fresh one by LRU while the stale ones linger.
+			const now = Date.now()
+			for (const [k, e] of this.map) {
+				if (e.expiresAt < now) this.map.delete(k)
+			}
+			// Still at capacity? evict the oldest (LRU).
+			if (this.map.size >= this.maxSize) {
+				const firstKey = this.map.keys().next().value
+				if (firstKey) this.map.delete(firstKey)
+			}
 		}
 		this.map.set(key, { value, expiresAt: Date.now() + this.ttlMs })
 	}

@@ -38,22 +38,29 @@ export class HealthMonitor {
 
 	private async check(id: string, w: WorkerEndpoint): Promise<void> {
 		try {
-			// Try a lightweight /health endpoint first; fall back to /v1/models
+			// Try a lightweight /health endpoint first; fall back to /v1/models.
+			// Each attempt gets its OWN controller + timeout: a shared one meant the
+			// fallback fetch could start with an already-fired 5s timer and abort
+			// instantly, hiding a worker that was actually up.
 			const base = w.url.replace(/\/v1\/?$/, "").replace(/\/$/, "")
-			const ctrl = new AbortController()
-			const timeout = setTimeout(() => ctrl.abort(), 5_000)
 			try {
-				const r = await fetch(`${base}/health`, { signal: ctrl.signal })
-				this.health.set(id, r.ok ? "up" : "down")
+				this.health.set(id, (await HealthMonitor.pingOnce(`${base}/health`)) ? "up" : "down")
 			} catch {
-				// try /v1/models
-				const r = await fetch(`${base}/v1/models`, { signal: ctrl.signal })
-				this.health.set(id, r.ok ? "up" : "down")
-			} finally {
-				clearTimeout(timeout)
+				this.health.set(id, (await HealthMonitor.pingOnce(`${base}/v1/models`)) ? "up" : "down")
 			}
 		} catch {
 			this.health.set(id, "down")
+		}
+	}
+
+	private static async pingOnce(url: string): Promise<boolean> {
+		const ctrl = new AbortController()
+		const timeout = setTimeout(() => ctrl.abort(), 5_000)
+		try {
+			const r = await fetch(url, { signal: ctrl.signal })
+			return r.ok
+		} finally {
+			clearTimeout(timeout)
 		}
 	}
 }
