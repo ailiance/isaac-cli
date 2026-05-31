@@ -29,15 +29,15 @@ export async function showWelcome(options: TaskOptions) {
 		const { printError } = await import("../utils/display")
 		printError(
 			[
-				"ailiance-agent interactive mode requires a real TTY.",
+				"isaac interactive mode requires a real TTY.",
 				"",
 				"This shell is not attached to one (piped input, subprocess,",
 				"CI runner, or backgrounded). Use one of these instead:",
 				"",
-				"  ailiance-agent \"<your task>\"     # one-shot run",
-				"  echo \"<task>\" | ailiance-agent    # piped task",
-				"  ailiance-agent --continue          # resume last task",
-				"  ailiance-agent --acp               # editor integration (ACP)",
+				"  isaac \"<your task>\"     # one-shot run",
+				"  echo \"<task>\" | isaac    # piped task",
+				"  isaac --continue          # resume last task",
+				"  isaac --acp               # editor integration (ACP)",
 				"",
 				"Run from Warp/iTerm/zellij/tmux directly to get the TUI.",
 			].join("\n"),

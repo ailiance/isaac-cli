@@ -1,4 +1,4 @@
-// ailiance-agent fork: rebrand "Dirac" → "ailiance-agent" in user-visible tool labels
+// ailiance-agent fork: rebrand "Dirac" → "ISAAC" in user-visible tool labels
 /**
  * Claude Code style chat message component
  * Renders messages with:
@@ -234,7 +234,7 @@ const ResultRow: React.FC<{ children: React.ReactNode; isFirst?: boolean }> = ({
 )
 
 /**
- * Render a tool call in webview style: "ailiance-agent wants to read this file:" / "ailiance-agent read this file:"
+ * Render a tool call in webview style: "ISAAC wants to read this file:" / "ISAAC read this file:"
  */
 const ToolCallText: React.FC<{
 	toolName: string
@@ -249,7 +249,7 @@ const ToolCallText: React.FC<{
 
 	return (
 		<Text>
-			<Text color={toolColor}>ailiance-agent {actionText}</Text>
+			<Text color={toolColor}>ISAAC {actionText}</Text>
 			{mainArg && (
 				<Text>
 					<Text color={toolColor}>: </Text>
@@ -432,10 +432,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, mode, isStrea
 
 		const isAsk = type === "ask"
 		const label = isExecuting
-			? "ailiance-agent is executing this command: "
+			? "ISAAC is executing this command: "
 			: isAsk
-				? "ailiance-agent wants to execute this command: "
-				: "ailiance-agent executed this command: "
+				? "ISAAC wants to execute this command: "
+				: "ISAAC executed this command: "
 
 		return (
 			<Box flexDirection="column" marginBottom={1} width="100%">
@@ -491,7 +491,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, mode, isStrea
 			<Box flexDirection="column" marginBottom={1} width="100%">
 				<DotRow color="red">
 					<Text color="red" wrap="wrap">
-						ailiance-agent tried to access <Text bold>{text}</Text> which is blocked by the .diracignore file.
+						ISAAC tried to access <Text bold>{text}</Text> which is blocked by the .diracignore file.
 					</Text>
 				</DotRow>
 			</Box>
@@ -614,7 +614,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, mode, isStrea
 			<Box flexDirection="column" marginBottom={1} width="100%">
 				<DotRow color={toolColor} flashing={partial === true && isStreaming}>
 					<Text>
-						<Text color={toolColor}>ailiance-agent used the browser</Text>
+						<Text color={toolColor}>ISAAC used the browser</Text>
 						{text && (
 							<Text>
 								<Text color={toolColor}>: </Text>
@@ -712,7 +712,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, mode, isStrea
 			<Box flexDirection="column" marginBottom={1} width="100%">
 				<DotRow color={COLORS.primaryBlue}>
 					<Text bold color={COLORS.primaryBlue}>
-						ailiance-agent wants to start a new task:
+						ISAAC wants to start a new task:
 					</Text>
 				</DotRow>
 				<Box flexDirection="column" paddingLeft={2}>
@@ -728,7 +728,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, mode, isStrea
 			<Box flexDirection="column" marginBottom={1} width="100%">
 				<DotRow color={COLORS.primaryBlue} flashing={partial === true && isStreaming}>
 					<Text bold color={COLORS.primaryBlue}>
-						ailiance-agent wants to condense your conversation:
+						ISAAC wants to condense your conversation:
 					</Text>
 				</DotRow>
 				<Box flexDirection="column" paddingLeft={2}>
@@ -744,7 +744,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, mode, isStrea
 			<Box flexDirection="column" marginBottom={1} width="100%">
 				<DotRow color={COLORS.primaryBlue} flashing={partial === true && isStreaming}>
 					<Text bold color={COLORS.primaryBlue}>
-						ailiance-agent wants to summarize the task:
+						ISAAC wants to summarize the task:
 					</Text>
 				</DotRow>
 				<Box flexDirection="column" paddingLeft={2}>
@@ -760,7 +760,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, mode, isStrea
 			<Box flexDirection="column" marginBottom={1} width="100%">
 				<DotRow color={COLORS.primaryBlue} flashing={partial === true && isStreaming}>
 					<Text bold color={COLORS.primaryBlue}>
-						ailiance-agent wants to create a Github issue:
+						ISAAC wants to create a Github issue:
 					</Text>
 				</DotRow>
 				<Box flexDirection="column" paddingLeft={2}>

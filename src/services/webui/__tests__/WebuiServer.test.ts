@@ -140,19 +140,20 @@ describe("WebuiServer", () => {
 			})
 		}
 
-		it("GET / returns landing page containing ailiance-agent heading", async () => {
+		it("GET / returns landing page containing ISAAC heading", async () => {
 			const { status, body, contentType } = await get("/")
 			expect(status).to.equal(200)
 			expect(contentType).to.include("text/html")
-			expect(body).to.include("<h1>ailiance-agent</h1>")
+			expect(body).to.include("<h1>ISAAC</h1>")
 		})
 
 		it("GET /api/version returns current version string", async () => {
 			const { status, body, contentType } = await get("/api/version")
 			expect(status).to.equal(200)
 			expect(contentType).to.include("text/plain")
-			// version is either a semver string or "?"
-			expect(body.trim()).to.match(/^\d+\.\d+\.\d+$|^\?$/)
+			// version is either a semver string (optionally with a prerelease
+			// suffix like 0.9.1-beta) or "?"
+			expect(body.trim()).to.match(/^\d+\.\d+\.\d+(-[\w.]+)?$|^\?$/)
 		})
 
 		it("GET /spa returns HTML (SPA build present) or 503 (build absent)", async () => {

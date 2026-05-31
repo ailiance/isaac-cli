@@ -1,4 +1,4 @@
-// ailiance-agent fork: /remember /forget /memories slash commands
+// isaac fork: /remember /forget /memories slash commands
 //
 // Surface the src/utils/ailiance-memory CRUD layer via CLI subcommands so
 // the user can manage cross-task memory from the terminal. Auto-injection
@@ -6,11 +6,11 @@
 // assembly) and deferred to a follow-up PR.
 //
 // Usage:
-//   ailiance-agent memory remember "user role" "data scientist focused on observability"
-//   ailiance-agent memory list
-//   ailiance-agent memory list --type feedback
-//   ailiance-agent memory show <name>
-//   ailiance-agent memory forget <name>
+//   isaac memory remember "user role" "data scientist focused on observability"
+//   isaac memory list
+//   isaac memory list --type feedback
+//   isaac memory show <name>
+//   isaac memory forget <name>
 
 import { exit } from "node:process"
 import { printError, printInfo, printSuccess, printWarning } from "../utils/display"
@@ -48,7 +48,7 @@ export async function runMemoryRemember(args: {
 	scope?: string
 }): Promise<void> {
 	if (!args.title?.trim()) {
-		printError("usage: ailiance-agent memory remember <title> [body]")
+		printError("usage: isaac memory remember <title> [body]")
 		exit(2)
 	}
 	const name = slugify(args.title)
@@ -84,7 +84,7 @@ export async function runMemoryList(args: { type?: string; scope?: string }): Pr
 	}
 	const memories = await listMemories(filter)
 	if (memories.length === 0) {
-		printInfo("No memories yet. Use `ailiance-agent memory remember <title>` to add one.")
+		printInfo("No memories yet. Use `isaac memory remember <title>` to add one.")
 		printInfo(`Memory root: ${getMemoryRoot()}`)
 		return
 	}
@@ -97,7 +97,7 @@ export async function runMemoryList(args: { type?: string; scope?: string }): Pr
 
 export async function runMemoryShow(args: { name: string }): Promise<void> {
 	if (!args.name) {
-		printError("usage: ailiance-agent memory show <name>")
+		printError("usage: isaac memory show <name>")
 		exit(2)
 	}
 	const matches = await findMemories(args.name)
@@ -120,7 +120,7 @@ export async function runMemoryShow(args: { name: string }): Promise<void> {
 
 export async function runMemoryForget(args: { name: string }): Promise<void> {
 	if (!args.name) {
-		printError("usage: ailiance-agent memory forget <name>")
+		printError("usage: isaac memory forget <name>")
 		exit(2)
 	}
 	// Try exact delete first.

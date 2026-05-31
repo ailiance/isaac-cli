@@ -260,7 +260,7 @@ export async function runPlainTextTask(options: PlainTextTaskOptions): Promise<b
 			}
 			process.stderr.write(`${"-".repeat(40)}\n`)
 		}
-		// ailiance-agent: surface the last worker / domain / LoRA captured
+		// ISAAC: surface the last worker / domain / LoRA captured
 		// from gateway X-Ailiance-* headers, so the user sees which backend
 		// actually served the turn. Printed even when the metrics summary
 		// is skipped (e.g. the agent errored before producing tokens) so

@@ -1,5 +1,5 @@
 /**
- * ailiance-agent CLI - TypeScript implementation with React Ink (fork of Dirac/Cline)
+ * ISAAC CLI - TypeScript implementation with React Ink (fork of Dirac/Cline)
  */
 
 // MUST be the first import — its top-level side effect (raw-mode stdin) runs
@@ -51,7 +51,7 @@ program
 	.option("--provider <provider>", "API provider to use (requires --model)")
 	.option("-v, --verbose", "Show verbose output")
 	.option("-c, --cwd <path>", "Working directory for the task")
-	.option("--config <path>", "Path to ailiance-agent configuration directory")
+	.option("--config <path>", "Path to ISAAC configuration directory")
 	.option("--thinking [tokens]", "Enable extended thinking (default: 1024 tokens)")
 	.option("--reasoning-effort <effort>", "Reasoning effort: none|low|medium|high|xhigh")
 	.option("--max-consecutive-mistakes <count>", "Maximum consecutive mistakes before halting in yolo mode")
@@ -89,7 +89,7 @@ program
 	.description("List task history")
 	.option("-n, --limit <number>", "Number of tasks to show", "10")
 	.option("-p, --page <number>", "Page number (1-based)", "1")
-	.option("--config <path>", "Path to ailiance-agent configuration directory")
+	.option("--config <path>", "Path to ISAAC configuration directory")
 	.action(async (options) => {
 		const { listHistory } = await import("./commands/history")
 		return listHistory(options)
@@ -109,7 +109,7 @@ program
 program
 	.command("config")
 	.description("Show current configuration")
-	.option("--config <path>", "Path to ailiance-agent configuration directory")
+	.option("--config <path>", "Path to ISAAC configuration directory")
 	.action(async (options) => {
 		const { showConfig } = await import("./commands/config")
 		return showConfig(options)
@@ -125,7 +125,7 @@ program
 	.option("--azure-api-version <version>", "Azure API version (optional, only for azure openai)")
 	.option("-v, --verbose", "Show verbose output")
 	.option("-c, --cwd <path>", "Working directory for the task")
-	.option("--config <path>", "Path to ailiance-agent configuration directory")
+	.option("--config <path>", "Path to ISAAC configuration directory")
 	.action(async (options) => {
 		const { runAuth } = await import("./commands/auth")
 		return runAuth(options)
@@ -133,10 +133,10 @@ program
 
 program
 	.command("version")
-	.description("Show ailiance-agent CLI version number")
+	.description("Show ISAAC CLI version number")
 	.action(async () => {
 		const { printInfo } = await import("./utils/display")
-		printInfo(`ailiance-agent CLI version: ${CLI_VERSION}`)
+		printInfo(`ISAAC CLI version: ${CLI_VERSION}`)
 	})
 
 program
@@ -190,7 +190,7 @@ memoryCommand
 	})
 
 // ailiance-agent fork: trace rotation + listing CLI
-const traceCommand = program.command("trace").description("Manage ailiance-agent run traces")
+const traceCommand = program.command("trace").description("Manage ISAAC run traces")
 
 traceCommand
 	.command("list")

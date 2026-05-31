@@ -30,7 +30,7 @@ describe("ChatMessage subagent rendering", () => {
 		const { lastFrame } = render(React.createElement(ChatMessage, { message, mode: "act" }))
 		const frame = lastFrame() || ""
 
-		expect(frame).toContain("ailiance-agent wants to run subagents")
+		expect(frame).toContain("ISAAC wants to run subagents")
 		expect(frame).toContain("├─   Find codebase stats and size")
 		expect(frame).toContain("├─   Find funny comments and easter eggs")
 		expect(frame).toContain("└─   Find unusual patterns and history")
@@ -97,7 +97,7 @@ describe("ChatMessage subagent rendering", () => {
 		const { lastFrame } = render(React.createElement(ChatMessage, { isStreaming: true, message, mode: "act" }))
 		const frame = lastFrame() || ""
 
-		expect(frame).toContain("ailiance-agent is running subagents")
+		expect(frame).toContain("ISAAC is running subagents")
 		expect(frame).toContain("✓ Find codebase stats and size")
 		expect(frame).toContain("5 tool uses · 24.4k tokens · $0.03")
 		expect(frame).toContain("11 tool uses · 31.6k tokens · $0.06")

@@ -89,7 +89,7 @@ export class E2ETestHelper {
 					// Accept either an explicit title match or any non-empty webview URL frame
 					// that is not the main host window.
 					const isWebviewUrl = /vscode-webview:\/\/|webview\/index\.html/i.test(url)
-					const titleMatches = /dirac|ailiance-agent|webview/i.test(title)
+					const titleMatches = /dirac|ailiance-agent|isaac|webview/i.test(title)
 					if (isWebviewUrl || titleMatches) {
 						this.cachedFrame = frame
 						return frame
@@ -149,7 +149,7 @@ export class E2ETestHelper {
 
 	public static async openDiracSidebar(page: Page): Promise<void> {
 		await page
-			.getByRole("tab", { name: /Dirac|ailiance-agent/ })
+			.getByRole("tab", { name: /Dirac|ailiance-agent|ISAAC/ })
 			.locator("a")
 			.click()
 	}

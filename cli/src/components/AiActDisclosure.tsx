@@ -26,7 +26,7 @@ export const AiActDisclosure: FunctionComponent<AiActDisclosureProps> = ({ onAck
 			</Text>
 
 			<Box flexDirection="column" marginTop={1}>
-				<Text>ailiance-agent is an artificial intelligence system</Text>
+				<Text>ISAAC is an artificial intelligence system</Text>
 				<Text>(EU AI Act, Article 50 — Transparency).</Text>
 			</Box>
 

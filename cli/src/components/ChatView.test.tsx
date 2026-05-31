@@ -305,7 +305,7 @@ describe("ChatView UI State During Exit", () => {
 
 		// Footer contains auto-approve toggle
 		expect(lastFrame()).toContain("Auto-approve")
-		expect(lastFrame()).toContain(`ailiance-agent v${CLI_VERSION}`)
+		expect(lastFrame()).toContain(`ISAAC v${CLI_VERSION}`)
 		expect(lastFrame()).toContain("Input:")
 
 		// Fire shutdown event
@@ -315,7 +315,7 @@ describe("ChatView UI State During Exit", () => {
 		const frameAfter = lastFrame()
 
 		// Static content should still be present
-		expect(frameAfter).toContain(`ailiance-agent v${CLI_VERSION}`)
+		expect(frameAfter).toContain(`ISAAC v${CLI_VERSION}`)
 		// Footer should still be present (only input is hidden)
 		expect(frameAfter).toContain("Auto-approve")
 		// Input should be hidden

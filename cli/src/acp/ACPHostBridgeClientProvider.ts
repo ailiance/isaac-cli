@@ -131,7 +131,7 @@ class ACPEnvServiceClient implements EnvServiceClientInterface {
 		// Return version info for the ACP agent.
 		return proto.host.GetHostVersionResponse.create({
 			version: this.version,
-			platform: "ailiance-agent ACP Agent",
+			platform: "ISAAC ACP Agent",
 			diracType: DiracClient.Cli,
 		})
 	}

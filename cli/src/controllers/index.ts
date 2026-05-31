@@ -100,7 +100,7 @@ export class CliEnvServiceClient implements EnvServiceClientInterface {
 	async getHostVersion(_request: proto.dirac.EmptyRequest): Promise<proto.host.GetHostVersionResponse> {
 		return proto.host.GetHostVersionResponse.create({
 			version: CLI_VERSION,
-			platform: "ailiance-agent CLI - Node.js",
+			platform: "ISAAC CLI - Node.js",
 			diracType: DiracClient.Cli,
 		})
 	}

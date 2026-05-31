@@ -189,7 +189,7 @@ export const SubagentMessage: React.FC<SubagentMessageProps> = ({ message, mode,
 			return (
 				<Box flexDirection="column" marginBottom={1} width="100%">
 					<DotRow color={toolColor}>
-						<Text color={toolColor}>ailiance-agent wants to run subagents:</Text>
+						<Text color={toolColor}>ISAAC wants to run subagents:</Text>
 					</DotRow>
 				</Box>
 			)
@@ -199,7 +199,7 @@ export const SubagentMessage: React.FC<SubagentMessageProps> = ({ message, mode,
 		return (
 			<Box flexDirection="column" marginBottom={1} width="100%">
 				<DotRow color={toolColor} flashing={partial === true && isStreaming}>
-					<Text color={toolColor}>{singular ? "ailiance-agent wants to run a subagent:" : "ailiance-agent wants to run subagents:"}</Text>
+					<Text color={toolColor}>{singular ? "ISAAC wants to run a subagent:" : "ISAAC wants to run subagents:"}</Text>
 				</DotRow>
 				<Box flexDirection="column" marginLeft={2} width="100%">
 					{prompts.map((prompt, index) => {
@@ -257,7 +257,7 @@ export const SubagentMessage: React.FC<SubagentMessageProps> = ({ message, mode,
 			<Box flexDirection="column" marginBottom={1} width="100%">
 				<DotRow color={toolColor} flashing={partial === true && isStreaming}>
 					<Text color={toolColor}>
-						{items.length === 1 ? "ailiance-agent is running a subagent:" : "ailiance-agent is running subagents:"}
+						{items.length === 1 ? "ISAAC is running a subagent:" : "ISAAC is running subagents:"}
 					</Text>
 				</DotRow>
 				<Box flexDirection="column" marginLeft={2} width="100%">

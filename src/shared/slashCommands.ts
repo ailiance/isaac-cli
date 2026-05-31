@@ -1,4 +1,4 @@
-// ailiance-agent fork: rebrand command descriptions, drop /askDirac (RAG over upstream source)
+// ISAAC fork: rebrand command descriptions, drop /askDirac (RAG over upstream source)
 export interface SlashCommand {
 	name: string
 	description?: string
@@ -21,24 +21,24 @@ export const BASE_SLASH_COMMANDS: SlashCommand[] = [
 	},
 	{
 		name: "newrule",
-		description: "Create a new ailiance-agent rule based on your conversation",
+		description: "Create a new ISAAC rule based on your conversation",
 		section: "default",
 		cliCompatible: true,
 	},
 	{
 		name: "reportbug",
-		description: "Create a Github issue with ailiance-agent",
+		description: "Create a Github issue with ISAAC",
 		section: "default",
 		cliCompatible: true,
 	},
 	{
 		name: "help",
-		description: "Learn how to use ailiance-agent CLI",
+		description: "Learn how to use ISAAC CLI",
 		section: "default",
 		cliCompatible: true,
 	},
 
-	// ailiance-agent fork: dropped /askDirac (RAG over upstream Dirac source — irrelevant here)
+	// ISAAC fork: dropped /askDirac (RAG over upstream Dirac source — irrelevant here)
 ]
 
 // VS Code-only slash commands

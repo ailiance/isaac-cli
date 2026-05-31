@@ -1,6 +1,6 @@
 /**
  * Help panel content for inline display in ChatView
- * Explains ailiance-agent CLI features and links to documentation
+ * Explains ISAAC CLI features and links to documentation
  * ailiance-agent fork: rebrand
  */
 
@@ -34,14 +34,14 @@ export const HelpPanelContent: React.FC<HelpPanelContentProps> = ({ onClose }) =
 		<Panel label="Help">
 			<Box flexDirection="column" gap={1}>
 				<Text>
-						ailiance-agent can edit files, run terminal commands, use the browser, and more with your permission.
+						ISAAC can edit files, run terminal commands, use the browser, and more with your permission.
 					</Text>
 
 				<Box flexDirection="column">
 					<Text bold>Plan vs Act Mode</Text>
 					<Text>
 						Use <Text color="yellow">Plan</Text> mode to discuss and strategize before making changes. Use{" "}
-						<Text color={COLORS.primaryBlue}>Act</Text> mode when you're ready for ailiance-agent to edit files and run
+						<Text color={COLORS.primaryBlue}>Act</Text> mode when you're ready for ISAAC to edit files and run
 						commands. Toggle between them with <Text color="white">Tab</Text>.
 					</Text>
 				</Box>
@@ -93,7 +93,7 @@ export const HelpPanelContent: React.FC<HelpPanelContentProps> = ({ onClose }) =
 					</Text>
 					<Text>
 						{"  "}
-						<Text color="white">/q</Text> - Quit ailiance-agent
+						<Text color="white">/q</Text> - Quit ISAAC
 					</Text>
 				</Box>
 

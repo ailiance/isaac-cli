@@ -34,7 +34,7 @@ export async function initializeCli(options: InitOptions): Promise<CliContext> {
 	})
 
 	// Set up output channel and Logger early so DiracEndpoint.initialize logs are captured
-	const outputChannel = window.createOutputChannel("ailiance-agent CLI")
+	const outputChannel = window.createOutputChannel("ISAAC CLI")
 	const logToChannel = (message: string) => outputChannel.appendLine(message)
 
 	// Configure the shared Logging class early to capture all initialization logs
@@ -53,7 +53,7 @@ export async function initializeCli(options: InitOptions): Promise<CliContext> {
 	}
 
 	outputChannel.appendLine(
-		`ailiance-agent CLI initialized. Data dir: ${DATA_DIR}, Extension dir: ${EXTENSION_DIR}, Log dir: ${DIRAC_CLI_DIR.log}`,
+		`ISAAC CLI initialized. Data dir: ${DATA_DIR}, Extension dir: ${EXTENSION_DIR}, Log dir: ${DIRAC_CLI_DIR.log}`,
 	)
 
 	HostProvider.initialize(
@@ -106,7 +106,7 @@ export async function initializeCli(options: InitOptions): Promise<CliContext> {
 		// only writes to the output channel buffer, which the standalone
 		// CLI does not surface unless --verbose. Stderr is the contract.
 		// eslint-disable-next-line no-console
-		console.error(`[ailiance-agent] ${formatPrewarmLog(prewarm)}`)
+		console.error(`[ISAAC] ${formatPrewarmLog(prewarm)}`)
 	}
 
 	const webview = HostProvider.get().createDiracWebviewProvider() as any
