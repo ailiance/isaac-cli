@@ -283,7 +283,19 @@ program
 	.option("--acp", "Run in ACP (Agent Client Protocol) mode for editor integration")
 	.option("-T, --taskId <id>", "Resume an existing task by ID")
 	.option("--continue", "Resume the most recent task from the current working directory")
+	.option(
+		"--mcp <servers>",
+		"Comma-separated allowlist of plugin MCP servers to load (e.g. github,context7); only these load this run",
+	)
+	.option("--no-mcp", "Disable all plugin MCP servers for this run (smaller prompt, faster on big-context backends)")
 	.action(async (prompt, options) => {
+		// Per-run MCP control (mirrors the `task` command): surfaced to the core
+		// MCP bootstrap via env so no global config is touched.
+		if (options.mcp === false) {
+			process.env.AILIANCE_NO_MCP = "1"
+		} else if (typeof options.mcp === "string") {
+			process.env.AILIANCE_MCP_SERVERS = options.mcp
+		}
 		// ailiance-agent fork: kanban path removed.
 		const { printWarning } = await import("./utils/display")
 		// Check for ACP mode first - this takes precedence over everything else
