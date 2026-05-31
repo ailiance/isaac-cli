@@ -28,9 +28,25 @@ const METADATA_HOSTS = new Set([
 	"fd00:ec2::254", // AWS IPv6 IMDS
 ])
 
-/** url.hostname keeps the [..] brackets for IPv6 literals; strip them + lowercase. */
+/**
+ * url.hostname keeps the [..] brackets for IPv6 literals; strip them + lowercase.
+ * Also canonicalise two evasion forms so downstream checks see the real address:
+ *  - trailing FQDN dot ("169.254.169.254." / "metadata.google.internal.")
+ *  - IPv4-mapped IPv6 ("::ffff:a9fe:a9fe" or "::ffff:169.254.169.254") -> dotted
+ *    IPv4, so both the metadata set and the private-range check apply.
+ */
 function normalizeHost(hostname: string): string {
-	return hostname.replace(/^\[/, "").replace(/\]$/, "").toLowerCase()
+	let h = hostname.replace(/^\[/, "").replace(/\]$/, "").toLowerCase()
+	if (h.length > 1 && h.endsWith(".")) h = h.slice(0, -1)
+	const mappedHex = h.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/)
+	if (mappedHex) {
+		const hi = Number.parseInt(mappedHex[1], 16)
+		const lo = Number.parseInt(mappedHex[2], 16)
+		return `${hi >> 8}.${hi & 0xff}.${lo >> 8}.${lo & 0xff}`
+	}
+	const mappedDotted = h.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/)
+	if (mappedDotted) return mappedDotted[1]
+	return h
 }
 
 function envAllowlist(): Set<string> {
@@ -72,7 +88,10 @@ function isPrivateHost(hostname: string): boolean {
 	if (a === 10) return true // 10.0.0.0/8
 	if (a === 192 && b === 168) return true // 192.168.0.0/16
 	if (a === 172 && b >= 16 && b <= 31) return true // 172.16.0.0/12
-	if (a === 100 && b >= 64 && b <= 127) return true // 100.64.0.0/10 CGNAT (Tailscale)
+	// 100.64.0.0/10 CGNAT (Tailscale). NB: 100.100.100.200 (Alibaba metadata)
+	// falls in this range, but the SSRF guard checks isMetadataHost FIRST and
+	// blocks the connection outright, so it never reaches the token-gate here.
+	if (a === 100 && b >= 64 && b <= 127) return true
 	return false
 }
 

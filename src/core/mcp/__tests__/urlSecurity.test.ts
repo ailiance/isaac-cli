@@ -37,6 +37,18 @@ describe("urlSecurity", () => {
 			}
 		})
 
+		it("blocks IPv4-mapped IPv6 and trailing-dot evasions of the metadata block", () => {
+			for (const u of [
+				"http://[::ffff:169.254.169.254]/", // dotted IPv4-mapped (Node compresses)
+				"http://[::ffff:a9fe:a9fe]/", // hextet IPv4-mapped form of 169.254.169.254
+				"http://[::ffff:6464:64c8]/", // 100.100.100.200 (Alibaba) mapped
+				"http://169.254.169.254./", // trailing FQDN dot
+				"http://metadata.google.internal./",
+			]) {
+				expect(assertMcpUrlAllowed(u).ok, u).to.equal(false)
+			}
+		})
+
 		it("rejects invalid urls and non-http schemes", () => {
 			expect(assertMcpUrlAllowed("not a url").ok).to.equal(false)
 			expect(assertMcpUrlAllowed("ftp://example.com").ok).to.equal(false)
@@ -62,6 +74,11 @@ describe("urlSecurity", () => {
 			expect(shouldSendBearer("http://192.168.0.2/")).to.equal(true)
 			expect(shouldSendBearer("http://172.16.0.1/")).to.equal(true)
 			expect(shouldSendBearer("http://100.96.0.7/")).to.equal(true)
+		})
+
+		it("recognises IPv4-mapped IPv6 private addresses as token-safe", () => {
+			expect(shouldSendBearer("http://[::ffff:192.168.1.1]/")).to.equal(true)
+			expect(shouldSendBearer("http://[::ffff:c0a8:0101]/")).to.equal(true) // hextet form of 192.168.1.1
 		})
 
 		it("refuses token over http to public hosts", () => {
