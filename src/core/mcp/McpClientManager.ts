@@ -42,10 +42,7 @@ const FORCE_REFRESH = ["1", "true", "yes"].includes((process.env.ISAAC_MCP_REFRE
 // Never touch the user's real cache from the test harnesses (mocha sets
 // TS_NODE_PROJECT, vitest sets VITEST). Mirrors the guard in TelemetryService.
 const CACHE_DISABLED =
-	!!process.env.TS_NODE_PROJECT ||
-	!!process.env.MOCHA ||
-	!!process.env.VITEST ||
-	process.env.ISAAC_MCP_CACHE === "0"
+	!!process.env.TS_NODE_PROJECT || !!process.env.MOCHA || !!process.env.VITEST || process.env.ISAAC_MCP_CACHE === "0"
 
 interface DiskCacheEntry {
 	configHash: string
@@ -75,11 +72,7 @@ function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
 	})
 }
 
-async function mapWithConcurrency<T, R>(
-	items: T[],
-	limit: number,
-	fn: (item: T, index: number) => Promise<R>,
-): Promise<R[]> {
+async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T, index: number) => Promise<R>): Promise<R[]> {
 	const results = new Array<R>(items.length)
 	let next = 0
 	const worker = async () => {
