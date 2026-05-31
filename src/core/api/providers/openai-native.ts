@@ -6,7 +6,7 @@ import {
 	openAiNativeModels,
 } from "@shared/api"
 import { normalizeOpenaiReasoningEffort } from "@shared/storage/types"
-import { calculateApiCostOpenAI } from "@utils/cost"
+import { formatOpenAiCompatibleUsage } from "../transform/openai-usage"
 import OpenAI from "openai"
 import {
 	buildResponseCreateParams,
@@ -84,20 +84,8 @@ export class OpenAiNativeHandler implements ApiHandler {
 	}
 
 	private async *yieldUsage(info: ModelInfo, usage: OpenAI.Completions.CompletionUsage | undefined): ApiStream {
-		const inputTokens = usage?.prompt_tokens || 0 // sum of cache hits and misses
-		const outputTokens = usage?.completion_tokens || 0
-		const cacheReadTokens = usage?.prompt_tokens_details?.cached_tokens || 0
-		const cacheWriteTokens = 0
-		const totalCost = calculateApiCostOpenAI(info, inputTokens, outputTokens, cacheWriteTokens, cacheReadTokens)
-		const nonCachedInputTokens = Math.max(0, inputTokens - cacheReadTokens - cacheWriteTokens)
-		yield {
-			type: "usage",
-			inputTokens: nonCachedInputTokens,
-			outputTokens: outputTokens,
-			cacheWriteTokens: cacheWriteTokens,
-			cacheReadTokens: cacheReadTokens,
-			totalCost: totalCost,
-		}
+		if (!usage) return
+		yield formatOpenAiCompatibleUsage(usage, info)
 	}
 
 	@withRetry()

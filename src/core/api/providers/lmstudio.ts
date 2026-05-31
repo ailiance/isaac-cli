@@ -8,6 +8,7 @@ import { withRetry } from "../retry"
 import { convertToOpenAiMessages } from "../transform/openai-format"
 import type { ApiStream } from "../transform/stream"
 import { getOpenAIToolParams, ToolCallProcessor } from "../transform/tool-call-processor"
+import { formatOpenAiCompatibleUsage } from "../transform/openai-usage"
 
 interface LmStudioHandlerOptions extends CommonApiHandlerOptions {
 	lmStudioBaseUrl?: string
@@ -79,12 +80,7 @@ export class LmStudioHandler implements ApiHandler {
 				}
 
 				if (chunk.usage) {
-					yield {
-						type: "usage",
-						inputTokens: chunk.usage.prompt_tokens || 0,
-						outputTokens: chunk.usage.completion_tokens || 0,
-						cacheReadTokens: chunk.usage.prompt_tokens_details?.cached_tokens || 0,
-					}
+					yield formatOpenAiCompatibleUsage(chunk.usage, this.getModel().info)
 				}
 			}
 		} catch {

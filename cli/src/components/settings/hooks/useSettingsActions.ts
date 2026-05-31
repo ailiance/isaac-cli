@@ -385,6 +385,14 @@ export function useSettingsActions({
 			if (!item) return
 
 			switch (item.key) {
+				case "baseUrl": {
+					await applyProviderConfig({
+						providerId: provider,
+						baseUrl: editValue,
+						controller,
+					})
+					break
+				}
 				case "actModelId":
 				case "planModelId":
 				case "actCustomModelId":
@@ -416,7 +424,18 @@ export function useSettingsActions({
 
 			setIsEditing(false)
 		},
-		[items, selectedIndex, separateModels, stateManager, setPreferredLanguage, setIsEditing, rebuildTaskApi],
+		[
+			items,
+			selectedIndex,
+			separateModels,
+			stateManager,
+			setPreferredLanguage,
+			setIsEditing,
+			rebuildTaskApi,
+			provider,
+			controller,
+			refreshModelIds,
+		],
 	)
 
 	const handleProviderSelect = useCallback(

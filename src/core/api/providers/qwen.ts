@@ -1,12 +1,12 @@
 import {
-	InternationalQwenModelId,
-	internationalQwenDefaultModelId,
-	internationalQwenModels,
-	MainlandQwenModelId,
-	ModelInfo,
-	mainlandQwenDefaultModelId,
-	mainlandQwenModels,
-	QwenApiRegions,
+    InternationalQwenModelId,
+    internationalQwenDefaultModelId,
+    internationalQwenModels,
+    MainlandQwenModelId,
+    ModelInfo,
+    mainlandQwenDefaultModelId,
+    mainlandQwenModels,
+    QwenApiRegions,
 } from "@shared/api"
 import OpenAI from "openai"
 import type { ChatCompletionTool as OpenAITool } from "openai/resources/chat/completions"
@@ -18,6 +18,7 @@ import { withRetry } from "../retry"
 import { convertToOpenAiMessages } from "../transform/openai-format"
 import { convertToR1Format } from "../transform/r1-format"
 import { ApiStream } from "../transform/stream"
+import { formatOpenAiCompatibleUsage } from "../transform/openai-usage"
 import { getOpenAIToolParams, ToolCallProcessor } from "../transform/tool-call-processor"
 
 interface QwenHandlerOptions extends CommonApiHandlerOptions {
@@ -151,15 +152,7 @@ export class QwenHandler implements ApiHandler {
 			}
 
 			if (chunk.usage) {
-				yield {
-					type: "usage",
-					inputTokens: chunk.usage.prompt_tokens || 0,
-					outputTokens: chunk.usage.completion_tokens || 0,
-					// @ts-expect-error-next-line
-					cacheReadTokens: chunk.usage.prompt_cache_hit_tokens || 0,
-					// @ts-expect-error-next-line
-					cacheWriteTokens: chunk.usage.prompt_cache_miss_tokens || 0,
-				}
+				yield formatOpenAiCompatibleUsage(chunk.usage, this.getModel().info)
 			}
 		}
 	}

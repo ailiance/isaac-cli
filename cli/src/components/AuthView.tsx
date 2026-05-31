@@ -7,6 +7,8 @@ import { Box, Text, useApp, useInput } from "ink"
 import Spinner from "ink-spinner"
 import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { StateManager } from "@/core/storage/StateManager"
+import { ProviderToBaseUrlKeyMap } from "@shared/storage"
+import { ApiProvider } from "@shared/api"
 import { openAiCodexOAuthManager } from "@/integrations/openai-codex/oauth"
 import { openAiCodexDefaultModelId } from "@/shared/api"
 import { getRandomQuote } from "@/shared/quotes"
@@ -393,8 +395,8 @@ export const AuthView: React.FC<AuthViewProps> = ({ controller, onComplete, onEr
 			if (value.trim()) {
 				setModelId(value)
 			}
-			// Only show baseurl step for OpenAI-like providers
-			if (["openai", "openai-native"].includes(selectedProvider)) {
+			// Only show baseurl step for providers that support it
+			if (ProviderToBaseUrlKeyMap[selectedProvider as ApiProvider]) {
 				setStep("baseurl")
 			} else {
 				setStep("saving")

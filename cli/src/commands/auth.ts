@@ -1,4 +1,5 @@
 import { exit } from "node:process"
+import type { ApiProvider } from "@shared/api"
 import type { CliContext } from "../types"
 import { initializeCli } from "../init"
 import { disposeCliContext } from "../utils/cleanup"
@@ -52,6 +53,7 @@ export async function performQuickAuthSetup(
 ): Promise<{ success: boolean; error?: string }> {
 	const { isValidCliProvider, getValidCliProviders } = await import("../utils/providers")
 	const { applyProviderConfig } = await import("../utils/provider-config")
+	const { ProviderToBaseUrlKeyMap } = await import("@shared/storage")
 	const { StateManager } = await import("@/core/storage/StateManager")
 
 	const { provider, apikey, modelid, baseurl, azureApiVersion } = options
@@ -73,8 +75,8 @@ export async function performQuickAuthSetup(
 		}
 	}
 
-	if (baseurl && !["openai", "openai-native"].includes(normalizedProvider)) {
-		return { success: false, error: "Base URL is only supported for OpenAI and OpenAI-compatible providers" }
+	if (baseurl && !ProviderToBaseUrlKeyMap[normalizedProvider as ApiProvider]) {
+		return { success: false, error: "Base URL is not supported for this provider" }
 	}
 
 	// Save configuration using shared utility
