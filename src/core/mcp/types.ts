@@ -1,19 +1,32 @@
 import type { Client } from "@modelcontextprotocol/sdk/client"
-import type { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js"
 
-export interface McpServerConfig {
+interface McpServerConfigBase {
 	id: string
 	pluginName: string
 	pluginRoot: string
+}
+
+/** A plugin-provided MCP server launched as a stdio subprocess. */
+export interface McpStdioServerConfig extends McpServerConfigBase {
 	type: "stdio"
 	command: string
 	args: string[]
 }
 
+/** A plugin-provided MCP server reached over Streamable HTTP (e.g. exa, supabase). */
+export interface McpHttpServerConfig extends McpServerConfigBase {
+	type: "http"
+	url: string
+	headers?: Record<string, string>
+}
+
+export type McpServerConfig = McpStdioServerConfig | McpHttpServerConfig
+
 export interface ConnectedClient {
 	config: McpServerConfig
 	client: Client
-	transport: StdioClientTransport
+	transport: Transport
 	startedAt: Date
 }
 

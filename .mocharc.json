@@ -5,6 +5,9 @@
 	"spec": [
 		"src/**/__tests__/*.ts"
 	],
+	"ignore": [
+		"src/core/mcp/__tests__/*.ts"
+	],
 	"require": [
 		"ts-node/register",
 		"source-map-support/register",

@@ -1,5 +1,5 @@
 import { expect } from "chai"
-import { afterEach, beforeEach, describe, it } from "mocha"
+import { afterEach, beforeEach, describe, it } from "vitest"
 import sinon from "sinon"
 
 import { formatMcpContent, McpToolHandler } from "../McpToolHandler"

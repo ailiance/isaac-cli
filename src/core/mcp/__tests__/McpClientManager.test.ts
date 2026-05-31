@@ -1,5 +1,5 @@
 import { expect } from "chai"
-import { afterEach, beforeEach, describe, it } from "mocha"
+import { afterEach, beforeEach, describe, it } from "vitest"
 import sinon from "sinon"
 
 import { McpServerConfig, makeQualifiedToolName } from "../types"
@@ -9,13 +9,10 @@ import { McpServerConfig, makeQualifiedToolName } from "../types"
 
 describe("McpClientManager", () => {
 	let McpClientManagerModule: typeof import("../McpClientManager")
-	let mcpLoaderModule: typeof import("../McpServerConfigLoader")
 
 	// Fresh import each time to reset singleton state
 	beforeEach(async () => {
-		// Use dynamic import so we can re-require cleanly; mocha's require cache handles this.
 		McpClientManagerModule = await import("../McpClientManager")
-		mcpLoaderModule = await import("../McpServerConfigLoader")
 	})
 
 	afterEach(() => {
@@ -62,11 +59,8 @@ describe("McpClientManager", () => {
 	it("loadFromPlugins returns empty array when no plugin has .mcp.json", async () => {
 		const { mcpClientManager } = McpClientManagerModule
 
-		// Patch loadMcpConfigsFromPlugins to return empty
-		const original = (mcpLoaderModule as any).loadMcpConfigsFromPlugins
-		;(mcpLoaderModule as any).loadMcpConfigsFromPlugins = async () => []
-
-		// McpClientManager imports the function at module load time, so patch via manager internals
+		// The loader export is read-only under ESM/vitest, so inject the fake
+		// result by overriding the manager method directly.
 		const manager = mcpClientManager as any
 		const originalLoad = manager.loadFromPlugins.bind(manager)
 		manager.loadFromPlugins = async function () {
@@ -82,7 +76,6 @@ describe("McpClientManager", () => {
 		expect(mcpClientManager.getKnownServerIds()).to.deep.equal([])
 
 		// Restore
-		;(mcpLoaderModule as any).loadMcpConfigsFromPlugins = original
 		manager.loadFromPlugins = originalLoad
 	})
 
@@ -399,15 +392,12 @@ describe("McpClientManager", () => {
 			args: [],
 		}
 
-		// Patch loadMcpConfigsFromPlugins on the loader module used by the manager
-		const origLoader = (mcpLoaderModule as any).loadMcpConfigsFromPlugins
-		;(mcpLoaderModule as any).loadMcpConfigsFromPlugins = async () => [cfgFoo, cfgBar]
-
-		// Also patch manager.loadFromPlugins to use the module-level loader
+		// The loader export is read-only under ESM/vitest, so inject the fake
+		// configs by overriding the manager method directly.
 		const manager = mcpClientManager as any
 		const origManagerLoad = manager.loadFromPlugins.bind(manager)
 		manager.loadFromPlugins = async function (filter?: { enabledServers?: string[] }) {
-			const configs: McpServerConfig[] = await (mcpLoaderModule as any).loadMcpConfigsFromPlugins()
+			const configs: McpServerConfig[] = [cfgFoo, cfgBar]
 			const filtered =
 				filter?.enabledServers && filter.enabledServers.length > 0
 					? configs.filter((c: McpServerConfig) => filter.enabledServers!.includes(c.id))
@@ -423,7 +413,6 @@ describe("McpClientManager", () => {
 		expect(result[0].id).to.equal("foo")
 		expect(mcpClientManager.getKnownServerIds()).to.deep.equal(["foo"])
 
-		;(mcpLoaderModule as any).loadMcpConfigsFromPlugins = origLoader
 		manager.loadFromPlugins = origManagerLoad
 	})
 

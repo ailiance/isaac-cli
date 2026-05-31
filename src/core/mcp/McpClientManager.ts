@@ -52,9 +52,13 @@ interface DiskCacheEntry {
 type DiskCache = Record<string, DiskCacheEntry>
 
 function configHash(cfg: McpServerConfig): string {
-	const basis = JSON.stringify([cfg.type, cfg.command, cfg.args])
+	const basis =
+		cfg.type === "http"
+			? JSON.stringify(["http", cfg.url, cfg.headers ?? null])
+			: JSON.stringify(["stdio", cfg.command, cfg.args])
 	return createHash("sha1").update(basis).digest("hex").slice(0, 16)
 }
+
 
 function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
 	return new Promise<T>((resolve, reject) => {
@@ -113,11 +117,24 @@ class McpClientManager {
 		const cfg = this.configs.get(serverId)
 		if (!cfg) throw new Error(`MCP server "${serverId}" not configured`)
 
-		const transport = new StdioClientTransport({
-			command: cfg.command,
-			args: cfg.args,
-			env: { ...process.env, CLAUDE_PLUGIN_ROOT: cfg.pluginRoot },
-		})
+		let transport: Parameters<Client["connect"]>[0]
+		if (cfg.type === "http") {
+			// Dynamic import so the streamableHttp module (and its ESM-only
+			// eventsource-parser dep) is pulled in only when an HTTP server connects.
+			// esbuild bundles it into the dist; the MCP unit tests run under vitest
+			// (native ESM), so this no longer needs the old new Function() shim.
+			const { StreamableHTTPClientTransport } = await import("@modelcontextprotocol/sdk/client/streamableHttp.js")
+			transport = new StreamableHTTPClientTransport(
+				new URL(cfg.url),
+				cfg.headers ? { requestInit: { headers: cfg.headers } } : undefined,
+			)
+		} else {
+			transport = new StdioClientTransport({
+				command: cfg.command,
+				args: cfg.args,
+				env: { ...process.env, CLAUDE_PLUGIN_ROOT: cfg.pluginRoot },
+			})
+		}
 
 		const client = new Client({ name: "isaac", version: "0.1.0" }, { capabilities: {} })
 

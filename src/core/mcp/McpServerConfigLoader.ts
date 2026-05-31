@@ -13,6 +13,8 @@ interface RawMcpJson {
 			type?: string
 			command?: string
 			args?: string[]
+			url?: string
+			headers?: Record<string, string>
 		}
 	>
 }
@@ -51,9 +53,17 @@ export async function loadMcpConfigsFromPlugins(): Promise<McpServerConfig[]> {
 
 		const servers = parsed.mcpServers ?? {}
 		for (const [serverId, server] of Object.entries(servers)) {
-			if (server.type !== "stdio" && server.type !== undefined) continue
-			if (!server.command) {
+			const kind = server.type ?? "stdio"
+			if (kind !== "stdio" && kind !== "http") continue
+
+			// Validate required fields per transport before claiming the id, so an
+			// invalid entry doesn't shadow a valid same-id server from a later plugin.
+			if (kind === "stdio" && !server.command) {
 				Logger.warn(`[mcp] Server "${serverId}" in plugin ${plugin.manifest.name} has no command, skipping`)
+				continue
+			}
+			if (kind === "http" && !server.url) {
+				Logger.warn(`[mcp] HTTP server "${serverId}" in plugin ${plugin.manifest.name} has no url, skipping`)
 				continue
 			}
 
@@ -67,14 +77,25 @@ export async function loadMcpConfigsFromPlugins(): Promise<McpServerConfig[]> {
 			seenServers.set(serverId, plugin.manifest.name)
 
 			const pluginRoot = plugin.rootDir
-			configs.push({
-				id: serverId,
-				pluginName: plugin.manifest.name,
-				pluginRoot,
-				type: "stdio",
-				command: expandPluginRoot(server.command, pluginRoot),
-				args: (server.args ?? []).map((a) => expandPluginRoot(a, pluginRoot)),
-			})
+			if (kind === "http") {
+				configs.push({
+					id: serverId,
+					pluginName: plugin.manifest.name,
+					pluginRoot,
+					type: "http",
+					url: server.url!,
+					headers: server.headers,
+				})
+			} else {
+				configs.push({
+					id: serverId,
+					pluginName: plugin.manifest.name,
+					pluginRoot,
+					type: "stdio",
+					command: expandPluginRoot(server.command!, pluginRoot),
+					args: (server.args ?? []).map((a) => expandPluginRoot(a, pluginRoot)),
+				})
+			}
 		}
 	}
 

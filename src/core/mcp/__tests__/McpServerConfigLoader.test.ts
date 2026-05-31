@@ -1,6 +1,6 @@
 import { expect } from "chai"
 import fs from "fs/promises"
-import { afterEach, beforeEach, describe, it } from "mocha"
+import { afterEach, beforeEach, describe, it } from "vitest"
 import os from "os"
 import path from "path"
 
@@ -148,6 +148,48 @@ describe("McpServerConfigLoader", () => {
 
 		const { loadMcpConfigsFromPlugins } = loaderModule
 		// Should not throw, returns empty array
+		const result = await loadMcpConfigsFromPlugins()
+		expect(result).to.deep.equal([])
+
+		;(pluginDiscoveryModule.pluginDiscoveryService as any).discover = async () => []
+	})
+
+	it("loads an http server (type=http) with its url and headers", async () => {
+		const fakePlugin = await createFakePlugin(tmpDir, "owner", "plugin-http", "1.0.0", { name: "plugin-http" })
+		const mcpJson = {
+			mcpServers: {
+				exa: {
+					type: "http",
+					url: "https://mcp.exa.ai/mcp",
+					headers: { "X-Source-Name": "isaac" },
+				},
+			},
+		}
+		await fs.writeFile(path.join(fakePlugin.rootDir, ".mcp.json"), JSON.stringify(mcpJson))
+
+		;(pluginDiscoveryModule.pluginDiscoveryService as any).discover = async () => [fakePlugin]
+
+		const { loadMcpConfigsFromPlugins } = loaderModule
+		const result = await loadMcpConfigsFromPlugins()
+		expect(result).to.have.length(1)
+		expect(result[0].id).to.equal("exa")
+		expect(result[0].type).to.equal("http")
+		expect((result[0] as { url?: string }).url).to.equal("https://mcp.exa.ai/mcp")
+		expect((result[0] as { headers?: Record<string, string> }).headers).to.deep.equal({ "X-Source-Name": "isaac" })
+
+		;(pluginDiscoveryModule.pluginDiscoveryService as any).discover = async () => []
+	})
+
+	it("skips an http server that has no url", async () => {
+		const fakePlugin = await createFakePlugin(tmpDir, "owner", "plugin-http-bad", "1.0.0", { name: "plugin-http-bad" })
+		await fs.writeFile(
+			path.join(fakePlugin.rootDir, ".mcp.json"),
+			JSON.stringify({ mcpServers: { broken: { type: "http" } } }),
+		)
+
+		;(pluginDiscoveryModule.pluginDiscoveryService as any).discover = async () => [fakePlugin]
+
+		const { loadMcpConfigsFromPlugins } = loaderModule
 		const result = await loadMcpConfigsFromPlugins()
 		expect(result).to.deep.equal([])
 
