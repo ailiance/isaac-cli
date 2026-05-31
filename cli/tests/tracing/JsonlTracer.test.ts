@@ -339,4 +339,38 @@ describe("JsonlTracer", () => {
 		tracer.appendTurn({ phase: "execute" })
 		tracer.close("aborted", 1)
 	})
+
+	it("scrubs inline credentials from gateway_url before writing meta.json", () => {
+		const tracer = new JsonlTracer("task-metascrub", tmpDir)
+		tracer.writeMeta({
+			task: "task-metascrub",
+			mode: "act",
+			approval_mode: "manual",
+			ailiance_agent_version: "0.1.0",
+			gateway_url: "http://admin:hunter2@studio:9300",
+		})
+		const raw = fs.readFileSync(path.join(tmpDir, TRACING_DIR_NAME, "task-metascrub", "meta.json"), "utf8")
+		expect(raw).not.toContain("hunter2")
+		expect(raw).toContain("[REDACTED]")
+		// in-memory meta stays intact for later merges (only the on-disk copy is scrubbed)
+		tracer.mergeStats({ turns: 1 })
+		const after = JSON.parse(fs.readFileSync(path.join(tmpDir, TRACING_DIR_NAME, "task-metascrub", "meta.json"), "utf8"))
+		expect(after.stats.turns).toBe(1)
+	})
+
+	it("scrubs secrets that surface in error strings", () => {
+		const tracer = new JsonlTracer("task-errscrub", tmpDir)
+		tracer.writeMeta({
+			task: "task-errscrub",
+			mode: "act",
+			approval_mode: "manual",
+			ailiance_agent_version: "0.1.0",
+			gateway_url: "http://studio:9300",
+		})
+		tracer.recordPlannerTurn("nope", 3, ["auth failed for token=supersecretvalue"])
+		const line = JSON.parse(
+			fs.readFileSync(path.join(tmpDir, TRACING_DIR_NAME, "task-errscrub", "trace.jsonl"), "utf8").trim().split("\n")[0],
+		)
+		expect(JSON.stringify(line.errors)).not.toContain("supersecretvalue")
+	})
 })

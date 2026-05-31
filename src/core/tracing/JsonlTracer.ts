@@ -244,7 +244,7 @@ export class JsonlTracer {
 						success: input.tool_execution.success,
 					}
 				: null,
-			errors: input.errors ?? [],
+			errors: input.errors ? scrubSecrets(input.errors) : [],
 		}
 		this.queueAppend(this.tracePath, line)
 		return line
@@ -315,7 +315,11 @@ export class JsonlTracer {
 		// uses the same pattern.
 		const tmpPath = `${this.metaPath}.tmp`
 		try {
-			fs.writeFileSync(tmpPath, JSON.stringify(this.meta, null, 2), "utf8")
+			// Scrub at the single persist point so credential-bearing fields
+			// (gateway_url with inline creds, worker endpoints) never hit disk.
+			// scrubSecrets returns a deep copy, so this.meta stays intact for
+			// later merges (mergeStats / close).
+			fs.writeFileSync(tmpPath, JSON.stringify(scrubSecrets(this.meta), null, 2), "utf8")
 			fs.renameSync(tmpPath, this.metaPath)
 		} catch (_err) {
 			// swallow — tracing is non-fatal. Best-effort cleanup of the tmp.
