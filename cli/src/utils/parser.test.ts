@@ -70,6 +70,14 @@ describe("parser", () => {
 	})
 
 	describe("parseImagesFromInput", () => {
+		beforeEach(() => {
+			vi.spyOn(fs, "existsSync").mockReturnValue(true)
+		})
+
+		afterEach(() => {
+			vi.restoreAllMocks()
+		})
+
 		it("should extract image paths with @ prefix", () => {
 			const input = "analyze this image @/path/to/image.png"
 			const result = parseImagesFromInput(input)
@@ -121,6 +129,66 @@ describe("parser", () => {
 			const result = parseImagesFromInput(input)
 			expect(result.prompt).toBe("text more text")
 		})
+
+		it("should handle paths with narrow non-breaking spaces (macOS screenshots)", () => {
+			const input = "/Users/max/Desktop/Screenshot\\ 2026-05-05\\ at\\ 4.08.14\u202fPM.png what is this image"
+			const result = parseImagesFromInput(input)
+			expect(result.imagePaths).toContain("/Users/max/Desktop/Screenshot 2026-05-05 at 4.08.14\u202fPM.png")
+			expect(result.prompt).toBe("what is this image")
+		})
+
+		it("should handle multiple consecutive standalone image paths", () => {
+			const input = "/img1.png /img2.jpg"
+			const result = parseImagesFromInput(input)
+			expect(result.imagePaths).toContain("/img1.png")
+			expect(result.imagePaths).toContain("/img2.jpg")
+			expect(result.prompt).toBe("")
+		})
+
+		it("should handle quoted paths with spaces and narrow non-breaking spaces", () => {
+			const input = 'analyze @"/path with spaces/Screenshot\u202fPM.png"'
+			const result = parseImagesFromInput(input)
+			expect(result.imagePaths).toContain("/path with spaces/Screenshot\u202fPM.png")
+			expect(result.prompt).toBe("analyze")
+		})
+
+
+		it("should not extract image paths that do not exist", () => {
+			vi.mocked(fs.existsSync).mockReturnValue(false)
+			const input = "analyze this image @/nonexistent/image.png"
+			const result = parseImagesFromInput(input)
+			expect(result.imagePaths).toEqual([])
+			expect(result.prompt).toBe("analyze this image @/nonexistent/image.png")
+		})
+
+		it("should handle ~ in paths", () => {
+			const input = "analyze @~/image.png"
+			const result = parseImagesFromInput(input)
+			expect(result.imagePaths).toContain("~/image.png")
+			expect(result.prompt).toBe("analyze")
+		})
+
+		it("should handle relative paths in quotes", () => {
+			const input = 'analyze "Desktop/image.png"'
+			const result = parseImagesFromInput(input)
+			expect(result.imagePaths).toContain("Desktop/image.png")
+			expect(result.prompt).toBe("analyze")
+		})
+
+		it("should not match standalone paths that do not start with path-like characters", () => {
+			const input = "this is not a path: image.png"
+			const result = parseImagesFromInput(input)
+			expect(result.imagePaths).toEqual([])
+			expect(result.prompt).toBe("this is not a path: image.png")
+		})
+
+		it("should match standalone paths starting with ./", () => {
+			const input = "this is a path: ./image.png"
+			const result = parseImagesFromInput(input)
+			expect(result.imagePaths).toContain("./image.png")
+			expect(result.prompt).toBe("this is a path:")
+		})
+
 	})
 
 	describe("imageFileToDataUrl", () => {

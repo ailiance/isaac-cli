@@ -1,4 +1,5 @@
 import fs from "node:fs"
+import os from "node:os"
 import path from "node:path"
 
 export function jsonParseSafe<T>(data: string, defaultValue: T): T {
@@ -52,6 +53,31 @@ export async function imageFileToDataUrl(filePath: string): Promise<string> {
  * Supports formats like: "prompt text @/path/to/image.png" or just file paths
  * Returns the clean prompt text and array of image paths
  */
+/**
+ * Expand ~ to home directory
+ */
+function expandHome(p: string): string {
+	if (p.startsWith("~/") || p === "~") {
+		return path.join(os.homedir(), p.slice(1))
+	}
+	return p
+}
+
+/**
+ * Check if a path exists on disk (handles unescaping and home expansion)
+ */
+function fileExists(p: string): boolean {
+	try {
+		const unescaped = unescapePath(p)
+		const expanded = expandHome(unescaped)
+		const resolved = path.resolve(expanded)
+		return fs.existsSync(resolved)
+	} catch {
+		return false
+	}
+}
+
+
 function unescapePath(p: string): string {
 	if ((p.startsWith("\"") && p.endsWith("\"")) || (p.startsWith("'") && p.endsWith("'"))) {
 		return p.slice(1, -1)
@@ -64,24 +90,22 @@ export function parseImagesFromInput(input: string): { prompt: string; imagePath
 	const imagePaths: string[] = []
 
 	// Match @path/to/image.ext patterns (with space or at start)
-	// Supports: @/abs/path, @./rel/path, @path/to/file, @C:\path\to\file
+	// Supports: @/abs/path, @./rel/path, @path/to/file, @C:\path\to\file, @~/path
 	// Also supports quoted paths and escaped spaces
 	const atPathPattern =
-		/@(?:"([^"]+\.(?:png|jpg|jpeg|gif|webp))"|'([^']+\.(?:png|jpg|jpeg|gif|webp))'|((?:[a-zA-Z]:\\|\/|\.\/|\.\.\/|[^\s@])(?:[^\s]|\\ )*?\.(?:png|jpg|jpeg|gif|webp)))/gi
+		/@(?:"([^"]+\.(?:png|jpg|jpeg|gif|webp))"|'([^']+\.(?:png|jpg|jpeg|gif|webp))'|((?:[a-zA-Z]:\\|\/|\.\/|\.\.\/|~|[^\s@])(?:[^\s]|\\ )*?\.(?:png|jpg|jpeg|gif|webp)))/gi
+
+	// Match standalone paths that look like images
+	// Stricter for unquoted paths: must start with /, ./, ../, ~/, or drive letter
+	const standalonePathPattern =
+		/(?:^|[ \t\n\r\f\v])(?:"([^"]+\.(?:png|jpg|jpeg|gif|webp))"|'([^']+\.(?:png|jpg|jpeg|gif|webp))'|((?:[a-zA-Z]:\\|\/|\.\/|\.\.\/|~)(?:[^ \t\n\r\f\v]|\\ )*?\.(?:png|jpg|jpeg|gif|webp)))(?=[ \t\n\r\f\v]|$)/gi
+
 	let match: RegExpExecArray | null
+
+	// First pass: find all potential image paths that actually exist
 	while ((match = atPathPattern.exec(input)) !== null) {
 		const p = match[1] || match[2] || match[3]
-		if (p) {
-			imagePaths.push(unescapePath(p))
-		}
-	}
-
-	// Also match standalone paths that look like images
-	const standalonePathPattern =
-		/(?:^|\s)(?:"([^"]+\.(?:png|jpg|jpeg|gif|webp))"|'([^']+\.(?:png|jpg|jpeg|gif|webp))'|((?:[a-zA-Z]:\\|\/|\.\/|\.\.\/|[^\s@])(?:[^\s]|\\ )*?\.(?:png|jpg|jpeg|gif|webp)))(?:\s|$)/gi
-	while ((match = standalonePathPattern.exec(input)) !== null) {
-		const p = match[1] || match[2] || match[3]
-		if (p) {
+		if (p && fileExists(p)) {
 			const unescaped = unescapePath(p)
 			if (!imagePaths.includes(unescaped)) {
 				imagePaths.push(unescaped)
@@ -89,8 +113,30 @@ export function parseImagesFromInput(input: string): { prompt: string; imagePath
 		}
 	}
 
-	// Remove the image references from the prompt
-	const prompt = input.replace(atPathPattern, " ").replace(standalonePathPattern, " ").replace(/[ \t]+/g, " ").trim()
+	while ((match = standalonePathPattern.exec(input)) !== null) {
+		const p = match[1] || match[2] || match[3]
+		if (p && fileExists(p)) {
+			const unescaped = unescapePath(p)
+			if (!imagePaths.includes(unescaped)) {
+				imagePaths.push(unescaped)
+			}
+		}
+	}
+
+	// Second pass: only remove paths from the prompt if they were successfully matched and exist
+	const prompt = input
+		.replace(atPathPattern, (match, p1, p2, p3) => {
+			const p = p1 || p2 || p3
+			return p && fileExists(p) ? " " : match
+		})
+		.replace(standalonePathPattern, (match, p1, p2, p3) => {
+			const p = p1 || p2 || p3
+			// For standalone paths, we need to preserve the leading separator if it was part of the match
+			const prefix = match.match(/^[ \t\n\r\f\v]/) ? match[0] : ""
+			return p && fileExists(p) ? prefix + " " : match
+		})
+		.replace(/[ \t]+/g, " ")
+		.trim()
 
 	return { prompt, imagePaths }
 }
@@ -130,7 +176,8 @@ export async function processImagePaths(imagePaths: string[]): Promise<string[]>
 
 	for (const imagePath of imagePaths) {
 		try {
-			const resolvedPath = path.resolve(imagePath)
+			const expandedPath = expandHome(imagePath)
+			const resolvedPath = path.resolve(expandedPath)
 			if (fs.existsSync(resolvedPath) && isImagePath(resolvedPath)) {
 				const dataUrl = await imageFileToDataUrl(resolvedPath)
 				dataUrls.push(dataUrl)
