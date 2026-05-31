@@ -811,8 +811,12 @@ export class DiracAgent implements acp.Agent {
 				return interceptedReviewResponse
 			}
 
-			// Determine if this is a new task, continuation, or loaded session resume
-			const hasActiveTask = controller.task !== undefined
+			// Determine if this is a new task, continuation, or loaded session resume.
+			// An aborted task must NOT count as active: otherwise once a task aborts
+			// (transient API failure, cancelled hook, …) every subsequent prompt would
+			// try to continue the dead task and re-throw "Dirac instance aborted",
+			// wedging the whole interactive session. Treat it as gone → start fresh.
+			const hasActiveTask = controller.task !== undefined && controller.task.taskState.abort !== true
 			const isLoadedSession = session.isLoadedFromHistory === true
 
 			if (isLoadedSession && !hasActiveTask) {
