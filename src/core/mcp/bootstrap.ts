@@ -96,17 +96,31 @@ function readMcpSettings(): {
 	enabledServers: string[] | undefined
 	toolDenylist: string[] | undefined
 	toolAllowlist: string[] | undefined
+	noMcp: boolean
 } {
+	// Per-run CLI overrides via env take precedence over persisted settings,
+	// so `aki --no-mcp` / `aki --mcp github,context7` can trim the (often
+	// large) inherited Claude-Code plugin MCP set without touching global
+	// config. AILIANCE_MCP_SERVERS="" (empty) is treated as "no servers".
+	const envServersRaw = process.env.AILIANCE_MCP_SERVERS
+	const envEnabled =
+		envServersRaw !== undefined
+			? envServersRaw.split(",").map((s) => s.trim()).filter(Boolean)
+			: undefined
+	const noMcp =
+		["1", "true", "yes"].includes((process.env.AILIANCE_NO_MCP ?? "").toLowerCase()) ||
+		(envEnabled !== undefined && envEnabled.length === 0)
 	try {
 		const mgr = StateManager.get()
 		return {
-			enabledServers: mgr.getGlobalSettingsKey("enabledMcpServers"),
+			enabledServers: envEnabled ?? mgr.getGlobalSettingsKey("enabledMcpServers"),
 			toolDenylist: mgr.getGlobalSettingsKey("mcpToolDenylist"),
 			toolAllowlist: mgr.getGlobalSettingsKey("mcpToolAllowlist"),
+			noMcp,
 		}
 	} catch {
-		// StateManager not initialized yet (e.g. in some tests) — skip filtering
-		return { enabledServers: undefined, toolDenylist: undefined, toolAllowlist: undefined }
+		// StateManager not initialized yet (e.g. in some tests) — env overrides still apply.
+		return { enabledServers: envEnabled, toolDenylist: undefined, toolAllowlist: undefined, noMcp }
 	}
 }
 
@@ -115,7 +129,13 @@ export async function initializeMcpForTask(
 	registerSpec: (spec: ReturnType<typeof mcpToolToSpec>) => void = (spec) => DiracToolSet.register(spec),
 ): Promise<McpToolMetadata[]> {
 	try {
-		const { enabledServers, toolDenylist, toolAllowlist } = readMcpSettings()
+		const { enabledServers, toolDenylist, toolAllowlist, noMcp } = readMcpSettings()
+
+		if (noMcp) {
+			// --no-mcp (or an empty --mcp allowlist): run with zero plugin MCP
+			// servers. Keeps the agent prompt small for big-context backends.
+			return []
+		}
 
 		await mcpClientManager.loadFromPlugins(enabledServers ? { enabledServers } : undefined)
 

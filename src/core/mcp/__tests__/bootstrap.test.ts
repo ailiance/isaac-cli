@@ -194,6 +194,42 @@ describe("initializeMcpForTask", () => {
 		expect((executor.registerMcpTool as sinon.SinonStub).called).to.be.false
 	})
 
+	it("--no-mcp (AILIANCE_NO_MCP) skips all plugin servers", async () => {
+		process.env.AILIANCE_NO_MCP = "1"
+		try {
+			const executor = makeToolExecutorStub()
+			const result = await initializeMcpForTask(executor as Parameters<typeof initializeMcpForTask>[0], noopRegisterSpec)
+			expect(result).to.deep.equal([])
+			expect(loadFromPluginsStub.called).to.be.false
+		} finally {
+			delete process.env.AILIANCE_NO_MCP
+		}
+	})
+
+	it("--mcp <list> (AILIANCE_MCP_SERVERS) passes a trimmed allowlist to loadFromPlugins", async () => {
+		process.env.AILIANCE_MCP_SERVERS = "github, context7"
+		try {
+			const executor = makeToolExecutorStub()
+			await initializeMcpForTask(executor as Parameters<typeof initializeMcpForTask>[0], noopRegisterSpec)
+			expect(loadFromPluginsStub.calledOnce).to.be.true
+			expect(loadFromPluginsStub.firstCall.args[0]).to.deep.equal({ enabledServers: ["github", "context7"] })
+		} finally {
+			delete process.env.AILIANCE_MCP_SERVERS
+		}
+	})
+
+	it("empty --mcp allowlist (AILIANCE_MCP_SERVERS='') skips all plugin servers", async () => {
+		process.env.AILIANCE_MCP_SERVERS = ""
+		try {
+			const executor = makeToolExecutorStub()
+			const result = await initializeMcpForTask(executor as Parameters<typeof initializeMcpForTask>[0], noopRegisterSpec)
+			expect(result).to.deep.equal([])
+			expect(loadFromPluginsStub.called).to.be.false
+		} finally {
+			delete process.env.AILIANCE_MCP_SERVERS
+		}
+	})
+
 	it("swallows listAllTools errors and returns empty array", async () => {
 		listAllToolsStub.rejects(new Error("discovery failure"))
 

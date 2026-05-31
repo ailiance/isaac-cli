@@ -61,7 +61,20 @@ program
 	.option("--subagents", "Enable subagents for the task")
 	.option("--hooks-dir <path>", "Path to additional hooks directory for runtime hook injection")
 	.option("-T, --taskId <id>", "Resume an existing task by ID")
+	.option(
+		"--mcp <servers>",
+		"Comma-separated allowlist of plugin MCP servers to load (e.g. github,context7); only these load this run",
+	)
+	.option("--no-mcp", "Disable all plugin MCP servers for this run (smaller prompt, faster on big-context backends)")
 	.action(async (prompt, options) => {
+		// Per-run MCP control. Commander sets options.mcp = false for --no-mcp,
+		// or the string list for --mcp <servers>. Surfaced to the core MCP
+		// bootstrap (src/core/mcp/bootstrap.ts) via env so no global config is touched.
+		if (options.mcp === false) {
+			process.env.AILIANCE_NO_MCP = "1"
+		} else if (typeof options.mcp === "string") {
+			process.env.AILIANCE_MCP_SERVERS = options.mcp
+		}
 		const { runTask } = await import("./commands/task")
 		const { resumeTask } = await import("./commands/resume")
 		if (options.taskId) {
