@@ -37,6 +37,9 @@ export interface SystemPromptContext {
 	readonly runtimePlaceholders?: Readonly<Record<string, unknown>>
 	readonly yoloModeToggled?: boolean
 	readonly subagentsEnabled?: boolean
+	/** Active MCP tool qualified names for adaptive retrieval. When set, only
+	 * these MCP tools are emitted; undefined means "no gating" (legacy: all). */
+	readonly activeMcpTools?: ReadonlySet<string>
 	readonly diracWebToolsEnabled?: boolean
 	readonly isMultiRootEnabled?: boolean
 	readonly workspaceRoots?: Array<{ path: string; name: string; vcs?: string }>
