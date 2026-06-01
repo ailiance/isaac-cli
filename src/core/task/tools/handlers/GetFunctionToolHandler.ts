@@ -13,6 +13,7 @@ import type { ToolValidator } from "../ToolValidator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
+import { coerceToStringArray, coerceFirstStringArray } from "../utils/coerceArray"
 
 export class GetFunctionToolHandler implements IFullyManagedTool {
 	readonly name = DiracDefaultTool.GET_FUNCTION
@@ -20,13 +21,13 @@ export class GetFunctionToolHandler implements IFullyManagedTool {
 	constructor(private validator: ToolValidator) {}
 
 	getDescription(block: ToolUse): string {
-		const functionNames = Array.isArray(block.params.function_names) ? block.params.function_names : (block.params.function_names ? [block.params.function_names as string] : [])
-		const relPaths = Array.isArray(block.params.paths) ? block.params.paths : (block.params.paths ? [block.params.paths as string] : (block.params.path ? [block.params.path as string] : []))
+		const functionNames = coerceToStringArray(block.params.function_names)
+		const relPaths = coerceFirstStringArray(block.params.paths, block.params.path)
 		return `[${block.name} for '${functionNames.join(", ")}' in ${relPaths.map((p) => `'${p}'`).join(", ")}]`
 	}
 	async handlePartialBlock(block: ToolUse, uiHelpers: StronglyTypedUIHelpers): Promise<void> {
-		const relPaths = Array.isArray(block.params.paths) ? block.params.paths : (block.params.paths ? [block.params.paths as string] : (block.params.path ? [block.params.path as string] : []))
-		const functionNames = Array.isArray(block.params.function_names) ? block.params.function_names : (block.params.function_names ? [block.params.function_names as string] : [])
+		const relPaths = coerceFirstStringArray(block.params.paths, block.params.path)
+		const functionNames = coerceToStringArray(block.params.function_names)
 
 		const config = uiHelpers.getConfig()
 		if (config.isSubagentExecution) {
@@ -119,8 +120,8 @@ export class GetFunctionToolHandler implements IFullyManagedTool {
 
 
 		async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
-		const relPaths = Array.isArray(block.params.paths) ? block.params.paths : (block.params.paths ? [block.params.paths as string] : (block.params.path ? [block.params.path as string] : []))
-		const functionNames = Array.isArray(block.params.function_names) ? block.params.function_names : (block.params.function_names ? [block.params.function_names as string] : [])
+		const relPaths = coerceFirstStringArray(block.params.paths, block.params.path)
+		const functionNames = coerceToStringArray(block.params.function_names)
 
 		const apiConfig = config.services.stateManager.getApiConfiguration()
 		const currentMode = config.services.stateManager.getGlobalSettingsKey("mode")

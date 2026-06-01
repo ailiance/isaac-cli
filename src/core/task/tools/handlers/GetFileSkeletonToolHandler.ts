@@ -13,6 +13,7 @@ import type { ToolValidator } from "../ToolValidator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
+import { coerceFirstStringArray } from "../utils/coerceArray"
 
 export class GetFileSkeletonToolHandler implements IFullyManagedTool {
 	readonly name = DiracDefaultTool.GET_FILE_SKELETON
@@ -20,12 +21,12 @@ export class GetFileSkeletonToolHandler implements IFullyManagedTool {
 	constructor(private validator: ToolValidator) {}
 
 	getDescription(block: ToolUse): string {
-		const relPaths = Array.isArray(block.params.paths) ? block.params.paths : (block.params.paths ? [block.params.paths as string] : (block.params.path ? [block.params.path as string] : []))
+		const relPaths = coerceFirstStringArray(block.params.paths, block.params.path)
 		return `[${block.name} for ${relPaths.map((p) => `'${p}'`).join(", ")}]`
 	}
 
 	async handlePartialBlock(block: ToolUse, uiHelpers: StronglyTypedUIHelpers): Promise<void> {
-		const relPaths = Array.isArray(block.params.paths) ? block.params.paths : (block.params.paths ? [block.params.paths as string] : (block.params.path ? [block.params.path as string] : []))
+		const relPaths = coerceFirstStringArray(block.params.paths, block.params.path)
 		const config = uiHelpers.getConfig()
 		if (config.isSubagentExecution) {
 			return
@@ -50,7 +51,7 @@ export class GetFileSkeletonToolHandler implements IFullyManagedTool {
 	}
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
-		const relPaths = Array.isArray(block.params.paths) ? block.params.paths : (block.params.paths ? [block.params.paths as string] : (block.params.path ? [block.params.path as string] : []))
+		const relPaths = coerceFirstStringArray(block.params.paths, block.params.path)
 		const apiConfig = config.services.stateManager.getApiConfiguration()
 		const currentMode = config.services.stateManager.getGlobalSettingsKey("mode")
 		const provider = (currentMode === "plan" ? apiConfig.planModeApiProvider : apiConfig.actModeApiProvider) as string

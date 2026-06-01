@@ -11,6 +11,7 @@ import { telemetryService } from "@/services/telemetry"
 import { ToolResponse } from "../../index"
 import { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import { ToolValidator } from "../ToolValidator"
+import { coerceToStringArray } from "../utils/coerceArray"
 import { TaskConfig } from "../types/TaskConfig"
 import { StronglyTypedUIHelpers } from "../types/UIHelpers"
 
@@ -23,13 +24,13 @@ export class DiagnosticsScanToolHandler implements IFullyManagedTool {
 	constructor(private validator: ToolValidator) {}
 
 	getDescription(block: ToolUse): string {
-		const relPaths = Array.isArray(block.params.paths) ? block.params.paths : (block.params.paths ? [block.params.paths as string] : [])
+		const relPaths = coerceToStringArray(block.params.paths)
 		const pathsText = relPaths.length > 0 ? ` for ${relPaths.map((p) => `'${p}'`).join(", ")}` : ""
 		return `[${block.name}${pathsText}]`
 	}
 
 	async handlePartialBlock(block: ToolUse, uiHelpers: StronglyTypedUIHelpers): Promise<void> {
-		const relPaths = Array.isArray(block.params.paths) ? block.params.paths : (block.params.paths ? [block.params.paths as string] : [])
+		const relPaths = coerceToStringArray(block.params.paths)
 		const config = uiHelpers.getConfig()
 
 		const message = JSON.stringify({
@@ -55,7 +56,7 @@ export class DiagnosticsScanToolHandler implements IFullyManagedTool {
 			return await config.callbacks.sayAndCreateMissingParamError(this.name, "paths")
 		}
 
-		const relPaths = Array.isArray(block.params.paths) ? block.params.paths : (block.params.paths ? [block.params.paths as string] : [])
+		const relPaths = coerceToStringArray(block.params.paths)
 		if (relPaths.length === 0) {
 			config.taskState.consecutiveMistakeCount++
 			return await config.callbacks.sayAndCreateMissingParamError(this.name, "paths")

@@ -21,6 +21,7 @@ import type { ToolValidator } from "../ToolValidator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
+import { coerceToStringArray } from "../utils/coerceArray"
 
 export class RenameSymbolToolHandler implements IFullyManagedTool {
 	readonly name = DiracDefaultTool.RENAME_SYMBOL
@@ -35,11 +36,7 @@ export class RenameSymbolToolHandler implements IFullyManagedTool {
 	getDescription(block: ToolUse): string {
 		const existingSymbol = block.params.existing_symbol as string
 		const newSymbol = block.params.new_symbol as string
-		const paths = Array.isArray(block.params.paths)
-			? block.params.paths
-			: block.params.paths
-				? [block.params.paths as string]
-				: []
+		const paths = coerceToStringArray(block.params.paths)
 		return `[${block.name} for '${existingSymbol}' to '${newSymbol}' in ${paths.map((p) => `'${p}'`).join(", ")}]`
 	}
 
@@ -50,11 +47,7 @@ export class RenameSymbolToolHandler implements IFullyManagedTool {
 			(block.params.existing_symbol as string) || "",
 		)
 		const newSymbol = uiHelpers.removeClosingTag(block, "new_symbol", (block.params.new_symbol as string) || "")
-		const paths = Array.isArray(block.params.paths)
-			? block.params.paths
-			: block.params.paths
-				? [block.params.paths as string]
-				: []
+		const paths = coerceToStringArray(block.params.paths)
 
 		const config = uiHelpers.getConfig()
 		if (config.isSubagentExecution) {
@@ -83,11 +76,7 @@ export class RenameSymbolToolHandler implements IFullyManagedTool {
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
 		const existingSymbol = block.params.existing_symbol as string
 		const newSymbol = block.params.new_symbol as string
-		const relPaths = Array.isArray(block.params.paths)
-			? block.params.paths
-			: block.params.paths
-				? [block.params.paths as string]
-				: []
+		const relPaths = coerceToStringArray(block.params.paths)
 
 		if (!existingSymbol || !newSymbol || relPaths.length === 0) {
 			config.taskState.consecutiveMistakeCount++

@@ -17,6 +17,7 @@ import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
+import { coerceToStringArray } from "../utils/coerceArray"
 import { isSafeCommand } from "../utils/CommandSafetyChecker"
 import { applyModelContentFixes } from "../utils/ModelContentProcessor"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
@@ -73,11 +74,7 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 	constructor(private validator: ToolValidator) {}
 
 	getDescription(block: ToolUse): string {
-		const commands = Array.isArray(block.params.commands)
-			? block.params.commands
-			: block.params.commands
-				? [block.params.commands as string]
-				: []
+		const commands = coerceToStringArray(block.params.commands)
 		const script = block.params.script as string | undefined
 		const language = block.params.language as string | undefined
 
@@ -99,23 +96,17 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 			return
 		}
 
-		const rawCommands = (block.params.commands as any) || []
+		const rawCommands = coerceToStringArray(block.params.commands)
 		const script = block.params.script as string | undefined
 		const language = (block.params.language as string | undefined) || "bash"
 
 		const commandsToProcess: { command: string; displayName?: string }[] = []
-		if (Array.isArray(rawCommands)) {
-			rawCommands.forEach((cmd: string) => {
-				if (cmd) {
-					commandsToProcess.push({
-						command: uiHelpers.removeClosingTag(block, "commands", cmd),
-					})
-				}
-			})
-		} else if (typeof rawCommands === "string" && rawCommands.trim() !== "") {
-			commandsToProcess.push({
-				command: uiHelpers.removeClosingTag(block, "commands", rawCommands),
-			})
+		for (const cmd of rawCommands) {
+			if (cmd) {
+				commandsToProcess.push({
+					command: uiHelpers.removeClosingTag(block, "commands", cmd),
+				})
+			}
 		}
 
 		if (script) {
@@ -158,7 +149,7 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 	}
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
-		const rawCommands = (block.params.commands as any) || []
+		const rawCommands = coerceToStringArray(block.params.commands)
 		const script = block.params.script as string | undefined
 		const language = (block.params.language as string | undefined) || "bash"
 
@@ -187,10 +178,10 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 		// Normalize to a list of commands
 		const commandsToProcess: { command: string; displayName?: string }[] = []
 
-		if (Array.isArray(rawCommands) && rawCommands.length > 0) {
-			rawCommands.forEach((cmd: string) => commandsToProcess.push({ command: cmd }))
-		} else if (typeof rawCommands === "string" && rawCommands.trim() !== "") {
-			commandsToProcess.push({ command: rawCommands })
+		for (const cmd of rawCommands) {
+			if (cmd) {
+				commandsToProcess.push({ command: cmd })
+			}
 		}
 
 		if (script) {

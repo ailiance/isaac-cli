@@ -16,6 +16,7 @@ import type { ToolValidator } from "../ToolValidator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
+import { coerceFirstStringArray } from "../utils/coerceArray"
 
 export class FindSymbolReferencesToolHandler implements IFullyManagedTool {
 	readonly name = DiracDefaultTool.FIND_SYMBOL_REFERENCES
@@ -23,15 +24,15 @@ export class FindSymbolReferencesToolHandler implements IFullyManagedTool {
 	constructor(private validator: ToolValidator) {}
 
 	getDescription(block: ToolUse): string {
-		const relPaths = Array.isArray(block.params.paths) ? block.params.paths : (block.params.paths ? [block.params.paths as string] : (block.params.path ? [block.params.path as string] : []))
-		const symbols = Array.isArray(block.params.symbols) ? block.params.symbols : (block.params.symbols ? [block.params.symbols as string] : (block.params.symbol ? [block.params.symbol as string] : []))
+		const relPaths = coerceFirstStringArray(block.params.paths, block.params.path)
+		const symbols = coerceFirstStringArray(block.params.symbols, block.params.symbol)
 		const findType = (block.params.find_type as string) || "both"
 		return `[${block.name} for ${symbols.map((s) => `'${s}'`).join(", ")} in ${relPaths.map((p) => `'${p}'`).join(", ")}${findType !== "both" ? ` (type: ${findType})` : ""}]`
 	}
 
 	async handlePartialBlock(block: ToolUse, uiHelpers: StronglyTypedUIHelpers): Promise<void> {
-		const relPaths = Array.isArray(block.params.paths) ? block.params.paths : (block.params.paths ? [block.params.paths as string] : (block.params.path ? [block.params.path as string] : []))
-		const symbols = Array.isArray(block.params.symbols) ? block.params.symbols : (block.params.symbols ? [block.params.symbols as string] : (block.params.symbol ? [block.params.symbol as string] : []))
+		const relPaths = coerceFirstStringArray(block.params.paths, block.params.path)
+		const symbols = coerceFirstStringArray(block.params.symbols, block.params.symbol)
 
 		const config = uiHelpers.getConfig()
 		if (config.isSubagentExecution) {
@@ -60,8 +61,8 @@ export class FindSymbolReferencesToolHandler implements IFullyManagedTool {
 	}
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
-		const relPaths = Array.isArray(block.params.paths) ? block.params.paths : (block.params.paths ? [block.params.paths as string] : (block.params.path ? [block.params.path as string] : []))
-		const symbols = Array.isArray(block.params.symbols) ? block.params.symbols : (block.params.symbols ? [block.params.symbols as string] : (block.params.symbol ? [block.params.symbol as string] : []))
+		const relPaths = coerceFirstStringArray(block.params.paths, block.params.path)
+		const symbols = coerceFirstStringArray(block.params.symbols, block.params.symbol)
 		const findType = (block.params.find_type as "definition" | "reference" | "both") || "both"
 
 		const apiConfig = config.services.stateManager.getApiConfiguration()

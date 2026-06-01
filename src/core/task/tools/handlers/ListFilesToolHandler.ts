@@ -15,6 +15,7 @@ import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
+import { coerceToStringArray } from "../utils/coerceArray"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
 
 // Sprint 2 — task E: async-by-default list_files when recursive=true.
@@ -39,20 +40,12 @@ export class ListFilesToolHandler implements IFullyManagedTool {
 	constructor(private validator: ToolValidator) {}
 
 	getDescription(block: ToolUse): string {
-		const relPaths = Array.isArray(block.params.paths)
-			? block.params.paths
-			: block.params.paths
-				? [block.params.paths as string]
-				: []
+		const relPaths = coerceToStringArray(block.params.paths)
 		return `[${block.name} for ${relPaths.map((p) => `'${p}'`).join(", ")}]`
 	}
 
 	async handlePartialBlock(block: ToolUse, uiHelpers: StronglyTypedUIHelpers): Promise<void> {
-		const relPaths = Array.isArray(block.params.paths)
-			? block.params.paths
-			: block.params.paths
-				? [block.params.paths as string]
-				: []
+		const relPaths = coerceToStringArray(block.params.paths)
 
 		// Get config access for services
 		const config = uiHelpers.getConfig()
@@ -177,11 +170,7 @@ export class ListFilesToolHandler implements IFullyManagedTool {
 	}
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
-		const relPaths = Array.isArray(block.params.paths)
-			? block.params.paths
-			: block.params.paths
-				? [block.params.paths as string]
-				: []
+		const relPaths = coerceToStringArray(block.params.paths)
 		const recursiveRaw = block.params.recursive
 		const recursive = String(recursiveRaw ?? "").toLowerCase() === "true"
 

@@ -16,6 +16,7 @@ import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
+import { coerceToStringArray } from "../utils/coerceArray"
 import { extractLastKnownHashFromHistory } from "../utils/extractLastKnownHash"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
 import { sliceContentLines } from "./readFilePagination"
@@ -43,7 +44,7 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 	constructor(private validator: ToolValidator) {}
 
 	getDescription(block: ToolUse): string {
-		const relPaths = Array.isArray(block.params.paths) ? block.params.paths : (block.params.paths ? [block.params.paths as string] : [])
+		const relPaths = coerceToStringArray(block.params.paths)
 		const range =
 			block.params.start_line || block.params.end_line
 				? ` lines ${block.params.start_line || 1}-${block.params.end_line || "?"}`
@@ -52,7 +53,7 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 	}
 
 	async handlePartialBlock(block: ToolUse, uiHelpers: StronglyTypedUIHelpers): Promise<void> {
-		const relPaths = Array.isArray(block.params.paths) ? block.params.paths : (block.params.paths ? [block.params.paths as string] : [])
+		const relPaths = coerceToStringArray(block.params.paths)
 		const config = uiHelpers.getConfig()
 		if (config.isSubagentExecution) {
 			return
@@ -90,11 +91,7 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 	}
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
-		const relPaths = Array.isArray(block.params.paths)
-			? block.params.paths
-			: block.params.paths
-				? [block.params.paths as string]
-				: []
+		const relPaths = coerceToStringArray(block.params.paths)
 		const startLineNum = block.params.start_line ? Number.parseInt(String(block.params.start_line)) : undefined
 		const endLineNum = block.params.end_line ? Number.parseInt(String(block.params.end_line)) : undefined
 		const rawOffset = (block.params as any).offset

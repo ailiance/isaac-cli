@@ -21,6 +21,7 @@ import type { ToolValidator } from "../ToolValidator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
+import { coerceFirstStringArray } from "../utils/coerceArray"
 
 // Sprint 2 — task D: async-by-default search_files. Mirrors S2-C
 // (ExecuteCommandToolHandler): if ripgrep finishes within ASYNC_FAST_PATH_MS
@@ -35,15 +36,7 @@ export class SearchFilesToolHandler implements IFullyManagedTool {
 
 	constructor(private validator: ToolValidator) {}
 	private getRelPaths(params: any): string[] {
-		return Array.isArray(params.paths)
-			? params.paths
-			: params.paths
-				? [params.paths as string]
-				: Array.isArray(params.path)
-					? params.path
-					: params.path
-						? [params.path as string]
-						: []
+		return coerceFirstStringArray(params.paths, params.path)
 	}
 
 	getDescription(block: ToolUse): string {
