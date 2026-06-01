@@ -2,9 +2,9 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import { hashLines } from "@utils/line-hashing"
 import * as diff from "diff"
 import * as path from "path"
+import type { FileInfo } from "../../services/glob/list-files"
 import { Mode } from "../../shared/storage/types"
 import { DiracIgnoreController, LOCK_TEXT_SYMBOL } from "../ignore/DiracIgnoreController"
-import type { FileInfo } from "../../services/glob/list-files"
 
 const CONTEXT_WINDOW_WARNING_THRESHOLD_PERCENT = 50
 
@@ -24,7 +24,8 @@ export const formatResponse = {
 
 	toolDenied: () => `The user denied this operation.`,
 
-	toolDeniedWithFeedback: (feedback: string) => `The user denied this operation and provided the following feedback:\n<feedback>\n${feedback}\n</feedback>`,
+	toolDeniedWithFeedback: (feedback: string) =>
+		`The user denied this operation and provided the following feedback:\n<feedback>\n${feedback}\n</feedback>`,
 
 	toolError: (error?: string) => `The tool execution failed with the following error:\n<error>\n${error}\n</error>`,
 
@@ -37,8 +38,7 @@ export const formatResponse = {
 	filePermissionError: (path: string, operation: string) =>
 		`Cannot ${operation} '${path}': Permission denied. You may need to ask the user to check file permissions or try a different path.`,
 
-	readOnlyError: (path: string) =>
-		`Cannot write to '${path}': Read-only file system.`,
+	readOnlyError: (path: string) => `Cannot write to '${path}': Read-only file system.`,
 
 	permissionDeniedError: (reason: string) =>
 		`Command execution blocked by DIRAC_COMMAND_PERMISSIONS: ${reason}. You must try a different approach or ask the user to update the permission settings.`,
@@ -58,7 +58,11 @@ Otherwise, if you have not completed the task and do not need additional informa
 		`You seem to be having trouble proceeding. The user has provided the following feedback to help guide you:\n<feedback>\n${feedback}\n</feedback>`,
 
 	missingToolParameterError: (paramName: string, example?: string) =>
-		`Missing value for required parameter '${paramName}'. Please retry with complete response.${example ? `\n\nExample of correct usage (arguments JSON):\n${example}` : ""}\n`,
+		`The required parameter '${paramName}' was missing or empty in your tool call. ` +
+		`You MUST provide a non-empty value for it. If '${paramName}' is an array (such as ` +
+		`paths or commands), it must contain at least one element — do NOT send an empty ` +
+		`array \`[]\`; put the actual value(s) inside it. Re-issue the SAME tool now with ` +
+		`'${paramName}' populated.${example ? `\n\nExample of correct usage (arguments JSON):\n${example}` : ""}\n`,
 
 	/**
 	 * Specialized error for write_to_file when the 'content' parameter is missing.
@@ -173,20 +177,14 @@ Otherwise, if you have not completed the task and do not need additional informa
 			return aParts.length - bParts.length
 		})
 
-		const filtered = diracIgnoreController
-			? sorted.filter((file) => diracIgnoreController.validateAccess(file.path))
-			: sorted
+		const filtered = diracIgnoreController ? sorted.filter((file) => diracIgnoreController.validateAccess(file.path)) : sorted
 
 		const formatted = filtered.map((file) => {
 			let relativePath = path.relative(absolutePath, file.path).toPosix()
 			if (relativePath === "" && !file.isDirectory) {
 				relativePath = path.basename(file.path)
 			}
-			const displayPath = file.isDirectory
-				? relativePath.endsWith("/")
-					? relativePath
-					: `${relativePath}/`
-				: relativePath
+			const displayPath = file.isDirectory ? (relativePath.endsWith("/") ? relativePath : `${relativePath}/`) : relativePath
 			const lineCountSuffix = file.lineCount !== undefined ? ` ${file.lineCount} lines` : ""
 			return `${displayPath}${lineCountSuffix}`
 		})
