@@ -277,6 +277,12 @@ const sharedOptions: Partial<esbuild.BuildOptions> = {
 		"pino",
 		"pino-roll",
 		"@vscode/ripgrep", // Uses __dirname to locate the binary
+		// Adaptive MCP retrieval embedder: lazily imported ONNX runtime + model.
+		// Native .node binaries cannot be bundled by esbuild; keep them external
+		// so they resolve from node_modules at runtime (only loaded when MCP
+		// retrieval is active — guarded by --no-mcp).
+		"@huggingface/transformers",
+		"onnxruntime-node",
 	],
 	supported: { "top-level-await": true },
 }

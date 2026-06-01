@@ -8,6 +8,7 @@ import { ModelContextTracker } from "@core/context/context-tracking/ModelContext
 import { DiracIgnoreController } from "@core/ignore/DiracIgnoreController"
 import { initializeMcpForTask } from "@core/mcp/bootstrap"
 import { mcpClientManager } from "@core/mcp/McpClientManager"
+import { getActiveMcpToolSet } from "@core/mcp/retrieval/session"
 import { CommandPermissionController } from "@core/permissions"
 import { WorkspaceRootManager } from "@core/workspace/WorkspaceRootManager"
 import { HostProvider } from "@hosts/host-provider"
@@ -517,6 +518,13 @@ export class Task {
 		// on its first request. Failures are swallowed — ailiance-agent must work
 		// without plugins.
 		await initializeMcpForTask(this.toolExecutor)
+		// Adaptive MCP retrieval: seed the session active set from the first
+		// user task text so the prompt-context gate can filter MCP tools down
+		// to the relevant subset. Best-effort — must not block task start.
+		const _mcpActiveSet = getActiveMcpToolSet()
+		if (_mcpActiveSet && typeof task === "string" && task.length > 0) {
+			await _mcpActiveSet.seed(task)
+		}
 		return this.lifecycleManager.startTask(task, images, files)
 	}
 

@@ -3,6 +3,7 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 import type { ApiHandler, buildApiHandler } from "@core/api"
 import { parseAssistantMessageV2, ToolParamName, ToolUse } from "@core/assistant-message"
 import { getOrDiscoverSkills } from "@core/context/instructions/user-instructions/skills"
+import { getActiveMcpToolSet } from "@core/mcp/retrieval/session"
 import { formatResponse } from "@core/prompts/responses"
 import { PromptRegistry } from "@core/prompts/system-prompt"
 import type { SystemPromptContext } from "@core/prompts/system-prompt/types"
@@ -368,6 +369,7 @@ export class SubagentRunner {
 				yoloModeToggled: false,
 				enableParallelToolCalling: false,
 				isSubagentRun: true,
+				activeMcpTools: getActiveMcpToolSet()?.snapshot(),
 				isMultiRootEnabled: this.baseConfig.isMultiRootEnabled,
 				workspaceRoots: this.baseConfig.workspaceManager?.getRoots().map((root) => ({
 					path: root.path,

@@ -15,6 +15,7 @@ import {
 import { formatResponse } from "@core/prompts/responses"
 import type { SystemPromptContext } from "@core/prompts/system-prompt"
 import { getSystemPrompt } from "@core/prompts/system-prompt"
+import { getActiveMcpToolSet } from "@core/mcp/retrieval/session"
 import { ensureRulesDirectoryExists, ensureTaskDirectoryExists } from "@core/storage/disk"
 import { isMultiRootEnabled } from "@core/workspace/multi-root-utils"
 import { HostProvider } from "@hosts/host-provider"
@@ -206,6 +207,7 @@ export class ApiRequestHandler {
 			availableCores: getAvailableCores(),
 			shouldCompact,
 			userPromptText: firstUserPromptText,
+			activeMcpTools: getActiveMcpToolSet()?.snapshot(),
 		}
 
 		// Notify user if any conditional rules were applied for this request
