@@ -10,6 +10,7 @@ import { initializeMcpForTask } from "@core/mcp/bootstrap"
 import { mcpClientManager } from "@core/mcp/McpClientManager"
 import { getActiveMcpToolSet } from "@core/mcp/retrieval/session"
 import { CommandPermissionController } from "@core/permissions"
+import { getSavedApiConversationHistory } from "@core/storage/disk"
 import { WorkspaceRootManager } from "@core/workspace/WorkspaceRootManager"
 import { HostProvider } from "@hosts/host-provider"
 import { ICheckpointManager } from "@integrations/checkpoints/types"
@@ -529,7 +530,59 @@ export class Task {
 	}
 
 	public async resumeTaskFromHistory() {
+		// Mirror startTask: the resume path must (re)publish MCP tool specs +
+		// a fresh session active set, otherwise getActiveMcpToolSet() returns
+		// undefined (or a stale set from a prior task in a long-lived process)
+		// and the prompt-context gate floods the prompt with every MCP spec
+		// still registered in the process-global DiracToolSet. Re-init is cheap
+		// (re-lists + re-publishes; the vector index is disk-cached).
+		await initializeMcpForTask(this.toolExecutor)
+		// Seed the active set from the resumed conversation's first user message
+		// so retrieval filters MCP tools down to the relevant subset. Best-effort.
+		const _mcpActiveSet = getActiveMcpToolSet()
+		if (_mcpActiveSet) {
+			const firstUserText = await this.extractFirstUserTextFromHistory()
+			if (firstUserText) {
+				await _mcpActiveSet.seed(firstUserText)
+			}
+		}
 		return this.lifecycleManager.resumeTaskFromHistory()
+	}
+
+	/**
+	 * Best-effort extraction of the first user message text from the saved API
+	 * conversation history, used to seed the adaptive MCP retrieval active set
+	 * on resume. Mirrors the extraction in ApiRequestHandler. Returns undefined
+	 * if the history is unreadable or contains no user text.
+	 */
+	private async extractFirstUserTextFromHistory(): Promise<string | undefined> {
+		try {
+			const history = await getSavedApiConversationHistory(this.taskId)
+			const firstUser = history.find((m) => m.role === "user")
+			if (!firstUser) {
+				return undefined
+			}
+			const content: unknown = firstUser.content
+			if (typeof content === "string") {
+				return content.length > 0 ? content : undefined
+			}
+			if (Array.isArray(content)) {
+				const parts: string[] = []
+				for (const block of content) {
+					if (block && typeof block === "object" && (block as { type?: unknown }).type === "text") {
+						const text = (block as { text?: unknown }).text
+						if (typeof text === "string") {
+							parts.push(text)
+						}
+					}
+				}
+				return parts.length > 0 ? parts.join(" ") : undefined
+			}
+			return undefined
+		} catch {
+			// best-effort — resume must never break on a missing/corrupt history
+			return undefined
+		}
 	}
 
 	private async initiateTaskLoop(userContent: DiracContent[]): Promise<void> {
