@@ -311,9 +311,19 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, mode, isStrea
 		)
 	}
 
-	// Assistant text response (hide reasoning traces - they're verbose and clutter the UI)
+	// Reasoning / chain-of-thought. Streamed live and kept in history, dimmed
+	// and italic so it stays visually distinct from the assistant's answer.
 	if (say === "reasoning") {
-		return null
+		if (!text?.trim()) return null
+		return (
+			<Box flexDirection="column" marginBottom={1} width="100%">
+				<DotRow color="gray" flashing={partial === true && isStreaming}>
+					<Text color="gray" dimColor italic>
+						{text}
+					</Text>
+				</DotRow>
+			</Box>
+		)
 	}
 	if (say === "text") {
 		if (!text?.trim()) return null
@@ -454,7 +464,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, mode, isStrea
 				)}
 				{output && (
 					<Box flexDirection="column" marginLeft={2} width="100%">
-						{formatToolResult(output, 8).map((line, idx) => (
+						{formatToolResult(output, isExecuting ? 20 : Number.MAX_SAFE_INTEGER).map((line, idx) => (
 							<ResultRow isFirst={idx === 0} key={idx}>
 								<Text color="gray">{line}</Text>
 							</ResultRow>

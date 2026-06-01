@@ -104,3 +104,35 @@ describe("ChatMessage subagent rendering", () => {
 		expect(frame).toContain("5 tool uses · 28.9k tokens · $0.00")
 	})
 })
+
+describe("ChatMessage reasoning rendering", () => {
+	it("renders the reasoning (chain-of-thought) text instead of hiding it", () => {
+		const message: DiracMessage = {
+			ts: Date.now(),
+			type: "say",
+			say: "reasoning",
+			text: "Let me first inspect the failing test before editing.",
+		}
+		const { lastFrame } = render(React.createElement(ChatMessage, { message, mode: "act" }))
+		const frame = lastFrame() || ""
+		expect(frame).toContain("Let me first inspect the failing test before editing.")
+	})
+
+	it("renders streaming reasoning while partial", () => {
+		const message: DiracMessage = {
+			ts: Date.now(),
+			type: "say",
+			say: "reasoning",
+			text: "Thinking through the approach",
+			partial: true,
+		}
+		const { lastFrame } = render(React.createElement(ChatMessage, { message, mode: "act", isStreaming: true }))
+		expect(lastFrame() || "").toContain("Thinking through the approach")
+	})
+
+	it("renders nothing for empty reasoning", () => {
+		const message: DiracMessage = { ts: Date.now(), type: "say", say: "reasoning", text: "   " }
+		const { lastFrame } = render(React.createElement(ChatMessage, { message, mode: "act" }))
+		expect((lastFrame() || "").trim()).toBe("")
+	})
+})

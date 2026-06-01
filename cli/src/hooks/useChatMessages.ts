@@ -13,7 +13,7 @@ export function useChatMessages(messages: any[]) {
 			if (m.say === "checkpoint_created") return false
 			if (m.say === "api_req_started") return false
 			if (m.say === "api_req_retried") return false
-			if (m.say === "reasoning") return false
+			// reasoning (chain-of-thought) is shown — rendered dimmed in ChatMessage
 			return true
 		})
 		const withHooks = combineHookSequences(filtered)
