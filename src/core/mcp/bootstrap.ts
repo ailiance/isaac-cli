@@ -157,6 +157,30 @@ export async function initializeMcpForTask(
 			Logger.info(`MCP: registered ${tools.length} tool(s) from plugins`)
 		}
 
+		// Adaptive retrieval: build the vector index and publish a session active set.
+		const { ActiveMcpToolSet } = await import("./retrieval/ActiveMcpToolSet")
+		const { getRetrievalConfig } = await import("./retrieval/config")
+		const { setActiveMcpToolSet } = await import("./retrieval/session")
+		try {
+			const { createDefaultEmbedder } = await import("./retrieval/Embedder")
+			const { ToolVectorIndex } = await import("./retrieval/ToolVectorIndex")
+			const os = await import("os")
+			const path = await import("path")
+			const cachePath = path.join(os.homedir(), ".dirac", "mcp-tool-vectors.json")
+			const embedder = createDefaultEmbedder()
+			const index = await new ToolVectorIndex(embedder, cachePath).build(
+				tools.map((t) => ({ qualifiedName: t.qualifiedName, text: `${t.qualifiedName}\n${t.description ?? ""}` })),
+			)
+			setActiveMcpToolSet(new ActiveMcpToolSet(embedder, index, getRetrievalConfig()))
+		} catch (err) {
+			Logger.warn("MCP adaptive retrieval unavailable; running native-only:", err)
+			const { Embedder } = await import("./retrieval/Embedder")
+			const dead = new Embedder(async () => {
+				throw new Error("embedder unavailable")
+			})
+			setActiveMcpToolSet(new ActiveMcpToolSet(dead, new Map(), getRetrievalConfig()))
+		}
+
 		return tools
 	} catch (err) {
 		Logger.warn("MCP initialization failed (continuing without plugins):", err)
