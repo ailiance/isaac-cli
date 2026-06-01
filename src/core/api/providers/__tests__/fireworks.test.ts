@@ -49,6 +49,7 @@ describe("FireworksHandler", () => {
 				outputTokens: 4,
 				cacheReadTokens: 0,
 				cacheWriteTokens: 0,
+				totalCost: 0.00003405,
 			},
 		])
 	})

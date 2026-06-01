@@ -8,13 +8,13 @@ import sinon from "sinon"
 import { HostProvider } from "@/hosts/host-provider"
 import * as getDiagnosticsProvidersModule from "@/integrations/diagnostics/getDiagnosticsProviders"
 import { LinterFeedbackProvider } from "@/integrations/diagnostics/LinterFeedbackProvider"
+import { SymbolIndexService } from "@/services/symbol-index/SymbolIndexService"
 import { DiagnosticSeverity } from "@/shared/proto/index.dirac"
 import { setVscodeHostProviderMock } from "@/test/host-provider-test-utils"
 import { TaskState } from "../../../TaskState"
 import { ToolValidator } from "../../ToolValidator"
 import type { TaskConfig } from "../../types/TaskConfig"
 import { RenameSymbolToolHandler } from "../RenameSymbolToolHandler"
-import { SymbolIndexService } from "@/services/symbol-index/SymbolIndexService"
 
 let tmpDir: string
 
@@ -32,10 +32,14 @@ function createConfig() {
 		reset: sinon.stub().resolves(),
 		saveChanges: sinon.stub().callsFake(async () => {
 			if (lastPath && lastContent !== undefined) {
-				await fs.writeFile(lastPath, lastContent)
+				// lastPath may be a relative displayPath — resolve against tmpDir
+				const absPath = path.isAbsolute(lastPath) ? lastPath : path.join(tmpDir, lastPath)
+				await fs.writeFile(absPath, lastContent)
 			}
 			return { finalContent: lastContent }
 		}),
+		showReview: sinon.stub().resolves(),
+		hideReview: sinon.stub().resolves(),
 	}
 
 	const callbacks = {
@@ -478,7 +482,7 @@ describe("RenameSymbolToolHandler", () => {
 
 		const result = await handler.execute(config, block)
 		assert.strictEqual(result, "No occurrences of symbol 'old' found in the specified paths.")
-		
+
 		// Verify updateFile was not called for non-existent file (it might be called if we don't check existence first, but the handler does check)
 		// Actually, the handler calls fs.stat(absPath) and skips if it fails.
 	})

@@ -182,7 +182,7 @@ export function toolSpecFunctionDefinition(tool: DiracToolSpec, context: SystemP
 				type: "object",
 				properties,
 				required,
-				...(strict ? { additionalProperties: false } : {}),
+				additionalProperties: false,
 			},
 		},
 	}
@@ -417,7 +417,7 @@ export function openAIToolToAnthropic(openAITool: OpenAITool): AnthropicTool {
 					? {
 							properties: func.parameters?.properties,
 							required: (func.parameters as any)?.required || [],
-					  }
+						}
 					: {}),
 			},
 		}

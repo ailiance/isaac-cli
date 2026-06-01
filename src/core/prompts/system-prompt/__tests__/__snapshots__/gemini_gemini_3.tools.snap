@@ -295,6 +295,30 @@
     }
   },
   {
+    "name": "get_tool_result",
+    "description": "Retrieve the result of an asynchronous tool call previously launched by execute_command, search_files, or list_files (when recursive=true). Use this when one of those tools returned a placeholder of the form 'task_id: <ULID>\\nstatus: running' instead of an immediate result. You may keep working on independent tasks in parallel — the async work runs in the background.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "task_id": {
+          "type": "STRING",
+          "description": "The task identifier (ULID) returned by the async tool."
+        },
+        "wait": {
+          "type": "BOOLEAN",
+          "description": "If true (default), block until the task completes or timeout_ms expires. If false, return current status immediately."
+        },
+        "timeout_ms": {
+          "type": "NUMBER",
+          "description": "How long to wait for completion when wait=true. Default 60000ms, hard-capped at 300000ms (5 minutes)."
+        }
+      },
+      "required": [
+        "task_id"
+      ]
+    }
+  },
+  {
     "name": "find_symbol_references",
     "description": "Finds all exact AST references and invocations of one or more functions, classes, or variables across specified files or directories. Returns precise file paths.",
     "parameters": {

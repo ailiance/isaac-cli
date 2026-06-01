@@ -44,7 +44,6 @@ function createConfig() {
 		undoUserEdits: sinon.stub().resolves(),
 	}
 
-
 	const callbacks = {
 		say: sinon.stub().resolves(undefined),
 		ask: sinon.stub().resolves({ response: "yesButtonClicked" }),
@@ -59,6 +58,9 @@ function createConfig() {
 		cwd: tmpDir,
 		mode: "act",
 		taskState,
+		messageState: {
+			getApiConversationHistory: sinon.stub().returns([]),
+		},
 		services: {
 			fileContextTracker: {
 				trackFileContext: sinon.stub().resolves(),

@@ -160,7 +160,7 @@ describe("SubagentToolHandler", () => {
 		)
 
 		sinon.assert.calledOnce(callbacks.removeLastPartialMessageIfExistsWithType)
-		sinon.assert.calledWithExactly(callbacks.removeLastPartialMessageIfExistsWithType, "say", "use_subagents")
+		sinon.assert.calledWithExactly(callbacks.removeLastPartialMessageIfExistsWithType, "say", "use_subagents", undefined)
 		sinon.assert.calledOnce(callbacks.ask)
 		sinon.assert.calledWithMatch(callbacks.ask, "use_subagents", sinon.match.string, true)
 
@@ -188,7 +188,7 @@ describe("SubagentToolHandler", () => {
 		)
 
 		sinon.assert.calledOnce(callbacks.removeLastPartialMessageIfExistsWithType)
-		sinon.assert.calledWithExactly(callbacks.removeLastPartialMessageIfExistsWithType, "ask", "use_subagents")
+		sinon.assert.calledWithExactly(callbacks.removeLastPartialMessageIfExistsWithType, "ask", "use_subagents", undefined)
 		sinon.assert.calledOnce(callbacks.say)
 		sinon.assert.calledWithMatch(callbacks.say, "use_subagents", sinon.match.string, undefined, undefined, true)
 
@@ -472,6 +472,4 @@ describe("SubagentToolHandler", () => {
 		// Check runner call
 		assert.equal(runStub.firstCall.args[2], 300)
 	})
-
-
 })
