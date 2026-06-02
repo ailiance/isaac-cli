@@ -107,7 +107,10 @@ function readMcpSettings(): {
 	const envServersRaw = process.env.AILIANCE_MCP_SERVERS
 	const envEnabled =
 		envServersRaw !== undefined
-			? envServersRaw.split(",").map((s) => s.trim()).filter(Boolean)
+			? envServersRaw
+					.split(",")
+					.map((s) => s.trim())
+					.filter(Boolean)
 			: undefined
 	const noMcp =
 		["1", "true", "yes"].includes((process.env.AILIANCE_NO_MCP ?? "").toLowerCase()) ||

@@ -30,7 +30,7 @@ export function createDefaultEmbedder(): Embedder {
 		const extractor = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2")
 		return async (texts: string[]) => {
 			const out = await (extractor as any)(texts, { pooling: "mean", normalize: true })
-			return ((out as { tolist(): number[][] }).tolist()).map((row) => Float32Array.from(row))
+			return (out as { tolist(): number[][] }).tolist().map((row) => Float32Array.from(row))
 		}
 	})
 }

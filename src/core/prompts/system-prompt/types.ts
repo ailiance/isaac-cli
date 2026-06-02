@@ -63,7 +63,6 @@ export interface SystemPromptContext {
 	readonly userPromptText?: string
 }
 
-
 /**
  * Utility functions for validating prompt components
  */
