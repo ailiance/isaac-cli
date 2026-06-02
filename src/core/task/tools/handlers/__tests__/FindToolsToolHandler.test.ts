@@ -1,4 +1,4 @@
-import { describe, it, afterEach } from "mocha"
+import { afterEach, describe, it } from "mocha"
 import "should"
 import { setActiveMcpToolSet } from "@core/mcp/retrieval/session"
 import { FindToolsToolHandler } from "../FindToolsToolHandler"

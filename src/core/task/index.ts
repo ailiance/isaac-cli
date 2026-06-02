@@ -8,7 +8,7 @@ import { ModelContextTracker } from "@core/context/context-tracking/ModelContext
 import { DiracIgnoreController } from "@core/ignore/DiracIgnoreController"
 import { initializeMcpForTask } from "@core/mcp/bootstrap"
 import { mcpClientManager } from "@core/mcp/McpClientManager"
-import { getActiveMcpToolSet } from "@core/mcp/retrieval/session"
+import { clearActiveMcpToolSet, getActiveMcpToolSet } from "@core/mcp/retrieval/session"
 import { CommandPermissionController } from "@core/permissions"
 import { getSavedApiConversationHistory } from "@core/storage/disk"
 import { WorkspaceRootManager } from "@core/workspace/WorkspaceRootManager"
@@ -611,6 +611,14 @@ export class Task {
 		// Disconnect MCP servers; no-op if none were connected.
 		mcpClientManager.disconnectAll().catch((_err) => {
 			// non-fatal — MCP cleanup must never block abort
+		})
+		// Clear the process-global adaptive-retrieval active set so the previous
+		// task's selection cannot leak into the next task's first request. We
+		// publish an EMPTY set (not undefined) so the gate emits zero MCP tools
+		// in the between-tasks window; fire-and-forget since it only constructs
+		// objects (no async work runs).
+		clearActiveMcpToolSet().catch((_err) => {
+			// non-fatal — retrieval cleanup must never block abort
 		})
 		return this.lifecycleManager.abortTask()
 	}

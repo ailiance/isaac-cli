@@ -1,3 +1,4 @@
+import { Logger } from "@/shared/services/Logger"
 import type { RetrievalConfig } from "./config"
 import { type ScoredItem, selectTopK } from "./cosine"
 import type { Embedder } from "./Embedder"
@@ -33,6 +34,7 @@ export class ActiveMcpToolSet {
 			for (const id of await this.select(prompt, this.config.baseK)) {
 				this.active.add(id)
 			}
+			Logger.debug(`[mcp-retrieval] seed selected ${this.active.size} tool(s): ${Array.from(this.active).join(", ")}`)
 		} catch {
 			this.embedderOk = false
 		}
@@ -47,6 +49,7 @@ export class ActiveMcpToolSet {
 					added.push(id)
 				}
 			}
+			Logger.debug(`[mcp-retrieval] find_tools added ${added.length} tool(s): ${added.join(", ")}`)
 			return added
 		} catch {
 			this.embedderOk = false

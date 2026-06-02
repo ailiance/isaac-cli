@@ -1,4 +1,4 @@
-import { describe, it, beforeEach, afterEach } from "mocha"
+import { afterEach, beforeEach, describe, it } from "mocha"
 import "should"
 import * as fs from "fs"
 import * as os from "os"

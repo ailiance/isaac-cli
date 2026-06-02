@@ -1,6 +1,6 @@
 import type { ToolUse } from "@core/assistant-message"
-import { DiracDefaultTool } from "@/shared/tools"
 import { getActiveMcpToolSet } from "@core/mcp/retrieval/session"
+import { DiracDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IPartialBlockHandler, IToolHandler } from "../ToolExecutorCoordinator"
 import type { TaskConfig } from "../types/TaskConfig"

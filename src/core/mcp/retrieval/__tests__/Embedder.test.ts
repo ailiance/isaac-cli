@@ -4,8 +4,7 @@ import { Embedder } from "../Embedder"
 
 describe("Embedder", () => {
 	it("embeds via the injected pipeline and returns Float32Array[]", async () => {
-		const fakePipeline = async (texts: string[]) =>
-			texts.map((t) => new Float32Array([t.length, 0, 0]))
+		const fakePipeline = async (texts: string[]) => texts.map((t) => new Float32Array([t.length, 0, 0]))
 		const e = new Embedder(async () => fakePipeline)
 		const [v] = await e.embed(["abc"])
 		Array.from(v).should.deepEqual([3, 0, 0])

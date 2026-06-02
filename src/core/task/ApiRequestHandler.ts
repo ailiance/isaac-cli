@@ -12,10 +12,10 @@ import {
 	getLocalWindsurfRules,
 	refreshExternalRulesToggles,
 } from "@core/context/instructions/user-instructions/external-rules"
+import { getActiveMcpToolSet } from "@core/mcp/retrieval/session"
 import { formatResponse } from "@core/prompts/responses"
 import type { SystemPromptContext } from "@core/prompts/system-prompt"
 import { getSystemPrompt } from "@core/prompts/system-prompt"
-import { getActiveMcpToolSet } from "@core/mcp/retrieval/session"
 import { ensureRulesDirectoryExists, ensureTaskDirectoryExists } from "@core/storage/disk"
 import { isMultiRootEnabled } from "@core/workspace/multi-root-utils"
 import { HostProvider } from "@hosts/host-provider"
@@ -427,9 +427,7 @@ ${notice}`
 						// For permanent client errors, mark attempt=1 to signal
 						// "fail-fast, no retries attempted" so the UI does not
 						// claim 3 retries were tried.
-						const finalAttempt = isPermanentClientError
-							? this.taskState.autoRetryAttempts + 1
-							: 3
+						const finalAttempt = isPermanentClientError ? this.taskState.autoRetryAttempts + 1 : 3
 						await this.ctx.say(
 							"error_retry",
 							JSON.stringify({

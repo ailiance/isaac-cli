@@ -1,12 +1,10 @@
 import { describe, it } from "mocha"
 import "should"
-import { Embedder } from "../Embedder"
 import { ActiveMcpToolSet } from "../ActiveMcpToolSet"
+import { Embedder } from "../Embedder"
 
 function makeEmbedder(map: Record<string, number[]>) {
-	return new Embedder(async () => async (texts: string[]) =>
-		texts.map((t) => Float32Array.from(map[t] ?? [0, 0])),
-	)
+	return new Embedder(async () => async (texts: string[]) => texts.map((t) => Float32Array.from(map[t] ?? [0, 0])))
 }
 
 describe("ActiveMcpToolSet", () => {
