@@ -77,9 +77,44 @@ Options (pick per the strategy):
 
 ## Verification checklist
 
-- [ ] Model mirror exists in `Ailiance-fr/`, ONNX hash matches upstream.
-- [ ] npm package mirrored/vendored with sha512 anchor; `sharp` trimmed.
-- [ ] `AILIANCE_EMBED_MODEL` + `AILIANCE_EMBED_OFFLINE=1` set in prod.
-- [ ] Embed works offline (no HF CDN egress).
-- [ ] SBOM updated; HITL review recorded.
-- [ ] PR #50 merge unblocked.
+- [x] Model mirror exists in `Ailiance-fr/`, ONNX hash matches upstream.
+- [x] npm package pinned with sha512 anchor (org strategy = pin-only, NOT vendor).
+- [ ] `AILIANCE_EMBED_MODEL` + `AILIANCE_EMBED_OFFLINE=1` set in prod (deploy-time).
+- [x] Embed works against the mirror (verified end-to-end, 384-d).
+- [x] Audit recorded (below); HITL review done by user 2026-06-02.
+- [ ] PR #50 merge unblocked (pending deploy-time env wiring).
+
+## Correction vs the org supply-chain strategy
+
+The org policy (`ailiance-gateway/docs/.../2026-05-29-dependency-fork-audit-strategy.md`
+§11–§12, user decision 2026-05-29) is **pin-only + SBOM for every ecosystem;
+vendoring is reserved for the single Tier-0 untrusted case (`omlx`)**. npm is
+explicitly *pin-only* (lockfile + `npm audit`), NOT vendored. So Step 2's
+"vendor the npm package" over-specified: `@huggingface/transformers@3.3.3` is
+already correctly frozen by its sha512 in `package-lock.json` — no fork/vendor
+needed. The `sharp` trim is a perf nicety, not a supply-chain requirement.
+
+The only genuine supply-chain action was mirroring the **model weights** into
+the `ailiance` org for a sovereign offline runtime posture (matching the 20
+other `Ailiance-fr` models).
+
+## Execution record (2026-06-02, HITL-approved)
+
+- **Model mirror:** `Ailiance-fr/all-MiniLM-L6-v2` (public, Apache-2.0) created
+  and populated from the full upstream snapshot.
+  - upstream `Xenova/all-MiniLM-L6-v2` commit sha = `751bff37182d3f1213fa05d7196b954e230abad9`
+  - mirror commit sha = `5cbc3683c2dbc1a6372202305af9762e7973c73e`
+  - contents: `onnx/model.onnx` (90.39 MB) + 7 quantized variants
+    (`model_fp16/int8/quantized/uint8/q4/q4f16/bnb4.onnx`) + tokenizer/config/
+    vocab/README — byte-identical to upstream.
+  - mirrored by `clemsail` (Ailiance-fr admin, write token) via
+    `huggingface_hub` `snapshot_download` → `create_repo` → `upload_folder`.
+  - verified: `AILIANCE_EMBED_MODEL=Ailiance-fr/all-MiniLM-L6-v2` loads through
+    `createDefaultEmbedder()` and returns a 384-d vector.
+- **npm pin (audit anchor):** `@huggingface/transformers@3.3.3`,
+  `sha512-OcMubhBjW6u1xnp0zSt5SvCxdGHuhP2k+w2Vlm3i0vNcTJhJTZWxxYQmPBfcb7PX+Q6c43lGSzWD6tsJFwka4Q==`,
+  license Apache-2.0 (`package-lock.json`). Pin-only per org strategy.
+- **Remaining (deploy-time, not a code change):** set
+  `AILIANCE_EMBED_MODEL=Ailiance-fr/all-MiniLM-L6-v2` + `AILIANCE_EMBED_OFFLINE=1`
+  in the isaac CLI/extension runtime env and pre-seed the model cache on the
+  deploy host so first run is offline.
