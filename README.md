@@ -119,7 +119,19 @@ See [`docs/local-router.md`](./docs/local-router.md) and [`CHANGELOG.md`](./CHAN
 
 ```bash
 # Installation globale (Node 20 / 22 / 24 — pas Node 25)
-npm install -g isaac
+# ISAAC n'est PAS publié sur npm public (ne pas faire `npm install -g isaac`,
+# qui installe un paquet CSPRNG sans rapport). Deux voies souveraines :
+
+# A. Depuis la source (contributeurs / dev) — cf. « Démarrage rapide (dev) »
+git clone https://git.saillant.cc/ailiance/isaac-cli.git && cd isaac-cli
+npm run install:all && npm run cli:build   # protos + build du workspace cli
+cd cli && npm link                         # expose `isaac` en global
+
+# B. Déploiement depuis un tarball pré-buildé (méthode utilisée sur MacStudio)
+#   machine de build :  cd cli && npm pack                  # -> isaac-cli-<ver>.tgz
+#   machine cible :     npm install -g ./isaac-cli-<ver>.tgz
+# Le tarball embarque dist/ et résout les binaires natifs (better-sqlite3,
+# ripgrep via l'optionalDependency @vscode/ripgrep-<plateforme>) à l'install.
 
 # Premier prompt — passerelle ailiance par défaut (https://gateway.ailiance.fr/v1)
 isaac "résume-moi ce dépôt en 5 puces"
@@ -476,13 +488,16 @@ Cache 30 s pour ne pas pinger les ports à chaque requête (`src/services/local-
 ## Démarrage rapide (dev)
 
 ```bash
-git clone https://github.com/ailiance/isaac-cli.git
-cd isaac
+git clone https://git.saillant.cc/ailiance/isaac-cli.git   # forge primaire (GitHub = miroir/backup)
+cd isaac-cli
 npm run install:all   # bootstrap monorepo (root + cli + webview-ui)
 npm run protos        # génère src/generated/ + src/shared/proto/ — REQUIS avant build
 npm run build
 npm test              # suite mocha (root) + vitest (cli, webview-ui)
 npm run lint          # biome
+
+# Pour un CLI global sans rebuild manuel :
+npm run cli:build && cd cli && npm link   # `isaac` sur le PATH
 ```
 
 Workspaces :

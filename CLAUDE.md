@@ -22,7 +22,17 @@ npm run protos          # REQUIS avant build (génère src/generated/, src/share
 npm run build
 npm test                # mocha (root) — voir cli/, webview-ui/ pour leurs tests
 npm run lint            # biome
+
+# CLI global `isaac` :
+npm run cli:build && cd cli && npm link        # dev (symlink)
+cd cli && npm pack && npm install -g ./isaac-cli-*.tgz   # déploiement (tarball auto-suffisant)
 ```
+
+> ⚠️ NE PAS `npm install -g isaac` : « isaac » sur npm public = un CSPRNG sans
+> rapport. Le paquet `isaac-cli` n'est pas publié — install via source ou tarball.
+> Tarball : résout better-sqlite3 + ripgrep (`@vscode/ripgrep-<plateforme>`,
+> optionalDependency) à l'install. Déployé sur MacStudio (`ssh studio`, user
+> `ailiance`, Node 22 user-level dans `~/.local`).
 
 ## Where to Look
 
