@@ -10,30 +10,17 @@ import type { WorkerEndpoint } from "./types"
  */
 export const DEFAULT_WORKERS: WorkerEndpoint[] = [
 	{
-		id: "tower-gemma",
-		url: "http://100.78.6.122:9304/v1",
-		modelId: "ailiance-gemma",
-		capabilities: ["general", "code"],
+		// Default: the public ailiance gateway. It does its own sovereign routing
+		// (domain classify → cascade → FC force-route → LoRA mascarade) and returns
+		// native OpenAI tool_calls, so the client treats it as a single tool-capable
+		// worker. For a direct local stack, override `localRouterWorkers` with the
+		// real per-worker Tailscale endpoints.
+		id: "ailiance-gateway",
+		url: "https://gateway.ailiance.fr/v1",
+		modelId: "ailiance-gateway",
+		capabilities: ["general", "code", "reason", "fr"],
 		priority: 10,
-		ctxMax: 32768, // llama-server -c 32768 (Gemma 3 native 128k)
-		supportsTools: false, // emulation needed
-	},
-	{
-		id: "studio-apertus",
-		url: "http://100.116.92.12:9301/v1",
-		modelId: "apertus-70b",
-		capabilities: ["reason", "general"],
-		priority: 7,
-		ctxMax: 8192, // Apertus 70B native context
-		supportsTools: false, // emulation needed
-	},
-	{
-		id: "studio-eurollm",
-		url: "http://100.116.92.12:9303/v1",
-		modelId: "eurollm-22b",
-		capabilities: ["fr"], // dropped "general" — too small for isaac system prompt
-		priority: 6,
-		ctxMax: 4096, // EuroLLM 22B native — TOO SMALL for isaac system prompt typically
-		supportsTools: true, // native function calling
+		ctxMax: 131072, // gateway force-routes to a large-context worker; real ctx surfaces via X-Ailiance-Context-Window
+		supportsTools: true, // gateway returns native OpenAI tool_calls (FC force-route)
 	},
 ]

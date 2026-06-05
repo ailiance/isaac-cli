@@ -47,6 +47,8 @@ const REGISTRY: RegistryEntry[] = [
 	{ pattern: "gpt-", profile: { format: "openai_native", isNative: true } },
 	{ pattern: "o1-", profile: { format: "openai_native", isNative: true } },
 	{ pattern: "o3-", profile: { format: "openai_native", isNative: true } },
+	// ── ailiance gateway (native OpenAI tool_calls via FC force-route) ──────
+	{ pattern: "ailiance-gateway", profile: { format: "openai_native", isNative: true } },
 	// ── Anthropic native ────────────────────────────────────────────────────
 	{ pattern: "claude", profile: { format: "anthropic_native", isNative: true } },
 	// ── DeepSeek (OpenAI-compatible function calling) ──────────────────────
