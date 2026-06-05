@@ -1,9 +1,10 @@
 import { IsaacDefaultTool } from "@/shared/tools"
 import type { IsaacToolSpec } from "../spec"
+import type { ParamNames } from "../tool-unit"
 
 const id = IsaacDefaultTool.LIST_FILES
 
-export const list_files: IsaacToolSpec = {
+export const list_files = {
 	id,
 	name: "list_files",
 	description:
@@ -26,4 +27,11 @@ export const list_files: IsaacToolSpec = {
 			type: "boolean",
 		},
 	],
-}
+} as const satisfies IsaacToolSpec
+
+/**
+ * Lot E: typed param-name union derived from the spec literal above.
+ * The handler reads params through these names; a rename/removal of a spec
+ * parameter changes this union and breaks the handler compile (kills drift).
+ */
+export type ListFilesParam = ParamNames<typeof list_files>

@@ -1,6 +1,8 @@
 import path from "node:path"
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
+import { defineTool, readParam } from "@core/prompts/system-prompt/tool-unit"
+import { list_files } from "@core/prompts/system-prompt/tools/list_files"
 import { getWorkspaceBasename, resolveWorkspacePath } from "@core/workspace"
 import { type FileInfo, listFiles } from "@services/glob/list-files"
 import { arePathsEqual, getReadablePath, isLocatedInWorkspace } from "@utils/path"
@@ -39,6 +41,15 @@ export class ListFilesToolHandler implements IFullyManagedTool {
 
 	constructor(private validator: ToolValidator) {}
 
+	/**
+	 * Lot E: read the `recursive` param through the typed contract derived from
+	 * the spec. The param name is checked against `list_files`'s declared params
+	 * at compile time — renaming it in the spec breaks this call.
+	 */
+	private parseRecursive(params: Record<string, unknown>): boolean {
+		return String(readParam(list_files_unit, params, "recursive") ?? "").toLowerCase() === "true"
+	}
+
 	getDescription(block: ToolUse): string {
 		const relPaths = coerceToStringArray(block.params.paths)
 		return `[${block.name} for ${relPaths.map((p) => `'${p}'`).join(", ")}]`
@@ -54,8 +65,7 @@ export class ListFilesToolHandler implements IFullyManagedTool {
 		}
 
 		// Create and show partial UI message
-		const recursiveRaw = block.params.recursive
-		const recursive = String(recursiveRaw ?? "").toLowerCase() === "true"
+		const recursive = this.parseRecursive(block.params)
 		const sharedMessageProps = {
 			tool: recursive ? "listFilesRecursive" : "listFilesTopLevel",
 			paths: relPaths.map((p) => getReadablePath(config.cwd, uiHelpers.removeClosingTag(block, "paths", p))),
@@ -171,8 +181,7 @@ export class ListFilesToolHandler implements IFullyManagedTool {
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
 		const relPaths = coerceToStringArray(block.params.paths)
-		const recursiveRaw = block.params.recursive
-		const recursive = String(recursiveRaw ?? "").toLowerCase() === "true"
+		const recursive = this.parseRecursive(block.params)
 
 		// Extract provider using the proven pattern from ReportBugHandler
 		const apiConfig = config.services.stateManager.getApiConfiguration()
@@ -511,3 +520,24 @@ export class ListFilesToolHandler implements IFullyManagedTool {
 		return finalResult
 	}
 }
+
+/**
+ * Lot E pilot — unified tool unit for `list_files`.
+ *
+ * Co-locates the prompt spec (imported from the prompts layer, the allowed
+ * task → prompts direction) with the handler factory and the read-only flag.
+ * This is the single source registration shape the migration will converge on:
+ * a registry can read `spec` for the prompt/schema and `createHandler` for
+ * dispatch, removing the duplicated `toolHandlersMap` entry and the separate
+ * `READ_ONLY_TOOLS` membership.
+ *
+ * Coexists with the legacy path: `list_files` is still registered via
+ * `init.ts`, and the handler is still wired through `ToolExecutorCoordinator`'s
+ * map. Nothing else changes until the registry adopts units.
+ */
+export const list_files_unit = defineTool({
+	id: IsaacDefaultTool.LIST_FILES,
+	spec: list_files,
+	readonly: true,
+	createHandler: (validator: unknown) => new ListFilesToolHandler(validator as ToolValidator),
+})
