@@ -18,7 +18,6 @@ import { useSettingsActions } from "./hooks/useSettingsActions"
 import { SettingsListView } from "./SettingsListView"
 import { ProviderPickerPage, ModelPickerPage, LanguagePickerPage } from "./subpages/PickerPages"
 import { ApiKeyInputPage, EditValuePage, ObjectEditorPage } from "./subpages/EditPages"
-import { BedrockSetupPage, BedrockCustomFlowPage } from "./subpages/SetupPages"
 import { CodexAuthPage, GithubAuthPage, AuthErrorPage } from "./subpages/AuthPages"
 import type { SettingsPanelContentProps, SettingsTab } from "./types"
 import type { TelemetrySetting } from "@shared/TelemetrySetting"
@@ -182,8 +181,6 @@ export const SettingsPanelContent: React.FC<SettingsPanelContentProps> = ({
 		handleProviderSelect,
 		handleModelSelect,
 		handleApiKeySubmit,
-		handleBedrockComplete,
-		handleBedrockCustomFlowComplete,
 		handleLanguageSelect,
 		startCodexAuth,
 		startGithubAuth,
@@ -398,18 +395,6 @@ export const SettingsPanelContent: React.FC<SettingsPanelContentProps> = ({
 				/>
 			)
 		}
-		if (isConfiguringBedrock) {
-			return (
-				<BedrockSetupPage
-					isActive={isConfiguringBedrock}
-					onCancel={() => {
-						setIsConfiguringBedrock(false)
-						setPendingProvider(null)
-					}}
-					onComplete={handleBedrockComplete}
-				/>
-			)
-		}
 		if (isWaitingForCodexAuth) {
 			return <CodexAuthPage codexAuthUrl={codexAuthUrl} copied={copied} />
 		}
@@ -433,18 +418,6 @@ export const SettingsPanelContent: React.FC<SettingsPanelContentProps> = ({
 		}
 		if (isPickingLanguage) {
 			return <LanguagePickerPage isActive={isPickingLanguage} onSelect={handleLanguageSelect} />
-		}
-		if (isBedrockCustomFlow) {
-			return (
-				<BedrockCustomFlowPage
-					isActive={isBedrockCustomFlow}
-					onCancel={() => {
-						setIsBedrockCustomFlow(false)
-						setIsPickingModel(true)
-					}}
-					onComplete={handleBedrockCustomFlowComplete}
-				/>
-			)
 		}
 		if (isEditing) {
 			const item = items[selectedIndex]

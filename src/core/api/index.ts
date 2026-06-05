@@ -1,31 +1,10 @@
-import { ApiConfiguration, ModelInfo, QwenApiRegions } from "@shared/api"
+import { ApiConfiguration, ModelInfo } from "@shared/api"
 import { Mode } from "@shared/storage/types"
 import { DiracStorageMessage } from "@/shared/messages/content"
 import { Logger } from "@/shared/services/Logger"
 import { DiracTool } from "@/shared/tools"
-import { AIhubmixHandler } from "./providers/aihubmix"
-import { AnthropicHandler } from "./providers/anthropic"
-import { AwsBedrockHandler } from "./providers/bedrock"
-import { CerebrasHandler } from "./providers/cerebras"
-import { ClaudeCodeHandler } from "./providers/claude-code"
-import { DeepSeekHandler } from "./providers/deepseek"
-import { DoubaoHandler } from "./providers/doubao"
-import { GeminiHandler } from "./providers/gemini"
-import { GithubCopilotHandler } from "./providers/github-copilot"
-import { MinimaxHandler } from "./providers/minimax"
-import { MistralHandler } from "./providers/mistral"
-import { MoonshotHandler } from "./providers/moonshot"
-import { NebiusHandler } from "./providers/nebius"
-import { OpenAiCodexHandler } from "./providers/openai-codex"
-import { OpenAiNativeHandler } from "./providers/openai-native"
-import { QwenHandler } from "./providers/qwen"
-import { QwenCodeHandler } from "./providers/qwen-code"
+import { OpenAiHandler } from "./providers/openai"
 import { resolveProvider } from "./providers/registry"
-import { SambanovaHandler } from "./providers/sambanova"
-import { VertexHandler } from "./providers/vertex"
-import { WandbHandler } from "./providers/wandb"
-import { XAIHandler } from "./providers/xai"
-import { ZAiHandler } from "./providers/zai"
 import "./providers/bootstrap" // side-effect: registers providers
 import { ApiStream, ApiStreamUsageChunk } from "./transform/stream"
 
@@ -66,217 +45,31 @@ function createHandlerForProvider(
 		return entry.factory(options, mode)
 	}
 
-	// 2. Fall through to legacy switch
-	switch (apiProvider) {
-		case "anthropic":
-			return new AnthropicHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				apiKey: options.apiKey,
-				anthropicBaseUrl: options.anthropicBaseUrl,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-				thinkingBudgetTokens:
-					mode === "plan" ? options.planModeThinkingBudgetTokens : options.actModeThinkingBudgetTokens,
-				reasoningEffort: mode === "plan" ? options.planModeReasoningEffort : options.actModeReasoningEffort,
-			})
-		case "bedrock":
-			return new AwsBedrockHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-				awsAccessKey: options.awsAccessKey,
-				awsSecretKey: options.awsSecretKey,
-				awsSessionToken: options.awsSessionToken,
-				awsRegion: options.awsRegion,
-				awsAuthentication: options.awsAuthentication,
-				awsBedrockApiKey: options.awsBedrockApiKey,
-				awsUseCrossRegionInference: options.awsUseCrossRegionInference,
-				awsUseGlobalInference: options.awsUseGlobalInference,
-				awsBedrockUsePromptCache: options.awsBedrockUsePromptCache,
-				awsUseProfile: options.awsUseProfile,
-				awsProfile: options.awsProfile,
-				awsBedrockEndpoint: options.awsBedrockEndpoint,
-				awsBedrockCustomSelected:
-					mode === "plan" ? options.planModeAwsBedrockCustomSelected : options.actModeAwsBedrockCustomSelected,
-				awsBedrockCustomModelBaseId:
-					mode === "plan" ? options.planModeAwsBedrockCustomModelBaseId : options.actModeAwsBedrockCustomModelBaseId,
-				thinkingBudgetTokens:
-					mode === "plan" ? options.planModeThinkingBudgetTokens : options.actModeThinkingBudgetTokens,
-				reasoningEffort: mode === "plan" ? options.planModeReasoningEffort : options.actModeReasoningEffort,
-			})
-		case "vertex":
-			return new VertexHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				vertexProjectId: options.vertexProjectId,
-				vertexRegion: options.vertexRegion,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-				thinkingBudgetTokens:
-					mode === "plan" ? options.planModeThinkingBudgetTokens : options.actModeThinkingBudgetTokens,
-				geminiApiKey: options.geminiApiKey,
-				geminiBaseUrl: options.geminiBaseUrl,
-				reasoningEffort: mode === "plan" ? options.planModeReasoningEffort : options.actModeReasoningEffort,
-				ulid: options.ulid,
-			})
-		case "gemini":
-			return new GeminiHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				vertexProjectId: options.vertexProjectId,
-				vertexRegion: options.vertexRegion,
-				geminiApiKey: options.geminiApiKey,
-				geminiBaseUrl: options.geminiBaseUrl,
-				thinkingBudgetTokens:
-					mode === "plan" ? options.planModeThinkingBudgetTokens : options.actModeThinkingBudgetTokens,
-				reasoningEffort: mode === "plan" ? options.planModeReasoningEffort : options.actModeReasoningEffort,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-				ulid: options.ulid,
-				geminiSearchEnabled: options.geminiSearchEnabled,
-			})
-		case "openai-native":
-			return new OpenAiNativeHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				openAiNativeApiKey: options.openAiNativeApiKey,
-				reasoningEffort: mode === "plan" ? options.planModeReasoningEffort : options.actModeReasoningEffort,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-				thinkingBudgetTokens:
-					mode === "plan" ? options.planModeThinkingBudgetTokens : options.actModeThinkingBudgetTokens,
-			})
-		case "openai-codex":
-			return new OpenAiCodexHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				reasoningEffort: mode === "plan" ? options.planModeReasoningEffort : options.actModeReasoningEffort,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-			})
-		case "deepseek":
-			return new DeepSeekHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				deepSeekApiKey: options.deepSeekApiKey,
-				reasoningEffort: mode === "plan" ? options.planModeReasoningEffort : options.actModeReasoningEffort,
-				thinkingBudgetTokens:
-					mode === "plan" ? options.planModeThinkingBudgetTokens : options.actModeThinkingBudgetTokens,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-			})
-		case "qwen":
-			return new QwenHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				qwenApiKey: options.qwenApiKey,
-				qwenApiLine:
-					options.qwenApiLine === QwenApiRegions.INTERNATIONAL ? QwenApiRegions.INTERNATIONAL : QwenApiRegions.CHINA,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-				thinkingBudgetTokens:
-					mode === "plan" ? options.planModeThinkingBudgetTokens : options.actModeThinkingBudgetTokens,
-			})
-		case "qwen-code":
-			return new QwenCodeHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				qwenCodeOauthPath: options.qwenCodeOauthPath,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-			})
-		case "doubao":
-			return new DoubaoHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				doubaoApiKey: options.doubaoApiKey,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-			})
-		case "mistral":
-			return new MistralHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				mistralApiKey: options.mistralApiKey,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-			})
-		case "github-copilot":
-			return new GithubCopilotHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-			})
-		case "moonshot":
-			return new MoonshotHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				moonshotApiKey: options.moonshotApiKey,
-				moonshotApiLine: options.moonshotApiLine,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-			})
-		case "nebius":
-			return new NebiusHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				nebiusApiKey: options.nebiusApiKey,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-			})
-		case "xai":
-			return new XAIHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				xaiApiKey: options.xaiApiKey,
-				reasoningEffort: mode === "plan" ? options.planModeReasoningEffort : options.actModeReasoningEffort,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-			})
-		case "sambanova":
-			return new SambanovaHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				sambanovaApiKey: options.sambanovaApiKey,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-			})
-		case "cerebras":
-			return new CerebrasHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				cerebrasApiKey: options.cerebrasApiKey,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-			})
-		case "claude-code":
-			return new ClaudeCodeHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				claudeCodePath: options.claudeCodePath,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-				thinkingBudgetTokens:
-					mode === "plan" ? options.planModeThinkingBudgetTokens : options.actModeThinkingBudgetTokens,
-			})
-		case "zai":
-			return new ZAiHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				zaiApiLine: options.zaiApiLine,
-				zaiApiKey: options.zaiApiKey,
-				thinkingBudgetTokens:
-					mode === "plan" ? options.planModeThinkingBudgetTokens : options.actModeThinkingBudgetTokens,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-			})
-		case "aihubmix":
-			return new AIhubmixHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				apiKey: options.aihubmixApiKey,
-				baseURL: options.aihubmixBaseUrl,
-				appCode: options.aihubmixAppCode,
-				modelId: mode === "plan" ? options.planModeAihubmixModelId : options.actModeAihubmixModelId,
-				modelInfo: mode === "plan" ? options.planModeAihubmixModelInfo : options.actModeAihubmixModelInfo,
-			})
-		case "minimax":
-			return new MinimaxHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				minimaxApiKey: options.minimaxApiKey,
-				minimaxApiLine: options.minimaxApiLine,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-				thinkingBudgetTokens:
-					mode === "plan" ? options.planModeThinkingBudgetTokens : options.actModeThinkingBudgetTokens,
-			})
-		case "wandb":
-			return new WandbHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				wandbApiKey: options.wandbApiKey,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-			})
-		default: {
-			Logger.warn(
-				`[buildApiHandler] Unknown apiProvider="${apiProvider}", ` +
-					`falling back to Anthropic. This is likely a config bug.`,
-			)
-			if (process.env.ISAAC_STRICT_PROVIDER === "1") {
-				throw new Error(`Unknown apiProvider: ${apiProvider}`)
-			}
-			return new AnthropicHandler({
-				onRetryAttempt: options.onRetryAttempt,
-				apiKey: options.apiKey,
-				anthropicBaseUrl: options.anthropicBaseUrl,
-				apiModelId: mode === "plan" ? options.planModeApiModelId : options.actModeApiModelId,
-				thinkingBudgetTokens:
-					mode === "plan" ? options.planModeThinkingBudgetTokens : options.actModeThinkingBudgetTokens,
-			})
+	// 2. Fall through to default (openai). All supported providers self-register
+	// via registerProvider() (see ./providers/bootstrap); an unknown apiProvider
+	// is treated as a config error and routed to the openai handler.
+	if (apiProvider !== "openai") {
+		Logger.warn(
+			`[buildApiHandler] Unknown apiProvider="${apiProvider}", ` + `falling back to openai. This is likely a config bug.`,
+		)
+		if (process.env.ISAAC_STRICT_PROVIDER === "1") {
+			throw new Error(`Unknown apiProvider: ${apiProvider}`)
 		}
 	}
+	const openAiEntry = resolveProvider("openai")
+	if (openAiEntry) {
+		return openAiEntry.factory(options, mode)
+	}
+	// Fallback if the openai registry somehow failed to register.
+	return new OpenAiHandler({
+		onRetryAttempt: options.onRetryAttempt,
+		openAiApiKey: options.openAiApiKey,
+		openAiBaseUrl: options.openAiBaseUrl,
+		openAiModelId: mode === "plan" ? options.planModeOpenAiModelId : options.actModeOpenAiModelId,
+		reasoningEffort: mode === "plan" ? options.planModeReasoningEffort : options.actModeReasoningEffort,
+		useLocalRouter: options.useLocalRouter,
+		localRouterWorkers: options.localRouterWorkers,
+	})
 }
 
 export function buildApiHandler(configuration: ApiConfiguration, mode: Mode): ApiHandler {

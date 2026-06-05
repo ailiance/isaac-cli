@@ -98,64 +98,8 @@ export function getModelsForProvider(
 			return openRouterModels
 		case "dirac":
 			return diracModels || {}
-		case "vercel-ai-gateway":
-			return vercelAiGatewayModels
 		case "litellm":
 			return liteLlmModels
-		case "requesty":
-			return requestyModels
-		case "groq":
-			return groqModels
-		case "baseten":
-			return basetenModels
-		case "huggingface":
-			return huggingFaceModels
-		case "aihubmix":
-			return aihubmixModels
-		case "github-copilot":
-			return githubCopilotModels || {}
-		case "anthropic":
-			return anthropicModels
-		case "claude-code":
-			return claudeCodeModels
-		case "bedrock":
-			return bedrockModels
-		case "vertex":
-			return vertexModels
-		case "gemini":
-			return geminiModels
-		case "openai-native":
-			return openAiNativeModels
-		case "openai-codex":
-			return openAiCodexModels
-		case "deepseek":
-			return deepSeekModels
-		case "qwen-code":
-			return qwenCodeModels
-		case "doubao":
-			return doubaoModels
-		case "mistral":
-			return mistralModels
-		case "xai":
-			return xaiModels
-		case "moonshot":
-			return moonshotModels
-		case "nebius":
-			return nebiusModels
-		case "wandb":
-			return wandbModels
-		case "sambanova":
-			return sambanovaModels
-		case "cerebras":
-			return cerebrasModels
-		case "huawei-cloud-maas":
-			return huaweiCloudMaasModels
-		case "fireworks":
-			return fireworksModels
-		case "minimax":
-			return minimaxModels
-		case "nousResearch":
-			return nousResearchModels
 		default:
 			return {}
 	}
@@ -178,7 +122,7 @@ export function normalizeApiConfiguration(
 	currentMode: Mode,
 ): NormalizedApiConfig {
 	const provider =
-		(currentMode === "plan" ? apiConfiguration?.planModeApiProvider : apiConfiguration?.actModeApiProvider) || "anthropic"
+		(currentMode === "plan" ? apiConfiguration?.planModeApiProvider : apiConfiguration?.actModeApiProvider) || "openai"
 
 	const modelId = currentMode === "plan" ? apiConfiguration?.planModeApiModelId : apiConfiguration?.actModeApiModelId
 
@@ -200,51 +144,6 @@ export function normalizeApiConfiguration(
 	}
 
 	switch (provider) {
-		case "anthropic":
-			return getProviderData(anthropicModels, anthropicDefaultModelId)
-		case "claude-code":
-			return getProviderData(claudeCodeModels, claudeCodeDefaultModelId)
-		case "bedrock":
-			const awsBedrockCustomSelected =
-				currentMode === "plan"
-					? apiConfiguration?.planModeAwsBedrockCustomSelected
-					: apiConfiguration?.actModeAwsBedrockCustomSelected
-			if (awsBedrockCustomSelected) {
-				const baseModelId =
-					currentMode === "plan"
-						? apiConfiguration?.planModeAwsBedrockCustomModelBaseId
-						: apiConfiguration?.actModeAwsBedrockCustomModelBaseId
-
-				return {
-					selectedProvider: provider,
-					selectedModelId: modelId || bedrockDefaultModelId,
-					selectedModelInfo:
-						(baseModelId && bedrockModels[baseModelId as keyof typeof bedrockModels]) ||
-						bedrockModels[bedrockDefaultModelId],
-				}
-			}
-			return getProviderData(bedrockModels, bedrockDefaultModelId)
-		case "vertex":
-			return getProviderData(vertexModels, vertexDefaultModelId)
-		case "gemini":
-			return getProviderData(geminiModels, geminiDefaultModelId)
-		case "openai-native":
-			return getProviderData(openAiNativeModels, openAiNativeDefaultModelId)
-		case "openai-codex":
-			return getProviderData(openAiCodexModels, openAiCodexDefaultModelId)
-		case "deepseek":
-			return getProviderData(deepSeekModels, deepSeekDefaultModelId)
-		case "qwen":
-			const qwenModels = apiConfiguration?.qwenApiLine === "china" ? mainlandQwenModels : internationalQwenModels
-			const qwenDefaultId =
-				apiConfiguration?.qwenApiLine === "china" ? mainlandQwenDefaultModelId : internationalQwenDefaultModelId
-			return getProviderData(qwenModels, qwenDefaultId)
-		case "qwen-code":
-			return getProviderData(qwenCodeModels, qwenCodeDefaultModelId)
-		case "doubao":
-			return getProviderData(doubaoModels, doubaoDefaultModelId)
-		case "mistral":
-			return getProviderData(mistralModels, mistralDefaultModelId)
 		case "openrouter":
 			const openRouterModelId =
 				currentMode === "plan" ? apiConfiguration?.planModeOpenRouterModelId : apiConfiguration?.actModeOpenRouterModelId
@@ -256,16 +155,6 @@ export function normalizeApiConfiguration(
 				selectedProvider: provider,
 				selectedModelId: openRouterModelId || openRouterDefaultModelId,
 				selectedModelInfo: openRouterModelInfo || openRouterDefaultModelInfo,
-			}
-		case "requesty":
-			const requestyModelId =
-				currentMode === "plan" ? apiConfiguration?.planModeRequestyModelId : apiConfiguration?.actModeRequestyModelId
-			const requestyModelInfo =
-				currentMode === "plan" ? apiConfiguration?.planModeRequestyModelInfo : apiConfiguration?.actModeRequestyModelInfo
-			return {
-				selectedProvider: provider,
-				selectedModelId: requestyModelId || requestyDefaultModelId,
-				selectedModelInfo: requestyModelInfo || requestyDefaultModelInfo,
 			}
 		case "dirac":
 			const fallbackOpenRouterModelId =
@@ -332,144 +221,12 @@ export function normalizeApiConfiguration(
 				selectedModelInfo: liteLlmModelInfo || liteLlmModelInfoSaneDefaults,
 			}
 		}
-		case "xai":
-			return getProviderData(xaiModels, xaiDefaultModelId)
-		case "moonshot":
-			return getProviderData(moonshotModels, moonshotDefaultModelId)
-		case "huggingface":
-			const huggingFaceModelId =
-				currentMode === "plan"
-					? apiConfiguration?.planModeHuggingFaceModelId
-					: apiConfiguration?.actModeHuggingFaceModelId
-			const huggingFaceModelInfo =
-				currentMode === "plan"
-					? apiConfiguration?.planModeHuggingFaceModelInfo
-					: apiConfiguration?.actModeHuggingFaceModelInfo
-			return {
-				selectedProvider: provider,
-				selectedModelId: huggingFaceModelId || huggingFaceDefaultModelId,
-				selectedModelInfo: huggingFaceModelInfo || huggingFaceModels[huggingFaceDefaultModelId],
-			}
-		case "nebius":
-			return getProviderData(nebiusModels, nebiusDefaultModelId)
-		case "wandb":
-			return getProviderData(wandbModels, wandbDefaultModelId)
-		case "sambanova":
-			return getProviderData(sambanovaModels, sambanovaDefaultModelId)
-		case "cerebras":
-			return getProviderData(cerebrasModels, cerebrasDefaultModelId)
-		case "groq":
-			const groqModelId =
-				currentMode === "plan" ? apiConfiguration?.planModeGroqModelId : apiConfiguration?.actModeGroqModelId
-			const groqModelInfo =
-				currentMode === "plan" ? apiConfiguration?.planModeGroqModelInfo : apiConfiguration?.actModeGroqModelInfo
-			return {
-				selectedProvider: provider,
-				selectedModelId: groqModelId || groqDefaultModelId,
-				selectedModelInfo: groqModelInfo || groqModels[groqDefaultModelId],
-			}
-		case "baseten": {
-			const basetenModelId =
-				currentMode === "plan" ? apiConfiguration?.planModeBasetenModelId : apiConfiguration?.actModeBasetenModelId
-			const basetenModelInfo =
-				currentMode === "plan" ? apiConfiguration?.planModeBasetenModelInfo : apiConfiguration?.actModeBasetenModelInfo
-			const finalBasetenModelId = basetenModelId || basetenDefaultModelId
-			return {
-				selectedProvider: provider,
-				selectedModelId: finalBasetenModelId,
-				selectedModelInfo: basetenModelInfo ||
-					basetenModels[finalBasetenModelId as keyof typeof basetenModels] ||
-					basetenModels[basetenDefaultModelId] || {
-						description: "Baseten model",
-					},
-			}
-		}
-		case "huawei-cloud-maas":
-			const huaweiCloudMaasModelId =
-				currentMode === "plan"
-					? apiConfiguration?.planModeHuaweiCloudMaasModelId
-					: apiConfiguration?.actModeHuaweiCloudMaasModelId
-			const huaweiCloudMaasModelInfo =
-				currentMode === "plan"
-					? apiConfiguration?.planModeHuaweiCloudMaasModelInfo
-					: apiConfiguration?.actModeHuaweiCloudMaasModelInfo
-			return {
-				selectedProvider: provider,
-				selectedModelId: huaweiCloudMaasModelId || huaweiCloudMaasDefaultModelId,
-				selectedModelInfo: huaweiCloudMaasModelInfo || huaweiCloudMaasModels[huaweiCloudMaasDefaultModelId],
-			}
-		case "dify":
-			return {
-				selectedProvider: provider,
-				selectedModelId: "dify-workflow",
-				selectedModelInfo: {
-					maxTokens: 8192,
-					contextWindow: 128000,
-					supportsImages: true,
-					supportsPromptCache: false,
-					inputPrice: 0,
-					outputPrice: 0,
-					description: "Dify workflow - model selection is configured in your Dify application",
-				},
-			}
-		case "vercel-ai-gateway":
-			// Vercel AI Gateway uses its own model fields
-			const vercelModelId =
-				currentMode === "plan"
-					? apiConfiguration?.planModeVercelAiGatewayModelId
-					: apiConfiguration?.actModeVercelAiGatewayModelId
-			const vercelModelInfo =
-				currentMode === "plan"
-					? apiConfiguration?.planModeVercelAiGatewayModelInfo
-					: apiConfiguration?.actModeVercelAiGatewayModelInfo
-			return {
-				selectedProvider: provider,
-				selectedModelId: vercelModelId || "",
-				selectedModelInfo: vercelModelInfo || openRouterDefaultModelInfo,
-			}
-		case "zai":
-			const zaiModels = apiConfiguration?.zaiApiLine === "china" ? mainlandZAiModels : internationalZAiModels
-			const zaiDefaultId =
-				apiConfiguration?.zaiApiLine === "china" ? mainlandZAiDefaultModelId : internationalZAiDefaultModelId
-			return getProviderData(zaiModels, zaiDefaultId)
-		case "fireworks":
-			const fireworksModelId =
-				currentMode === "plan" ? apiConfiguration?.planModeFireworksModelId : apiConfiguration?.actModeFireworksModelId
-			return {
-				selectedProvider: provider,
-				selectedModelId: fireworksModelId || fireworksDefaultModelId,
-				selectedModelInfo:
-					fireworksModelId && fireworksModelId in fireworksModels
-						? fireworksModels[fireworksModelId as keyof typeof fireworksModels]
-						: fireworksModels[fireworksDefaultModelId],
-			}
-		case "aihubmix":
-			const aihubmixModelId =
-				currentMode === "plan" ? apiConfiguration?.planModeAihubmixModelId : apiConfiguration?.actModeAihubmixModelId
-			const aihubmixModelInfo =
-				currentMode === "plan" ? apiConfiguration?.planModeAihubmixModelInfo : apiConfiguration?.actModeAihubmixModelInfo
-			return {
-				selectedProvider: provider,
-				selectedModelId: aihubmixModelId || "",
-				selectedModelInfo: aihubmixModelInfo || openAiModelInfoSaneDefaults,
-			}
-		case "minimax":
-			return getProviderData(minimaxModels, minimaxDefaultModelId)
-		case "nousResearch":
-			const nousResearchModelId =
-				currentMode === "plan"
-					? apiConfiguration?.planModeNousResearchModelId
-					: apiConfiguration?.actModeNousResearchModelId
-			return {
-				selectedProvider: provider,
-				selectedModelId: nousResearchModelId || nousResearchDefaultModelId,
-				selectedModelInfo:
-					nousResearchModelId && nousResearchModelId in nousResearchModels
-						? nousResearchModels[nousResearchModelId as keyof typeof nousResearchModels]
-						: nousResearchModels[nousResearchDefaultModelId],
-			}
 		default:
-			return getProviderData(anthropicModels, anthropicDefaultModelId)
+			return {
+				selectedProvider: provider,
+				selectedModelId: modelId || openRouterDefaultModelId,
+				selectedModelInfo: openRouterDefaultModelInfo,
+			}
 	}
 }
 
@@ -597,13 +354,6 @@ export async function syncModeConfigurations(
 			updates.actModeDiracModelInfo = sourceFields.diracModelInfo
 			break
 
-		case "requesty":
-			updates.planModeRequestyModelId = sourceFields.requestyModelId
-			updates.actModeRequestyModelId = sourceFields.requestyModelId
-			updates.planModeRequestyModelInfo = sourceFields.requestyModelInfo
-			updates.actModeRequestyModelInfo = sourceFields.requestyModelInfo
-			break
-
 		case "openai":
 			updates.planModeOpenAiModelId = sourceFields.openAiModelId
 			updates.actModeOpenAiModelId = sourceFields.openAiModelId
@@ -628,96 +378,7 @@ export async function syncModeConfigurations(
 			updates.actModeLiteLlmModelInfo = sourceFields.liteLlmModelInfo
 			break
 
-		case "groq":
-			updates.planModeGroqModelId = sourceFields.groqModelId
-			updates.actModeGroqModelId = sourceFields.groqModelId
-			updates.planModeGroqModelInfo = sourceFields.groqModelInfo
-			updates.actModeGroqModelInfo = sourceFields.groqModelInfo
-			break
-
-		case "huggingface":
-			updates.planModeHuggingFaceModelId = sourceFields.huggingFaceModelId
-			updates.actModeHuggingFaceModelId = sourceFields.huggingFaceModelId
-			updates.planModeHuggingFaceModelInfo = sourceFields.huggingFaceModelInfo
-			updates.actModeHuggingFaceModelInfo = sourceFields.huggingFaceModelInfo
-			break
-
-		case "baseten":
-			updates.planModeBasetenModelId = sourceFields.basetenModelId
-			updates.actModeBasetenModelId = sourceFields.basetenModelId
-			updates.planModeBasetenModelInfo = sourceFields.basetenModelInfo
-			updates.actModeBasetenModelInfo = sourceFields.basetenModelInfo
-			break
-
-		case "together":
-			updates.planModeTogetherModelId = sourceFields.togetherModelId
-			updates.actModeTogetherModelId = sourceFields.togetherModelId
-			break
-
-		case "fireworks":
-			updates.planModeFireworksModelId = sourceFields.fireworksModelId
-			updates.actModeFireworksModelId = sourceFields.fireworksModelId
-			break
-
-		case "bedrock":
-			updates.planModeApiModelId = sourceFields.apiModelId
-			updates.actModeApiModelId = sourceFields.apiModelId
-			updates.planModeAwsBedrockCustomSelected = sourceFields.awsBedrockCustomSelected
-			updates.actModeAwsBedrockCustomSelected = sourceFields.awsBedrockCustomSelected
-			updates.planModeAwsBedrockCustomModelBaseId = sourceFields.awsBedrockCustomModelBaseId
-			updates.actModeAwsBedrockCustomModelBaseId = sourceFields.awsBedrockCustomModelBaseId
-			break
-
-		case "huawei-cloud-maas":
-			updates.planModeHuaweiCloudMaasModelId = sourceFields.huaweiCloudMaasModelId
-			updates.actModeHuaweiCloudMaasModelId = sourceFields.huaweiCloudMaasModelId
-			updates.planModeHuaweiCloudMaasModelInfo = sourceFields.huaweiCloudMaasModelInfo
-			updates.actModeHuaweiCloudMaasModelInfo = sourceFields.huaweiCloudMaasModelInfo
-			break
-
-		case "dify":
-			// Dify doesn't have mode-specific model configurations
-			// The model is configured in the Dify application itself
-			break
-
-		case "vercel-ai-gateway":
-			// Vercel AI Gateway uses its own model fields
-			updates.planModeVercelAiGatewayModelId = sourceFields.vercelAiGatewayModelId
-			updates.actModeVercelAiGatewayModelId = sourceFields.vercelAiGatewayModelId
-			updates.planModeVercelAiGatewayModelInfo = sourceFields.vercelAiGatewayModelInfo
-			updates.actModeVercelAiGatewayModelInfo = sourceFields.vercelAiGatewayModelInfo
-			break
-
-		case "nousResearch":
-			updates.planModeNousResearchModelId = sourceFields.nousResearchModelId
-			updates.actModeNousResearchModelId = sourceFields.nousResearchModelId
-			break
-
-		case "aihubmix":
-			updates.planModeAihubmixModelId = sourceFields.aihubmixModelId
-			updates.planModeAihubmixModelInfo = sourceFields.aihubmixModelInfo
-			updates.actModeAihubmixModelId = sourceFields.aihubmixModelId
-			updates.actModeAihubmixModelInfo = sourceFields.aihubmixModelInfo
-			break
-
-		// Providers that use apiProvider + apiModelId fields
-		case "anthropic":
-		case "claude-code":
-		case "vertex":
-		case "gemini":
-		case "openai-native":
-		case "openai-codex":
-		case "deepseek":
-		case "qwen":
-		case "doubao":
-		case "mistral":
-		case "xai":
-		case "nebius":
-		case "wandb":
-		case "sambanova":
-		case "cerebras":
-		case "zai":
-		case "minimax":
+		// Providers that use apiProvider + apiModelId fields (e.g. vscode-lm)
 		default:
 			updates.planModeApiModelId = sourceFields.apiModelId
 			updates.actModeApiModelId = sourceFields.apiModelId
@@ -737,13 +398,6 @@ export const getProviderInfo = (
 	effectiveMode: "plan" | "act",
 ): { modelId?: string; baseUrl?: string; helpText: string } => {
 	switch (provider) {
-		case "baseten":
-			return {
-				modelId:
-					effectiveMode === "plan" ? apiConfiguration.planModeBasetenModelId : apiConfiguration.actModeBasetenModelId,
-				baseUrl: apiConfiguration.basetenBaseUrl,
-				helpText: "Start Baseten and load a model to begin",
-			}
 		case "lmstudio":
 			return {
 				modelId:
@@ -770,33 +424,6 @@ export const getProviderInfo = (
 				modelId: undefined,
 				baseUrl: undefined,
 				helpText: "Select a VS Code language model from settings",
-			}
-		case "requesty":
-			return {
-				modelId:
-					effectiveMode === "plan" ? apiConfiguration.planModeRequestyModelId : apiConfiguration.actModeRequestyModelId,
-				baseUrl: apiConfiguration.requestyBaseUrl,
-				helpText: "Add your Requesty API key in settings",
-			}
-		case "together":
-			return {
-				modelId:
-					effectiveMode === "plan" ? apiConfiguration.planModeTogetherModelId : apiConfiguration.actModeTogetherModelId,
-				baseUrl: undefined,
-				helpText: "Add your Together AI API key in settings",
-			}
-		case "dify":
-			return {
-				modelId: undefined,
-				baseUrl: apiConfiguration.difyBaseUrl,
-				helpText: "Configure your Dify workflow URL and API key",
-			}
-		case "aihubmix":
-			return {
-				modelId:
-					effectiveMode === "plan" ? apiConfiguration.planModeAihubmixModelId : apiConfiguration.actModeAihubmixModelId,
-				baseUrl: apiConfiguration.aihubmixBaseUrl,
-				helpText: "Add your AIHubMix API key in settings",
 			}
 		default:
 			return {

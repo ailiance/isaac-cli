@@ -85,7 +85,7 @@ type Story = StoryObj<typeof MockApp>
 
 // Mock data factories
 const createApiConfig = (overrides: Partial<ApiConfiguration> = {}): ApiConfiguration => ({
-	actModeApiProvider: "anthropic",
+	actModeApiProvider: "openrouter",
 	actModeApiModelId: "claude-3-5-sonnet-20241022",
 	actModeOpenRouterModelInfo: {
 		maxTokens: 8000,
@@ -98,7 +98,7 @@ const createApiConfig = (overrides: Partial<ApiConfiguration> = {}): ApiConfigur
 
 const mockApiConfiguration = createApiConfig()
 const mockApiConfigurationPlan = createApiConfig({
-	planModeApiProvider: "anthropic",
+	planModeApiProvider: "openrouter",
 	planModeApiModelId: "claude-3-5-sonnet-20241022",
 })
 

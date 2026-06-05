@@ -1,8 +1,5 @@
 import { ApiHandlerModel, ApiProviderInfo } from "@core/api"
-import {
-    AnthropicModelId,
-    anthropicModels, getProviderForModel
-} from "@/shared/api"
+import { AnthropicModelId, anthropicModels } from "@/shared/api"
 
 export { supportsReasoningEffortForModel } from "@shared/utils/reasoning-support"
 
@@ -24,14 +21,11 @@ export function shouldSkipReasoningForModel(modelId?: string): boolean {
 	if (!modelId) {
 		return false
 	}
-	const provider = getProviderForModel(modelId)
-	return provider === "xai" || modelId.includes("devstral")
+	const normalized = modelId.toLowerCase()
+	return normalized.includes("grok") || normalized.includes("devstral")
 }
 
 export function isAnthropicModelId(modelId: string): modelId is AnthropicModelId {
-	if (getProviderForModel(modelId) === "anthropic") {
-		return true
-	}
 	const CLAUDE_MODELS = ["sonnet", "opus", "haiku"]
 	return modelId in anthropicModels || CLAUDE_MODELS.some((substring) => modelId.includes(substring))
 }
@@ -63,7 +57,6 @@ export function parsePrice(priceString: string | undefined): number {
 	return parsed * 1_000_000
 }
 
-
 /**
  * Check if parallel tool calling is enabled.
  * For this fork, we always enable parallel tool calling to support multiple tool uses per turn.
@@ -75,4 +68,3 @@ export function isParallelToolCallingEnabled(enableParallelSetting: boolean, pro
 function normalize(text: string): string {
 	return text.trim().toLowerCase()
 }
-

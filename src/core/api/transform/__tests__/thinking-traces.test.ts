@@ -12,7 +12,6 @@
 import { describe, it } from "mocha"
 import "should"
 import { DiracAssistantThinkingBlock, DiracStorageMessage, DiracTextContentBlock } from "@/shared/messages/content"
-import { sanitizeAnthropicMessages } from "../anthropic-format"
 import { convertToOpenAiMessages, sanitizeGeminiMessages } from "../openai-format"
 
 describe("Thinking Trace Preservation", () => {
@@ -220,64 +219,6 @@ describe("Thinking Trace Preservation", () => {
 
 			result.should.have.length(1)
 			;(result[0] as any).tool_calls.should.have.length(1)
-		})
-	})
-
-	describe("sanitizeAnthropicMessages", () => {
-		it("should preserve thinking blocks", () => {
-			const messages: DiracStorageMessage[] = [
-				{
-					role: "assistant",
-					content: [
-						{
-							type: "thinking",
-							thinking: "Let me think about this...",
-							signature: "valid-sig",
-						} as DiracAssistantThinkingBlock,
-						{
-							type: "text",
-							text: "Here's my answer",
-						} as DiracTextContentBlock,
-					],
-				},
-			]
-
-			const result = sanitizeAnthropicMessages(messages, false)
-
-			result.should.have.length(1)
-			const content = result[0].content as any[]
-			// Find thinking block
-			const thinkingBlock = content.find((b) => b.type === "thinking")
-			thinkingBlock.should.not.be.undefined
-			thinkingBlock.thinking.should.equal("Let me think about this...")
-		})
-
-		it("should not add cache_control to thinking blocks", () => {
-			const messages: DiracStorageMessage[] = [
-				{
-					role: "user",
-					content: [
-						{
-							type: "thinking",
-							thinking: "Thinking...",
-							signature: "sig",
-						} as any,
-						{
-							type: "text",
-							text: "Question",
-						} as DiracTextContentBlock,
-					],
-				},
-			]
-
-			const result = sanitizeAnthropicMessages(messages, true)
-
-			result.should.have.length(1)
-			const content = result[0].content as any[]
-			// The text block (last non-thinking) should have cache_control
-			const textBlock = content.find((b) => b.type === "text")
-			textBlock.cache_control.should.deepEqual({ type: "ephemeral" })
-			// Thinking block should not have cache_control (it doesn't support it)
 		})
 	})
 })

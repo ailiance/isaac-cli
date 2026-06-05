@@ -48,15 +48,6 @@ export class SharedUriHandler {
 					Logger.warn("SharedUriHandler: Missing code parameter for OpenRouter callback")
 					return false
 				}
-				case "/requesty": {
-					const code = query.get("code")
-					if (code) {
-						await visibleWebview.controller.handleRequestyCallback(code)
-						return true
-					}
-					Logger.warn("SharedUriHandler: Missing code parameter for Requesty callback")
-					return false
-				}
 				case TASK_URI_PATH: {
 					const prompt = query.get("prompt")
 					if (prompt) {

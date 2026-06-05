@@ -10,6 +10,7 @@ import type { ApiProvider, ModelInfo } from "@shared/api"
 import type { ChatContent } from "@shared/ChatContent"
 import type { ExtensionState, Platform } from "@shared/ExtensionMessage"
 import type { HistoryItem } from "@shared/HistoryItem"
+import { ShowMessageType } from "@shared/proto/host/window"
 import { type Settings } from "@shared/storage/state-keys"
 import type { Mode } from "@shared/storage/types"
 import type { TelemetrySetting } from "@shared/TelemetrySetting"
@@ -22,6 +23,7 @@ import * as path from "path"
 import { DiracEnv } from "@/config"
 import type { FolderLockWithRetryResult } from "@/core/locks/types"
 import { HostProvider } from "@/hosts/host-provider"
+import { githubCopilotAuthManager } from "@/integrations/github-copilot/auth"
 import { ExtensionRegistryInfo } from "@/registry"
 import { BannerService } from "@/services/banner/BannerService"
 import { featureFlagsService } from "@/services/feature-flags"
@@ -31,21 +33,19 @@ import { DiracExtensionContext } from "@/shared/dirac"
 import { getAxiosSettings } from "@/shared/net"
 import { Logger } from "@/shared/services/Logger"
 import { Session } from "@/shared/services/Session"
+import { SkillMetadata } from "@/shared/skills"
 import { getLatestAnnouncementId } from "@/utils/announcements"
-import { ShowMessageType } from "@shared/proto/host/window"
 import { getCwd, getDesktopDir } from "@/utils/path"
+import { getOrDiscoverSkills } from "../context/instructions/user-instructions/skills"
 import { PromptRegistry } from "../prompts/system-prompt"
 import { ensureCacheDirectoryExists, GlobalFileNames } from "../storage/disk"
 import { type PersistenceErrorEvent, StateManager } from "../storage/StateManager"
 import { Task } from "../task"
-import { getOrDiscoverSkills } from "../context/instructions/user-instructions/skills"
 import { getDiracOnboardingModels } from "./models/getDiracOnboardingModels"
 import { appendDiracStealthModels } from "./models/refreshOpenRouterModels"
 import { checkCliInstallation } from "./state/checkCliInstallation"
 import { sendStateUpdate } from "./state/subscribeToState"
-import { githubCopilotAuthManager } from "@/integrations/github-copilot/auth"
 import { sendChatButtonClickedEvent } from "./ui/subscribeToChatButtonClicked"
-import { SkillMetadata } from "@/shared/skills"
 
 export class Controller {
 	public discoveredSkillsCache?: SkillMetadata[]
@@ -497,25 +497,6 @@ export class Controller {
 				type: ShowMessageType.ERROR,
 				message: `GitHub Copilot login failed: ${error instanceof Error ? error.message : String(error)}`,
 			})
-		}
-	}
-
-	// Requesty
-
-	async handleRequestyCallback(code: string) {
-		const requesty: ApiProvider = "requesty"
-		const currentMode = this.stateManager.getGlobalSettingsKey("mode")
-		const currentApiConfiguration = this.stateManager.getApiConfiguration()
-		const updatedConfig = {
-			...currentApiConfiguration,
-			planModeApiProvider: requesty,
-			actModeApiProvider: requesty,
-			requestyApiKey: code,
-		}
-		this.stateManager.setApiConfiguration(updatedConfig)
-		await this.postStateToWebview()
-		if (this.task) {
-			this.task.api = buildApiHandler({ ...updatedConfig, ulid: this.task.ulid }, currentMode)
 		}
 	}
 

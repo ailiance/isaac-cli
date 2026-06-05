@@ -19,12 +19,10 @@ import { useStdinContext } from "../context/StdinContext"
 import { useScrollableList } from "../hooks/useScrollableList"
 import { type DetectedSources, detectImportSources, type ImportSource } from "../utils/import-configs"
 import { isMouseEscapeSequence } from "../utils/input"
-import { applyBedrockConfig, applyProviderConfig } from "../utils/provider-config"
+import { applyProviderConfig } from "../utils/provider-config"
 import { useValidProviders } from "../utils/providers"
 import { ApiKeyInput } from "./ApiKeyInput"
 import { StaticRobotFrame } from "./AsciiMotionCli"
-import { BedrockCustomModelFlow } from "./BedrockCustomModelFlow"
-import { type BedrockConfig, BedrockSetup } from "./BedrockSetup"
 import { ImportView } from "./ImportView"
 import { GithubAuthView } from "./GithubAuthView"
 import { CUSTOM_MODEL_ID, getDefaultModelId, hasModelPicker, ModelPicker } from "./ModelPicker"
@@ -42,9 +40,7 @@ type AuthStep =
 	| "error"
 	| "openai_codex_auth"
 	| "openai_codex_device_auth"
-	| "bedrock"
 	| "import"
-	| "bedrock_custom"
 	| "github_copilot_auth"
 
 interface AuthViewProps {
@@ -169,8 +165,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ controller, onComplete, onEr
 	const [providerIndex, setProviderIndex] = useState(0)
 	const [importSources, setImportSources] = useState<DetectedSources>({ codex: false, opencode: false })
 	const [importSource, setImportSource] = useState<ImportSource | null>(null)
-	const [bedrockConfig, setBedrockConfig] = useState<BedrockConfig | null>(null)
-
 	// Main menu items - conditionally include import options
 	const mainMenuItems: SelectItem[] = useMemo(() => {
 		const items: SelectItem[] = []
@@ -302,8 +296,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ controller, onComplete, onEr
 				startOpenAiCodexAuth()
 			} else if (value === "github-copilot") {
 				setStep("github_copilot_auth")
-			} else if (value === "bedrock") {
-				setStep("bedrock")
 			} else {
 				setStep("apikey")
 			}
@@ -325,17 +317,14 @@ export const AuthView: React.FC<AuthViewProps> = ({ controller, onComplete, onEr
 		[selectedProvider],
 	)
 
-	// Save custom Bedrock ARN configuration with base model for capability detection
-	const saveCustomBedrockConfiguration = useCallback(
-		async (arn: string, baseModelId: string) => {
+	const saveConfiguration = useCallback(
+		async (model: string, base: string) => {
 			try {
-				if (!bedrockConfig) {
-					throw new Error("Bedrock configuration is missing")
-				}
-				await applyBedrockConfig({
-					bedrockConfig,
-					modelId: arn,
-					customModelBaseId: baseModelId,
+				await applyProviderConfig({
+					providerId: selectedProvider,
+					apiKey,
+					modelId: model,
+					baseUrl: base,
 					controller,
 				})
 
@@ -349,48 +338,11 @@ export const AuthView: React.FC<AuthViewProps> = ({ controller, onComplete, onEr
 				setStep("error")
 			}
 		},
-		[bedrockConfig, controller],
-	)
-
-	const saveConfiguration = useCallback(
-		async (model: string, base: string) => {
-			try {
-				if (selectedProvider === "bedrock" && bedrockConfig) {
-					await applyBedrockConfig({
-						bedrockConfig,
-						modelId: model,
-						controller,
-					})
-				} else {
-					await applyProviderConfig({
-						providerId: selectedProvider,
-						apiKey,
-						modelId: model,
-						baseUrl: base,
-						controller,
-					})
-				}
-
-				const stateManager = StateManager.get()
-				stateManager.setGlobalState("welcomeViewCompleted", true)
-				await stateManager.flushPendingState()
-
-				setStep("success")
-			} catch (error) {
-				setErrorMessage(error instanceof Error ? error.message : String(error))
-				setStep("error")
-			}
-		},
-		[selectedProvider, apiKey, bedrockConfig, controller],
+		[selectedProvider, apiKey, controller],
 	)
 
 	const handleModelIdSubmit = useCallback(
 		(value: string) => {
-			// Intercept "Custom" selection for Bedrock — redirect to custom ARN input flow
-			if (value === CUSTOM_MODEL_ID && selectedProvider === "bedrock") {
-				setStep("bedrock_custom")
-				return
-			}
 
 			if (value.trim()) {
 				setModelId(value)
@@ -415,11 +367,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ controller, onComplete, onEr
 		[modelId, saveConfiguration],
 	)
 
-
-	const handleBedrockComplete = useCallback((config: BedrockConfig) => {
-		setBedrockConfig(config)
-		setStep("modelid")
-	}, [])
 
 	const handleImportComplete = useCallback(() => {
 		setStep("success")
@@ -488,12 +435,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ controller, onComplete, onEr
 				break
 			case "modelid":
 				setModelId("")
-				if (selectedProvider === "bedrock") {
-					// Bedrock skips the API key step — go back to Bedrock setup
-					setStep("bedrock")
-				} else {
-					setStep("apikey")
-				}
+				setStep("apikey")
 				break
 			case "baseurl":
 				setBaseUrl("")
@@ -508,10 +450,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ controller, onComplete, onEr
 				break
 			case "github_copilot_auth":
 				setStep("menu")
-				break
-			case "bedrock":
-				setBedrockConfig(null)
-				setStep("provider")
 				break
 			case "import":
 				setImportSource(null)
@@ -711,30 +649,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ controller, onComplete, onEr
 					/>
 				)
 
-			case "bedrock":
-				return (
-					<BedrockSetup
-						isActive={step === "bedrock"}
-						onCancel={() => {
-							setBedrockConfig(null)
-							setStep("provider")
-						}}
-						onComplete={handleBedrockComplete}
-					/>
-				)
-
-			case "bedrock_custom":
-				return (
-					<BedrockCustomModelFlow
-						isActive={step === "bedrock_custom"}
-						onCancel={() => setStep("modelid")}
-						onComplete={(arn, baseModelId) => {
-							setStep("saving")
-							saveCustomBedrockConfiguration(arn, baseModelId)
-						}}
-					/>
-				)
-
 			case "import":
 				if (!importSource) {
 					return null
@@ -765,7 +679,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ controller, onComplete, onEr
 
 	// Steps that allow going back with escape (apikey handled by ApiKeyInput component)
 	// OcaEmployeeCheck handles its own escape key, so oca_employee_check is not in this list
-	const canGoBack = ["provider", "modelid", "baseurl", "openai_codex_auth", "openai_codex_device_auth", "bedrock", "error"].includes(
+	const canGoBack = ["provider", "modelid", "baseurl", "openai_codex_auth", "openai_codex_device_auth", "error"].includes(
 		step,
 	)
 

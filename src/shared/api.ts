@@ -14,90 +14,11 @@ export function stripOpenRouterPreset(modelId: string): string {
 	return modelId
 }
 
-export type ApiProvider =
-	| "anthropic"
-	| "claude-code"
-	| "openrouter"
-	| "bedrock"
-	| "vertex"
-	| "openai"
-	| "lmstudio"
-	| "gemini"
-	| "openai-native"
-	| "openai-codex"
-	| "requesty"
-	| "together"
-	| "deepseek"
-	| "qwen"
-	| "qwen-code"
-	| "doubao"
-	| "mistral"
-	| "github-copilot"
-	| "vscode-lm"
-	| "dirac"
-	| "litellm"
-	| "moonshot"
-	| "nebius"
-	| "fireworks"
-	| "xai"
-	| "sambanova"
-	| "cerebras"
-	| "groq"
-	| "huggingface"
-	| "huawei-cloud-maas"
-	| "dify"
-	| "baseten"
-	| "vercel-ai-gateway"
-	| "zai"
-	| "oca"
-	| "aihubmix"
-	| "minimax"
-	| "nousResearch"
-	| "wandb"
+export type ApiProvider = "openrouter" | "openai" | "lmstudio" | "vscode-lm" | "dirac" | "litellm"
 
-export const ALL_PROVIDERS: ApiProvider[] = [
-	"anthropic",
-	"claude-code",
-	"openrouter",
-	"bedrock",
-	"vertex",
-	"openai",
-	"lmstudio",
-	"gemini",
-	"openai-native",
-	"openai-codex",
-	"requesty",
-	"together",
-	"deepseek",
-	"qwen",
-	"qwen-code",
-	"doubao",
-	"mistral",
-	"github-copilot",
-	"vscode-lm",
-	"dirac",
-	"litellm",
-	"moonshot",
-	"nebius",
-	"fireworks",
-	"xai",
-	"sambanova",
-	"cerebras",
-	"groq",
-	"huggingface",
-	"huawei-cloud-maas",
-	"dify",
-	"baseten",
-	"vercel-ai-gateway",
-	"zai",
-	"oca",
-	"aihubmix",
-	"minimax",
-	"nousResearch",
-	"wandb",
-]
+export const ALL_PROVIDERS: ApiProvider[] = ["openrouter", "openai", "lmstudio", "vscode-lm", "dirac", "litellm"]
 
-export const DEFAULT_API_PROVIDER = "openrouter" as ApiProvider
+export const DEFAULT_API_PROVIDER = "openai" as ApiProvider
 
 export interface ApiHandlerOptions extends Partial<ApiHandlerSettings> {
 	ulid?: string // Used to identify the task in API requests
@@ -217,7 +138,6 @@ export const GPT_5_5_TIERS = [
 		cacheReadsPrice: 1.0,
 	},
 ]
-
 
 export const GPT_5_4_TIERS = [
 	{
@@ -396,8 +316,8 @@ export function isAnthropicAdaptiveThinkingSupported(modelId: string, info?: Mod
 
 	const versionMatch = id.match(/claude-(\d+)[.-](\d+)/)
 	if (versionMatch) {
-		const major = parseInt(versionMatch[1])
-		const minor = parseInt(versionMatch[2])
+		const major = Number.parseInt(versionMatch[1])
+		const minor = Number.parseInt(versionMatch[2])
 		if (major < 4 || (major === 4 && minor <= 5)) {
 			return false // Old model
 		}
@@ -410,7 +330,6 @@ export function isAnthropicAdaptiveThinkingSupported(modelId: string, info?: Mod
 
 	return true // Default to adaptive for everything else
 }
-
 
 // Claude Code
 export type ClaudeCodeModelId = keyof typeof claudeCodeModels
@@ -1204,7 +1123,7 @@ export const deepSeekModels = {
 		maxTokens: 384_000,
 		contextWindow: 1_048_576,
 		supportsImages: false,
-		supportsPromptCache: true, 
+		supportsPromptCache: true,
 		supportsReasoning: true,
 		supportsReasoningEffort: true,
 		supportsTools: true,
@@ -1217,7 +1136,7 @@ export const deepSeekModels = {
 		maxTokens: 384_000,
 		contextWindow: 1_048_576,
 		supportsImages: false,
-		supportsPromptCache: true, 
+		supportsPromptCache: true,
 		supportsReasoning: true,
 		supportsReasoningEffort: true,
 		supportsTools: true,
@@ -1599,7 +1518,6 @@ export const liteLlmModelInfoSaneDefaults: LiteLLMModelInfo = {
 	cacheReadsPrice: 0,
 	temperature: 0,
 }
-
 
 // Nebius AI Studio
 // https://docs.nebius.com/studio/inference/models
@@ -2351,36 +2269,7 @@ export const nousResearchModels = {
  * Central registry of all hardcoded model maps.
  * This is used as the single source of truth for model-to-provider mapping.
  */
-export const ALL_MODEL_MAPS: [ApiProvider, Record<string, ModelInfo>][] = [
-	["anthropic", anthropicModels],
-	["claude-code", claudeCodeModels],
-	["bedrock", bedrockModels],
-	["vertex", vertexModels],
-	["gemini", geminiModels],
-	["openai-native", openAiNativeModels],
-	["openai-codex", openAiCodexModels],
-	["deepseek", deepSeekModels],
-	["huggingface", huggingFaceModels],
-	["qwen", internationalQwenModels],
-	["qwen", mainlandQwenModels],
-	["doubao", doubaoModels],
-	["mistral", mistralModels],
-	["nebius", nebiusModels],
-	["wandb", wandbModels],
-	["xai", xaiModels],
-	["sambanova", sambanovaModels],
-	["cerebras", cerebrasModels],
-	["groq", groqModels],
-	["moonshot", moonshotModels],
-	["huawei-cloud-maas", huaweiCloudMaasModels],
-	["baseten", basetenModels],
-	["zai", internationalZAiModels],
-	["zai", mainlandZAiModels],
-	["fireworks", fireworksModels],
-	["qwen-code", qwenCodeModels],
-	["minimax", minimaxModels],
-	["nousResearch", nousResearchModels],
-]
+export const ALL_MODEL_MAPS: [ApiProvider, Record<string, ModelInfo>][] = []
 
 /**
  * Gets the provider for a given model ID based on hardcoded model maps.
@@ -2394,7 +2283,6 @@ export function getProviderForModel(modelId: string): ApiProvider | undefined {
 	}
 	return undefined
 }
-
 
 /**
  * Gets the model info for a given model ID based on hardcoded model maps.

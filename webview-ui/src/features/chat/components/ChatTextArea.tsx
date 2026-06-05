@@ -1023,17 +1023,10 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					return `openai-compat:${selectedModelId}`
 				case "vscode-lm":
 					return `vscode-lm:${vsCodeLmModelSelector ? `${vsCodeLmModelSelector.vendor ?? ""}/${vsCodeLmModelSelector.family ?? ""}` : unknownModel}`
-				case "together":
-					return `${selectedProvider}:${togetherModelId}`
 				case "lmstudio":
 					return `${selectedProvider}:${lmStudioModelId}`
 				case "litellm":
 					return `${selectedProvider}:${liteLlmModelId}`
-				case "requesty":
-					return `${selectedProvider}:${requestyModelId}`
-				case "vercel-ai-gateway":
-					return `${selectedProvider}:${vercelAiGatewayModelId || selectedModelId}`
-				case "anthropic":
 				case "openrouter":
 				default:
 					return `${selectedProvider}:${selectedModelId}`

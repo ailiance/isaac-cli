@@ -108,36 +108,14 @@ export function getSettingsFromEnv(): Partial<Settings> {
 	return settings
 }
 
-
-
 /**
  * Get the best provider based on available environment variables.
  */
 export function getProviderFromEnv(): ApiProvider | undefined {
-	if (process.env.ANTHROPIC_API_KEY) return "anthropic"
 	if (process.env.OPENROUTER_API_KEY) return "openrouter"
-	if (process.env.OPENAI_API_KEY) return "openai-native"
-	if (process.env.GEMINI_API_KEY) return "gemini"
-
-	if (process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT) return "vertex"
-	// AWS Bedrock: detected via explicit credentials or model ID
-	if (process.env.AWS_ACCESS_KEY_ID || process.env.AWS_BEDROCK_MODEL) return "bedrock"
-	if (process.env.GROQ_API_KEY) return "groq"
-	if (process.env.XAI_API_KEY) return "xai"
-	if (process.env.MISTRAL_API_KEY) return "mistral"
-	if (process.env.MOONSHOT_API_KEY) return "moonshot"
-	if (process.env.HF_TOKEN) return "huggingface"
-	if (process.env.ZAI_API_KEY) return "zai"
-	if (process.env.MINIMAX_API_KEY || process.env.MINIMAX_CN_API_KEY) return "minimax"
-	if (process.env.CEREBRAS_API_KEY) return "cerebras"
-	if (process.env.AI_GATEWAY_API_KEY) return "vercel-ai-gateway"
-	if (process.env.OPENCODE_API_KEY || process.env.KIMI_API_KEY) return "openai-native"
-	if (process.env.DEEPSEEK_API_KEY) return "deepseek"
-	if (process.env.QWEN_API_KEY) return "qwen"
-	if (process.env.TOGETHER_API_KEY) return "together"
-	if (process.env.FIREWORKS_API_KEY) return "fireworks"
-	if (process.env.NEBIUS_API_KEY) return "nebius"
-	if (process.env.OPENAI_COMPATIBLE_CUSTOM_KEY || process.env.OPENAI_API_BASE) return "openai"
+	if (process.env.LITELLM_API_KEY) return "litellm"
+	if (process.env.OPENAI_API_KEY || process.env.OPENAI_COMPATIBLE_CUSTOM_KEY || process.env.OPENAI_API_BASE) {
+		return "openai"
+	}
 	return undefined
 }
-

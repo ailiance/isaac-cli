@@ -1,29 +1,7 @@
 // Map providers to their specific model ID keys
 
 import { Secrets, SettingsKey } from "@shared/storage/state-keys"
-import {
-	ApiProvider,
-	anthropicDefaultModelId,
-	basetenDefaultModelId,
-	bedrockDefaultModelId,
-	deepSeekDefaultModelId,
-	fireworksDefaultModelId,
-	geminiDefaultModelId,
-	groqDefaultModelId,
-	huaweiCloudMaasDefaultModelId,
-	huggingFaceDefaultModelId,
-	internationalQwenDefaultModelId,
-	liteLlmDefaultModelId,
-	minimaxDefaultModelId,
-	moonshotDefaultModelId,
-	nousResearchDefaultModelId,
-	openAiNativeDefaultModelId,
-	openRouterDefaultModelId,
-	requestyDefaultModelId,
-	wandbDefaultModelId,
-	xaiDefaultModelId,
-} from "../api"
-
+import { ApiProvider, liteLlmDefaultModelId, openRouterDefaultModelId } from "../api"
 
 const ProviderKeyMap: Partial<Record<ApiProvider, string>> = {
 	openrouter: "OpenRouterModelId",
@@ -31,91 +9,27 @@ const ProviderKeyMap: Partial<Record<ApiProvider, string>> = {
 	openai: "OpenAiModelId",
 	lmstudio: "LmStudioModelId",
 	litellm: "LiteLlmModelId",
-	requesty: "RequestyModelId",
-	together: "TogetherModelId",
-	fireworks: "FireworksModelId",
-	groq: "GroqModelId",
-	baseten: "BasetenModelId",
-	huggingface: "HuggingFaceModelId",
-	aihubmix: "AihubmixModelId",
-	nousResearch: "NousResearchModelId",
-	"vercel-ai-gateway": "VercelAiGatewayModelId",
 } as const
-
 
 export const ProviderToBaseUrlKeyMap: Partial<Record<ApiProvider, SettingsKey>> = {
 	openai: "openAiBaseUrl",
-	"openai-native": "openAiBaseUrl",
 	litellm: "liteLlmBaseUrl",
 	lmstudio: "lmStudioBaseUrl",
-	anthropic: "anthropicBaseUrl",
-	gemini: "geminiBaseUrl",
-	requesty: "requestyBaseUrl",
-	dify: "difyBaseUrl",
-	aihubmix: "aihubmixBaseUrl",
-	bedrock: "awsBedrockEndpoint",
 } as const
 
 export const ProviderToApiKeyMap: Partial<Record<ApiProvider, keyof Secrets | (keyof Secrets)[]>> = {
 	dirac: ["diracApiKey"],
-	anthropic: "apiKey",
 	openrouter: "openRouterApiKey",
-	bedrock: ["awsAccessKey", "awsBedrockApiKey"],
 	openai: ["openAiApiKey", "openAiCompatibleCustomApiKey"],
-	gemini: "geminiApiKey",
-	"openai-native": "openAiNativeApiKey",
-	requesty: "requestyApiKey",
-	together: "togetherApiKey",
-	deepseek: "deepSeekApiKey",
-	qwen: "qwenApiKey",
-	"qwen-code": "qwenApiKey",
-	doubao: "doubaoApiKey",
-	mistral: "mistralApiKey",
 	litellm: "liteLlmApiKey",
-	moonshot: "moonshotApiKey",
-	nebius: "nebiusApiKey",
-	fireworks: "fireworksApiKey",
-	xai: "xaiApiKey",
-	sambanova: "sambanovaApiKey",
-	cerebras: "cerebrasApiKey",
-	groq: "groqApiKey",
-	huggingface: "huggingFaceApiKey",
-	"huawei-cloud-maas": "huaweiCloudMaasApiKey",
-	dify: "difyApiKey",
-	baseten: "basetenApiKey",
-	"vercel-ai-gateway": "vercelAiGatewayApiKey",
-	zai: "zaiApiKey",
-	aihubmix: "aihubmixApiKey",
-	minimax: "minimaxApiKey",
-	nousResearch: "nousResearchApiKey",
-	wandb: "wandbApiKey",
 } as const
 
 const ProviderDefaultModelMap: Partial<Record<ApiProvider, string>> = {
-	anthropic: anthropicDefaultModelId,
 	openrouter: openRouterDefaultModelId,
 	dirac: openRouterDefaultModelId,
-	openai: openAiNativeDefaultModelId,
+	openai: openRouterDefaultModelId,
 	lmstudio: "",
 	litellm: liteLlmDefaultModelId,
-	requesty: requestyDefaultModelId,
-	together: openRouterDefaultModelId,
-	fireworks: fireworksDefaultModelId,
-	groq: groqDefaultModelId,
-	baseten: basetenDefaultModelId,
-	huggingface: huggingFaceDefaultModelId,
-	"huawei-cloud-maas": huaweiCloudMaasDefaultModelId,
-	aihubmix: openRouterDefaultModelId,
-	bedrock: bedrockDefaultModelId,
-	nousResearch: nousResearchDefaultModelId,
-	"vercel-ai-gateway": openRouterDefaultModelId,
-	xai: xaiDefaultModelId,
-	gemini: geminiDefaultModelId,
-	minimax: minimaxDefaultModelId,
-	moonshot: moonshotDefaultModelId,
-	qwen: internationalQwenDefaultModelId,
-	deepseek: deepSeekDefaultModelId,
-	wandb: wandbDefaultModelId,
 } as const
 
 /**

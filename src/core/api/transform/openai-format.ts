@@ -44,13 +44,6 @@ function transformToolCallIdForNativeApi(toolId: string, provider?: ApiProvider)
 		// Use the last 33 chars + "call_" (5 chars) to stay under the 40-char limit.
 		return `call_${toolId.slice(toolId.length - (MAX_TOOL_CALL_ID_LENGTH - 5))}`
 	}
-	if (provider !== "openai-native") {
-		return toolId
-	}
-	// Ensure ID doesn't exceed max length
-	if (toolId.length > MAX_TOOL_CALL_ID_LENGTH) {
-		return toolId.slice(0, MAX_TOOL_CALL_ID_LENGTH)
-	}
 	return toolId
 }
 
@@ -68,7 +61,7 @@ function transformToolCallIdForNativeApi(toolId: string, provider?: ApiProvider)
 export function convertToOpenAiMessages(
 	anthropicMessages: Omit<DiracStorageMessage, "modelInfo">[],
 	provider?: ApiProvider,
-	supportsImages: boolean = true,
+	supportsImages = true,
 ): OpenAI.Chat.ChatCompletionMessageParam[] {
 	const openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = []
 
@@ -158,9 +151,8 @@ export function convertToOpenAiMessages(
 													: (part.source as any).url,
 										},
 									}
-								} else {
-									return { type: "text", text: "[Image]" }
 								}
+								return { type: "text", text: "[Image]" }
 							}
 							return { type: "text", text: part.text || "" }
 						}),

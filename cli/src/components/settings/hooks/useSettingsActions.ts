@@ -3,7 +3,7 @@ import { StateManager } from "@/core/storage/StateManager"
 import { getProviderModelIdKey, ProviderToApiKeyMap } from "@shared/storage"
 import { openAiCodexOAuthManager } from "@/integrations/openai-codex/oauth"
 import { githubCopilotAuthManager } from "@/integrations/github-copilot/auth"
-import { applyProviderConfig, applyBedrockConfig } from "../../../utils/provider-config"
+import { applyProviderConfig } from "../../../utils/provider-config"
 import { normalizeReasoningEffort, nextReasoningEffort } from "../utils"
 import { FEATURE_SETTINGS, type FeatureKey } from "../constants"
 import { hasModelPicker, CUSTOM_MODEL_ID } from "../../ModelPicker"
@@ -17,7 +17,6 @@ import type { TelemetrySetting } from "@shared/TelemetrySetting"
 import type { OpenaiReasoningEffort } from "@shared/storage/types"
 import type { ApiProvider, ModelInfo } from "@shared/api"
 import type { ObjectEditorState } from "../../ConfigViewComponents"
-import type { BedrockConfig } from "../../BedrockSetup"
 
 interface UseSettingsActionsProps {
 	items: ListItem[]
@@ -445,7 +444,7 @@ export function useSettingsActions({
 			const fieldName = keyField ? (Array.isArray(keyField) ? keyField[0] : keyField) : null
 			const existingKey = fieldName ? (apiConfig as Record<string, string>)[fieldName] || "" : ""
 
-			if (initialMode === "provider-picker" && (existingKey || !keyField) && providerId !== "bedrock") {
+			if (initialMode === "provider-picker" && (existingKey || !keyField)) {
 				let canSwitchDirectly = true
 				if (providerId === "openai-codex") {
 					canSwitchDirectly = await openAiCodexOAuthManager.isAuthenticated()
@@ -460,22 +459,6 @@ export function useSettingsActions({
 					onClose()
 					return
 				}
-			}
-
-			if (providerId === "bedrock") {
-				const isConfigured = !!(apiConfig.awsRegion && (apiConfig.awsUseProfile || (apiConfig.awsAccessKey && apiConfig.awsSecretKey)))
-				if (initialMode === "provider-picker" && isConfigured) {
-					await applyProviderConfig({ providerId, controller })
-					setProvider(providerId)
-					refreshModelIds()
-					setIsPickingProvider(false)
-					onClose()
-					return
-				}
-				setPendingProvider(providerId)
-				setIsPickingProvider(false)
-				setIsConfiguringBedrock(true)
-				return
 			}
 
 			if (providerId === "github-copilot") {
@@ -524,11 +507,6 @@ export function useSettingsActions({
 		async (modelId: string) => {
 			if (!pickingModelKey) return
 			if (modelId === CUSTOM_MODEL_ID) {
-				if (provider === "bedrock") {
-					setIsPickingModel(false)
-					setIsBedrockCustomFlow(true)
-					return
-				}
 				if (usesOpenRouterModels(provider)) {
 					// For OpenRouter, selecting "Custom" just sets the model ID to __custom__
 					// which triggers the third line to appear in the settings list.
@@ -590,38 +568,6 @@ export function useSettingsActions({
 		[pendingProvider, controller, refreshModelIds, initialMode, onClose, setProvider, setIsEnteringApiKey, setPendingProvider, setApiKeyValue],
 	)
 
-	const handleBedrockComplete = useCallback(
-		(bedrockConfig: BedrockConfig) => {
-			setProvider("bedrock")
-			refreshModelIds()
-			setIsConfiguringBedrock(false)
-			setPendingProvider(null)
-			applyBedrockConfig({ bedrockConfig, controller })
-			if (initialMode) onClose()
-		},
-		[controller, refreshModelIds, initialMode, onClose, setProvider, setIsConfiguringBedrock, setPendingProvider],
-	)
-
-	const handleBedrockCustomFlowComplete = useCallback(
-		async (arn: string, baseModelId: string) => {
-			if (!pickingModelKey) return
-			const apiConfig = stateManager.getApiConfiguration()
-			const bedrockConfig: BedrockConfig = {
-				awsRegion: apiConfig.awsRegion ?? "us-east-1",
-				awsAuthentication: apiConfig.awsUseProfile ? "profile" : "credentials",
-				awsUseCrossRegionInference: Boolean(apiConfig.awsUseCrossRegionInference),
-			}
-			await applyBedrockConfig({ bedrockConfig, modelId: arn, customModelBaseId: baseModelId, controller })
-			await stateManager.flushPendingState()
-			rebuildTaskApi()
-			refreshModelIds()
-			setIsBedrockCustomFlow(false)
-			setPickingModelKey(null)
-			if (initialMode) onClose()
-		},
-		[pickingModelKey, stateManager, controller, rebuildTaskApi, refreshModelIds, initialMode, onClose, setIsBedrockCustomFlow, setPickingModelKey],
-	)
-
 	const handleLanguageSelect = useCallback(
 		(language: string) => {
 			setPreferredLanguage(language)
@@ -654,8 +600,6 @@ export function useSettingsActions({
 		handleProviderSelect,
 		handleModelSelect,
 		handleApiKeySubmit,
-		handleBedrockComplete,
-		handleBedrockCustomFlowComplete,
 		handleLanguageSelect,
 		startCodexAuth,
 		startGithubAuth,

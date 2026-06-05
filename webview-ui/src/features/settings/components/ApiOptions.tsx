@@ -9,44 +9,12 @@ import { normalizeApiConfiguration } from "@/features/settings/components/utils/
 import { useSettingsStore } from "@/features/settings/store/settingsStore"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip"
 import { OPENROUTER_MODEL_PICKER_Z_INDEX } from "./OpenRouterModelPicker"
-import { AIhubmixProvider } from "./providers/AihubmixProvider"
-import { AnthropicProvider } from "./providers/AnthropicProvider"
-import { BasetenProvider } from "./providers/BasetenProvider"
-import { GithubCopilotProvider } from "./providers/GithubCopilotProvider"
-import { BedrockProvider } from "./providers/BedrockProvider"
-import { CerebrasProvider } from "./providers/CerebrasProvider"
-import { ClaudeCodeProvider } from "./providers/ClaudeCodeProvider"
 import { DiracProvider } from "./providers/DiracProvider"
-import { DeepSeekProvider } from "./providers/DeepSeekProvider"
-import { DifyProvider } from "./providers/DifyProvider"
-import { DoubaoProvider } from "./providers/DoubaoProvider"
-import { FireworksProvider } from "./providers/FireworksProvider"
-import { GeminiProvider } from "./providers/GeminiProvider"
-import { GroqProvider } from "./providers/GroqProvider"
-import { HuaweiCloudMaasProvider } from "./providers/HuaweiCloudMaasProvider"
-import { HuggingFaceProvider } from "./providers/HuggingFaceProvider"
 import { LiteLlmProvider } from "./providers/LiteLlmProvider"
 import { LMStudioProvider } from "./providers/LMStudioProvider"
-import { MinimaxProvider } from "./providers/MiniMaxProvider"
-import { MistralProvider } from "./providers/MistralProvider"
-import { MoonshotProvider } from "./providers/MoonshotProvider"
-import { NebiusProvider } from "./providers/NebiusProvider"
-import { NousResearchProvider } from "./providers/NousresearchProvider"
 import { OpenAICompatibleProvider } from "./providers/OpenAICompatible"
-import { OpenAINativeProvider } from "./providers/OpenAINative"
-import { OpenAiCodexProvider } from "./providers/OpenAiCodexProvider"
 import { OpenRouterProvider } from "./providers/OpenRouterProvider"
-import { QwenCodeProvider } from "./providers/QwenCodeProvider"
-import { QwenProvider } from "./providers/QwenProvider"
-import { RequestyProvider } from "./providers/RequestyProvider"
-import { SambanovaProvider } from "./providers/SambanovaProvider"
-import { TogetherProvider } from "./providers/TogetherProvider"
-import { VercelAIGatewayProvider } from "./providers/VercelAIGatewayProvider"
-import { VertexProvider } from "./providers/VertexProvider"
 import { VSCodeLmProvider } from "./providers/VSCodeLmProvider"
-import { WandbProvider } from "./providers/WandbProvider"
-import { XaiProvider } from "./providers/XaiProvider"
-import { ZAiProvider } from "./providers/ZAiProvider"
 import { useApiConfigurationHandlers } from "./utils/useApiConfigurationHandlers"
 
 interface ApiOptionsProps {
@@ -335,150 +303,22 @@ const ApiOptions = ({
 			)}
 
 
-			{apiConfiguration && selectedProvider === "anthropic" && (
-				<AnthropicProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "claude-code" && (
-				<ClaudeCodeProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "openai-native" && (
-				<OpenAINativeProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "openai-codex" && (
-				<OpenAiCodexProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "qwen" && (
-				<QwenProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "qwen-code" && (
-				<QwenCodeProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "doubao" && (
-				<DoubaoProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "mistral" && (
-				<MistralProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
 			{apiConfiguration && selectedProvider === "openrouter" && (
 				<OpenRouterProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "deepseek" && (
-				<DeepSeekProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "together" && (
-				<TogetherProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
 			)}
 
 			{apiConfiguration && selectedProvider === "openai" && (
 				<OpenAICompatibleProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
 			)}
 
-			{apiConfiguration && selectedProvider === "vercel-ai-gateway" && (
-				<VercelAIGatewayProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "sambanova" && (
-				<SambanovaProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "bedrock" && (
-				<BedrockProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "vertex" && (
-				<VertexProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "gemini" && (
-				<GeminiProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "requesty" && (
-				<RequestyProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "fireworks" && (
-				<FireworksProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "github-copilot" && (
-				<GithubCopilotProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
 			{apiConfiguration && selectedProvider === "vscode-lm" && <VSCodeLmProvider currentMode={currentMode} />}
 
-			{apiConfiguration && selectedProvider === "groq" && (
-				<GroqProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-			{apiConfiguration && selectedProvider === "baseten" && (
-				<BasetenProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
 			{apiConfiguration && selectedProvider === "litellm" && (
 				<LiteLlmProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
 			)}
 
 			{apiConfiguration && selectedProvider === "lmstudio" && (
 				<LMStudioProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-
-			{apiConfiguration && selectedProvider === "moonshot" && (
-				<MoonshotProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "huggingface" && (
-				<HuggingFaceProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "nebius" && (
-				<NebiusProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "wandb" && (
-				<WandbProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "xai" && (
-				<XaiProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "cerebras" && (
-				<CerebrasProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-
-			{apiConfiguration && selectedProvider === "huawei-cloud-maas" && (
-				<HuaweiCloudMaasProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "dify" && (
-				<DifyProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "zai" && (
-				<ZAiProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "minimax" && (
-				<MinimaxProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "nousResearch" && (
-				<NousResearchProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
-			)}
-
-			{apiConfiguration && selectedProvider === "aihubmix" && (
-				<AIhubmixProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
 			)}
 
 			{apiErrorMessage && (

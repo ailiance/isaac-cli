@@ -35,7 +35,6 @@ import { version as AGENT_VERSION } from "../../package.json"
 import { ACPDiffViewProvider } from "../acp/ACPDiffViewProvider.js"
 import { ACPHostBridgeClientProvider } from "../acp/ACPHostBridgeClientProvider.js"
 import { AcpTerminalManager } from "../acp/AcpTerminalManager.js"
-import { refreshGithubCopilotModels } from "@/core/controller/models/refreshGithubCopilotModels"
 import { filterOpenRouterModelIds } from "@/shared/utils/model-filters"
 import { getDefaultModelId, getModelList, hasStaticModels } from "../utils/model-metadata.js"
 import { fetchOpenRouterModels, usesOpenRouterModels } from "../utils/openrouter-models"
@@ -425,8 +424,6 @@ export class DiracAgent implements acp.Agent {
 			if (usesOpenRouterModels(currentProvider)) {
 				// Fetch OpenRouter models (async)
 				modelIds = filterOpenRouterModelIds(await fetchOpenRouterModels(), currentProvider)
-			} else if (currentProvider === "github-copilot") {
-				modelIds = Object.keys(await refreshGithubCopilotModels()).sort((a, b) => a.localeCompare(b))
 			} else if (hasStaticModels(currentProvider)) {
 				// Use static model list
 				modelIds = getModelList(currentProvider)
@@ -534,8 +531,6 @@ export class DiracAgent implements acp.Agent {
 		let modelIds: string[] = []
 		if (usesOpenRouterModels(provider)) {
 			modelIds = filterOpenRouterModelIds(await fetchOpenRouterModels(), provider)
-		} else if (provider === "github-copilot") {
-			modelIds = Object.keys(await refreshGithubCopilotModels()).sort((a, b) => a.localeCompare(b))
 		} else if (hasStaticModels(provider)) {
 			modelIds = getModelList(provider)
 		}
