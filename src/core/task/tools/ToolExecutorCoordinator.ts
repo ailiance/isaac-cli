@@ -1,36 +1,15 @@
 import type { ToolUse } from "@core/assistant-message"
 import { IsaacDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../index"
-import { AskFollowupQuestionToolHandler } from "./handlers/AskFollowupQuestionToolHandler"
-import { AttemptCompletionHandler } from "./handlers/AttemptCompletionHandler"
-import { BrowserToolHandler } from "./handlers/BrowserToolHandler"
 import { CondenseHandler } from "./handlers/CondenseHandler"
-import { DiagnosticsScanToolHandler } from "./handlers/DiagnosticsScanToolHandler"
-import { EditFileToolHandler } from "./handlers/EditFileToolHandler"
-import { ExecuteCommandToolHandler } from "./handlers/ExecuteCommandToolHandler"
-import { FindSymbolReferencesToolHandler } from "./handlers/FindSymbolReferencesToolHandler"
-import { FindToolsToolHandler } from "./handlers/FindToolsToolHandler"
-import { GenerateExplanationToolHandler } from "./handlers/GenerateExplanationToolHandler"
-import { GetFileSkeletonToolHandler } from "./handlers/GetFileSkeletonToolHandler"
-import { GetFunctionToolHandler } from "./handlers/GetFunctionToolHandler"
-import { GetToolResultToolHandler } from "./handlers/GetToolResultToolHandler"
-import { ListFilesToolHandler } from "./handlers/ListFilesToolHandler"
-import { ListSkillsToolHandler } from "./handlers/ListSkillsToolHandler"
-import { NewTaskHandler } from "./handlers/NewTaskHandler"
-import { PlanModeRespondHandler } from "./handlers/PlanModeRespondHandler"
-import { ReadFileToolHandler } from "./handlers/ReadFileToolHandler"
-import { RenameSymbolToolHandler } from "./handlers/RenameSymbolToolHandler"
-import { ReplaceSymbolToolHandler } from "./handlers/ReplaceSymbolToolHandler"
 import { ReportBugHandler } from "./handlers/ReportBugHandler"
-import { SearchFilesToolHandler } from "./handlers/SearchFilesToolHandler"
 import { UseSubagentsToolHandler } from "./handlers/SubagentToolHandler"
-import { SummarizeTaskHandler } from "./handlers/SummarizeTaskHandler"
-import { UseSkillToolHandler } from "./handlers/UseSkillToolHandler"
 import { WriteToFileToolHandler } from "./handlers/WriteToFileToolHandler"
 import { AgentConfigLoader } from "./subagent/AgentConfigLoader"
 import { ToolValidator } from "./ToolValidator"
 import type { TaskConfig } from "./types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "./types/UIHelpers"
+import { getUnits } from "./units"
 
 export interface IToolHandler {
 	readonly name: IsaacDefaultTool
@@ -78,38 +57,36 @@ export class ToolExecutorCoordinator {
 	private dynamicSubagentHandlers = new Map<string, IToolHandler>()
 	private mcpHandlers = new Map<string, IToolHandler>()
 
-	private readonly toolHandlersMap: Record<IsaacDefaultTool, (v: ToolValidator) => IToolHandler | undefined> = {
-		[IsaacDefaultTool.ASK]: (_v: ToolValidator) => new AskFollowupQuestionToolHandler(),
-		[IsaacDefaultTool.ATTEMPT]: (_v: ToolValidator) => new AttemptCompletionHandler(),
-		[IsaacDefaultTool.BASH]: (v: ToolValidator) => new ExecuteCommandToolHandler(v),
-		[IsaacDefaultTool.FILE_READ]: (v: ToolValidator) => new ReadFileToolHandler(v),
-		[IsaacDefaultTool.FILE_NEW]: (v: ToolValidator) => new WriteToFileToolHandler(v),
-		[IsaacDefaultTool.SEARCH]: (v: ToolValidator) => new SearchFilesToolHandler(v),
-		[IsaacDefaultTool.LIST_FILES]: (v: ToolValidator) => new ListFilesToolHandler(v),
-		[IsaacDefaultTool.GET_FUNCTION]: (v: ToolValidator) => new GetFunctionToolHandler(v),
-		[IsaacDefaultTool.GET_FILE_SKELETON]: (v: ToolValidator) => new GetFileSkeletonToolHandler(v),
-		[IsaacDefaultTool.FIND_SYMBOL_REFERENCES]: (v: ToolValidator) => new FindSymbolReferencesToolHandler(v),
-
-		[IsaacDefaultTool.EDIT_FILE]: (v: ToolValidator) => new EditFileToolHandler(v),
-		[IsaacDefaultTool.DIAGNOSTICS_SCAN]: (v: ToolValidator) => new DiagnosticsScanToolHandler(v),
-		[IsaacDefaultTool.REPLACE_SYMBOL]: (v: ToolValidator) => new ReplaceSymbolToolHandler(v),
-		[IsaacDefaultTool.RENAME_SYMBOL]: (v: ToolValidator) => new RenameSymbolToolHandler(v),
-		[IsaacDefaultTool.BROWSER]: (_v: ToolValidator) => new BrowserToolHandler(),
-
-		[IsaacDefaultTool.NEW_TASK]: (_v: ToolValidator) => new NewTaskHandler(),
-		[IsaacDefaultTool.PLAN_MODE]: (_v: ToolValidator) => new PlanModeRespondHandler(),
-		[IsaacDefaultTool.CONDENSE]: (_v: ToolValidator) => new CondenseHandler(),
-		[IsaacDefaultTool.SUMMARIZE_TASK]: (_v: ToolValidator) => new SummarizeTaskHandler(_v),
-		[IsaacDefaultTool.REPORT_BUG]: (_v: ToolValidator) => new ReportBugHandler(),
+	/**
+	 * Lot E cutover: the per-tool handler factories come from the migrated tool
+	 * *units* (`getUnits()`), built lazily into a name→factory map. This removes
+	 * the previously-duplicated `toolHandlersMap`.
+	 *
+	 * Four tools have no unit and keep their legacy registration here, reproducing
+	 * the exact prior behavior:
+	 *  - `new_rule`       — SharedToolHandler aliasing the write_to_file handler.
+	 *  - `use_subagents`  — dynamic per-subagent names (see `getHandler`).
+	 *  - `condense`       — slash-command only.
+	 *  - `report_bug`     — slash-command only.
+	 */
+	private readonly legacyHandlersMap: Partial<Record<IsaacDefaultTool, (v: ToolValidator) => IToolHandler | undefined>> = {
 		[IsaacDefaultTool.NEW_RULE]: (v: ToolValidator) =>
 			new SharedToolHandler(IsaacDefaultTool.NEW_RULE, new WriteToFileToolHandler(v)),
-		[IsaacDefaultTool.GENERATE_EXPLANATION]: (_v: ToolValidator) => new GenerateExplanationToolHandler(),
-		[IsaacDefaultTool.USE_SKILL]: (_v: ToolValidator) => new UseSkillToolHandler(),
-		[IsaacDefaultTool.LIST_SKILLS]: (_v: ToolValidator) => new ListSkillsToolHandler(),
+		[IsaacDefaultTool.CONDENSE]: (_v: ToolValidator) => new CondenseHandler(),
+		[IsaacDefaultTool.REPORT_BUG]: (_v: ToolValidator) => new ReportBugHandler(),
 		[IsaacDefaultTool.USE_SUBAGENTS]: (_v: ToolValidator) => new UseSubagentsToolHandler(),
-		[IsaacDefaultTool.GET_TOOL_RESULT]: (_v: ToolValidator) => new GetToolResultToolHandler(),
+	}
 
-		[IsaacDefaultTool.FIND_TOOLS]: (_v: ToolValidator) => new FindToolsToolHandler(),
+	private unitHandlerFactories?: Map<IsaacDefaultTool, (v: ToolValidator) => IToolHandler | undefined>
+
+	private getHandlerFactory(toolName: IsaacDefaultTool): ((v: ToolValidator) => IToolHandler | undefined) | undefined {
+		if (!this.unitHandlerFactories) {
+			this.unitHandlerFactories = new Map()
+			for (const unit of getUnits()) {
+				this.unitHandlerFactories.set(unit.id, (v: ToolValidator) => unit.createHandler(v))
+			}
+		}
+		return this.unitHandlerFactories.get(toolName) ?? this.legacyHandlersMap[toolName]
 	}
 
 	/**
@@ -120,7 +97,7 @@ export class ToolExecutorCoordinator {
 	}
 
 	registerByName(toolName: IsaacDefaultTool, validator: ToolValidator): void {
-		const handler = this.toolHandlersMap[toolName]?.(validator)
+		const handler = this.getHandlerFactory(toolName)?.(validator)
 		if (handler) {
 			this.register(handler)
 		}
