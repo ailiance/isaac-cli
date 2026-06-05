@@ -103,3 +103,31 @@ events PostHog/OTEL retirables), `hook-factory.ts` 1196 (1 fichier/type + durcir
 Lot A (dérisque) → Lot E quick-wins (XML/converters/parse) → **Lot C purge providers** (déclenche la fonte
 de `api.ts`) → Lot B standalone → Lot D rebrand → Lot E refontes lourdes. Build + typecheck + `vitest`
 (cli+mcp) après **chaque** sous-lot. Commits atomiques sur branche `feat/simplify-souverain`.
+
+---
+
+# MISE À JOUR — état au 2026-06-06 (post-exécution, audit frais HEAD `e606c20`)
+
+PR #53 ouverte. 6 gates verts (test:unit 1279, cli 554, check-types, cli/webview typecheck, lint), CI bloquante.
+
+## FAIT
+- **Lot C (handlers)** : 38→6 providers (openai, openrouter, lmstudio, vscode-lm, litellm, isaac). Handlers/registries/union/bootstrap/pickers/JSON purgés. Default factory → openai. **MAIS** `shared/api.ts` PAS élagué (voir RESTE).
+- **Lot A** : ~90% — dead code + 7 deps retirés.
+- **Lot B** : partiel — `src/standalone/` réduit à `utils.ts`, `hosts/external/` à 4 fichiers.
+- **Lot D** : rebrand interne FAIT + **hard rebrand contrats** (clean break) : `~/.dirac`→`~/.isaac`, `.diracrules`→`.isaacrules`, commandes `dirac.*`→`isaac.*`, env `AGENT_KIKI`/`DIRAC_*`→`AILIANCE_GATEWAY`/`ISAAC_*`, provider id `dirac`→`isaac`, proto régénéré. Contrats EXTERNES gardés (`dirac.run`, `X-Dirac-API-Key`, `dirac-run.dirac` marketplace).
+- **Lot E** : boucle aplatie (tail-call→while), 23/26 tools sur `IsaacToolUnit` + cutover registration (`toolHandlersMap` supprimé), `getNativeConverter` réduit OpenAI-only.
+- **Sécurité** : P0 #1 RCE whitelist, P0 #2 XSS (escapeHtml — `dangerouslySetInnerHTML` reçoit du HTML échappé, **clos** ; un audit grep-only le flag à tort), P0 #3 npm audit (0 critical), P1 #4 hook spawn durci, P1 #5 secrets/gitignore, P1 #10 empty-catch.
+- **Hygiène** : P2 #12 IPs Tailscale (gone, gateway), #13 rebrand AGENTS.md/pack-cli, P3 #17 résidus racine, #19 CI gate bloquant, #20 husky/scripts. Axe 2 : local-router → `gateway.ailiance.fr` (health-check confirmé).
+
+## RESTE (priorisé gain/risque)
+1. **Vrais morts** (~300 L, risque nul) : `task/tools/utils/PathResolver.ts`, `task/utils/symbol-block.ts`, `task/tools/utils/FileProviderOperations.ts`(+test), `task/multifile-diff.ts`.
+2. **Quick-win Lot E** (~200 L hot-path, faible) : retirer la branche XML hallucinated-tool (`parse-hallucinated-tool-xml.ts` 153 L + 3 usages `ResponseProcessor.ts`), figer `useNativeToolCalls=true`. ⚠️ vérifier que lmstudio direct (override) n'en dépend pas (gateway force-route FC).
+3. **Achever Lot C — le plus gros gain restant** (~1300 L, moyen) : `shared/api.ts` (2298 L) garde ~25 `export const xxxModels` morts. Bloqué par 3 consommateurs à retirer d'abord : `cli/src/utils/model-metadata.ts` (importe ~82 symboles), `src/utils/model-utils.ts` (`anthropicModels`), `refreshGroqModels.ts` + cache `groq_models.json` (`disk.ts`/`StateManager.ts`). Puis purger maps + `*ModelId` types + transforms morts (`r1-format`, `refreshGroqModels`) → dissout aussi ~25 `as any`. Désamorce P1 #6 (aimant à conflits).
+4. **Lot B fin** (~600 L, faible-moyen) : extraire `AuthHandler` hors `hosts/external/`, purger `ExternalWebviewProvider`/`ExternalCommentReviewController`/`grpc-types` + `standalone/utils.ts`.
+5. **Deps** : retirer sql.js, tailwind(+vite), codicons, reconnecting-eventsource, archiver, os-name, default-shell, json5, strip-ansi, tree-sitter-wasms + devDeps mortes (mocha/should/nyc/c8/proxyquire/…) ; déclarer les unlisted (tar, p-limit, js-yaml, @azure/identity, minimist, playwright). GARDER @opentelemetry/* (gated).
+6. **Splits** (lisibilité) : `hook-factory.ts` 1218 L (1 fichier/runner, trivial), `TelemetryService.ts` 2267 L (par domaine, moyen).
+7. **P1 #9** : `MultiRootCheckpointManager` stub — bloquer/finir (toujours instancié).
+8. **P1 #7** : `AilianceHandler extends OpenAiHandler` (isoler le seam gateway) — optionnel.
+9. **Divers** : committer les 2 CLAUDE.md non trackés (controller, local-router), 4 réfs `Cline` cosmétiques, `ToolExecutor` 767 L (dégonfler).
+
+## Différés (décision/ROI) : 12 npm audit breaking bumps ; #11 nom disque (= isaac, fait, contrats externes gardés).
