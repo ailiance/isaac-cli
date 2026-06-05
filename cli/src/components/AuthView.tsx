@@ -25,7 +25,7 @@ import { ApiKeyInput } from "./ApiKeyInput"
 import { StaticRobotFrame } from "./AsciiMotionCli"
 import { ImportView } from "./ImportView"
 import { GithubAuthView } from "./GithubAuthView"
-import { CUSTOM_MODEL_ID, getDefaultModelId, hasModelPicker, ModelPicker } from "./ModelPicker"
+import { getDefaultModelId, hasModelPicker, ModelPicker } from "./ModelPicker"
 import { OpenAiCodexDeviceAuthView } from "./OpenAiCodexDeviceAuthView"
 import { getProviderLabel } from "./ProviderPicker"
 
@@ -461,7 +461,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ controller, onComplete, onEr
 				break
 			// menu, saving, success - no back action
 		}
-	}, [step, selectedProvider])
+	}, [step])
 
 	// Render the auth box content based on current step
 	// Note: "menu" step is rendered separately in the main return for proper menuIndex tracking
