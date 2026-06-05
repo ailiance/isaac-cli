@@ -13,7 +13,7 @@ export async function initializeCli(options: InitOptions): Promise<CliContext> {
 	const { IsaacEndpoint } = await import("@/config")
 	const { autoUpdateOnStartup } = await import("./utils/update")
 	const { Session } = await import("@/shared/services/Session")
-	const { AuthHandler } = await import("@/hosts/external/AuthHandler")
+	const { AuthHandler } = await import("@/services/auth/AuthHandler")
 	const { HostProvider } = await import("@/hosts/host-provider")
 	const { CliWebviewProvider } = await import("./controllers/CliWebviewProvider")
 	const { FileEditProvider } = await import("@/integrations/editor/FileEditProvider")

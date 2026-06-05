@@ -1,6 +1,6 @@
 import { afterEach, describe, it } from "mocha"
 import "should"
-import { AuthHandler } from "@/hosts/external/AuthHandler"
+import { AuthHandler } from "@/services/auth/AuthHandler"
 
 /**
  * Regression tests for OAuth callback URL generation.
