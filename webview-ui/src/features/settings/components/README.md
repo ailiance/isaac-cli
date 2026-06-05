@@ -14,7 +14,7 @@ settings/
 │   ├── ModelInfoView.tsx       # Model information display
 │   └── ModelSelector.tsx       # Model selection dropdown
 ├── providers/                   # Provider-specific components
-│   ├── DiracProvider.tsx       # Dirac configuration
+│   ├── IsaacProvider.tsx       # Dirac configuration
 │   ├── AnthropicProvider.tsx   # Anthropic-specific configuration
 │   ├── BedrockProvider.tsx     # AWS Bedrock configuration
 │   ├── GeminiProvider.tsx      # Google Gemini configuration

@@ -8,7 +8,7 @@ Vues et widgets Ink/React du binaire `isaac`. `App.tsx` route les top-level view
 |------|------|
 | `App.tsx` | Router de views via `switch(currentView)` (L221). `ViewType = "task"\|"history"\|"config"\|"auth"\|"welcome"` (L20). Wrappe tout dans `ErrorBoundary` + `TerminalInfoProvider` + `StdinProvider` ; `task`/`welcome` ⇒ `TaskContextProvider`. `jsonOutput` ⇒ `TaskJsonView`. Bloque sur `AiActDisclosure` au 1er render TTY (L211) |
 | `ChatView.tsx` | Vue principale. `<Static>` = header + messages complétés (zéro re-render), région dynamique = streaming + input. State input persistant inter-remount via `inputStateStorage` Map (L109). Délègue aux hooks `useChatMessages`/`useChatTask`/`useChatInputHandler` |
-| `ChatMessage.tsx` | Rend un `DiracMessage` (L284) ; markdown via `marked` (`case "heading"`/`"code"`/… L70+) |
+| `ChatMessage.tsx` | Rend un `IsaacMessage` (L284) ; markdown via `marked` (`case "heading"`/`"code"`/… L70+) |
 | `ActionButtons.tsx` | `getButtonConfig(message, isStreaming)` (L189) → boutons selon le `ask`. `ButtonActionType` (L17) consommé par `ChatView.handleButtonAction` |
 | `AskPrompt.tsx` | Rend le prompt selon `message.ask` (followup/tool/command/…) ; lit le `pendingAsk` du TaskContext |
 | `ConfigView.tsx` / `ConfigViewWrapper.tsx` | Vue plein écran `config` (toggles rules/hooks/skills). Le **Wrapper** est stateful (handlers toggle) et est le point d'entrée appelé par `commands/config.ts` |

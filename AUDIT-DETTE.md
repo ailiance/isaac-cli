@@ -21,7 +21,7 @@
 
 1. **RCE via `execute_command` script mode** — `src/core/task/tools/handlers/ExecuteCommandToolHandler.ts:707-727`.
    `wrapScript(script, language)` : si `language` n'est pas whitelisté, fallback `interpreter = normalizedLanguage` (valeur LLM brute) → injection heredoc, contournée par `classifyCommand` (1er token only). **Fix 5 lignes** : whitelist stricte `{bash,sh,python,python3,node,javascript,ruby,perl}`, pas de fallback.
-2. **XSS webview via `dangerouslySetInnerHTML` non-sanitisé** — `webview-ui/.../HistoryView.tsx:503` + 6 model pickers (`DiracModelPicker.tsx:322`, OpenRouter/Groq/HuggingFace/Requesty/Vercel) + `ModelAutocomplete.tsx:232`. Model IDs venant d'API providers injectés sans échappement. **Fix** : échapper `inputText` dans `generateHighlightedText`. NB : la plupart de ces pickers **disparaissent** avec le souverain strict (quick win combiné).
+2. **XSS webview via `dangerouslySetInnerHTML` non-sanitisé** — `webview-ui/.../HistoryView.tsx:503` + 6 model pickers (`IsaacModelPicker.tsx:322`, OpenRouter/Groq/HuggingFace/Requesty/Vercel) + `ModelAutocomplete.tsx:232`. Model IDs venant d'API providers injectés sans échappement. **Fix** : échapper `inputText` dans `generateHighlightedText`. NB : la plupart de ces pickers **disparaissent** avec le souverain strict (quick win combiné).
 3. **`npm audit` : 1 CRITICAL + 8 HIGH** — `vitest <4.1.0` (RCE UI), `simple-git 3.33→3.36` (RCE via remote URL, utilisé dans worktree/GenerateExplanation avec refs LLM), `vite 7.3.1`, `ws`, `fast-xml-parser`, `tmp`, `serialize-javascript`. **`npm audit fix`** (majorité sans breaking).
 
 ### 🟠 P1 — Dette structurelle majeure

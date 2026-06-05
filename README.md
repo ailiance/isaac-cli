@@ -198,7 +198,7 @@ L'extension VS Code s'installe via le `.vsix` du repo (paquet `isaac-0.3.1.vsix`
 
 ## Outils de l'agent — read / write / bash
 
-L'agent dispose de 27 outils canoniques (`DiracDefaultTool`) ; les trois principaux sont :
+L'agent dispose de 27 outils canoniques (`IsaacDefaultTool`) ; les trois principaux sont :
 
 | Outil | Enum | Handler | Limite |
 |-------|------|---------|--------|
@@ -281,7 +281,7 @@ Quand un backend MLX (Mistral-Medium-128B, Devstral, etc.) sans native function 
 </function>
 ```
 
-Le CLI parse ces blocs en `ToolUse` synthétiques (cf. `src/utils/parse-hallucinated-tool-xml.ts`), valide chaque nom contre `DiracDefaultTool` (avec alias map : `bash`/`grep`/`writefile`/`listfiles` mappés à leur enum canonique), et dispatche via le même handler que les tool_calls natifs. Le root-cause fix vit dans la gateway (`FC_FORCE_ROUTE_PORT`) qui redirige les `tools[]` vers le worker natif-FC Qwen 32B, mais ce parser CLI reste comme defense-in-depth.
+Le CLI parse ces blocs en `ToolUse` synthétiques (cf. `src/utils/parse-hallucinated-tool-xml.ts`), valide chaque nom contre `IsaacDefaultTool` (avec alias map : `bash`/`grep`/`writefile`/`listfiles` mappés à leur enum canonique), et dispatche via le même handler que les tool_calls natifs. Le root-cause fix vit dans la gateway (`FC_FORCE_ROUTE_PORT`) qui redirige les `tools[]` vers le worker natif-FC Qwen 32B, mais ce parser CLI reste comme defense-in-depth.
 
 ## Extension VS Code
 

@@ -50,7 +50,7 @@ membre union/ALL_PROVIDERS (`shared/api.ts:17-55`) + JSON (`shared/providers/*.j
 1. Décider dirac/openrouter/litellm.
 2. `bootstrap.ts` → 3 KEEP ; `index.ts` switch vidé + **fallback défaut Anthropic→openai** (`index.ts:262`, sinon crash).
 3. `providers.json` → 3 entrées (propage CLI **et** webview) ; `DEFAULT_API_PROVIDER` (`api.ts:100`) → openai.
-4. Webview : `ApiOptions.tsx`, `providerUtils.ts` (4 switches), supprimer `providers/*.tsx` + pickers ; **patch XSS** `ModelAutocomplete.tsx:232` + `DiracModelPicker.tsx:322` (survivants).
+4. Webview : `ApiOptions.tsx`, `providerUtils.ts` (4 switches), supprimer `providers/*.tsx` + pickers ; **patch XSS** `ModelAutocomplete.tsx:232` + `IsaacModelPicker.tsx:322` (survivants).
 5. `rm` providers/registries/transforms/tests.
 6. **En dernier** : élaguer `shared/api.ts` (union, ALL_MODEL_MAPS, champs `ApiConfiguration`, registries modèles) + `state-keys.ts`.
 
@@ -68,7 +68,7 @@ VS Code `dirac.*` = contrat utilisateur → migration, pas rename brut.
 **Quick wins (gain élevé, risque faible)** :
 - Supprimer la branche XML « hallucinated tool » (`ResponseProcessor.ts:220-300`) ; `useNativeToolCalls`
   devient constante `true` (gateway force-route FC). −150 L hot-path, 3 formats → 1.
-- Réduire `getNativeConverter` (`registry/DiracToolSet.ts:87-104`) au seul OpenAI + supprimer 4 converters
+- Réduire `getNativeConverter` (`registry/IsaacToolSet.ts:87-104`) au seul OpenAI + supprimer 4 converters
   Anthropic/Gemini/etc. dans `spec.ts:196-492` → ~60 % de `spec.ts`.
 - Simplifier `parseAssistantMessageV2` (`parse-assistant-message.ts`) → split reasoning trivial (−80 L).
 - Externaliser le tracing du hot-path en listener sur `diracMessagesChanged`.
@@ -77,7 +77,7 @@ VS Code `dirac.*` = contrat utilisateur → migration, pas rename brut.
 
 **Refontes lourdes (planifier)** :
 - **Drift spec/handler** : `prompts/system-prompt/tools/*` (spec prompt) et `tools/handlers/*` (exécution)
-  ne sont liés que par l'enum string `DiracDefaultTool` → un rename de param ne casse pas le compile.
+  ne sont liés que par l'enum string `IsaacDefaultTool` → un rename de param ne casse pas le compile.
   Cible = **1 tool = 1 unité typée** (spec+handler co-localisés, schéma natif dérivé). Réduit « ajouter un tool »
   de 4 étapes à 1, tue la map dupliquée `ToolExecutorCoordinator:81-113`.
 - Aplatir la double boucle `initiateLoop` (while) + `AgentLoopRunner.makeRequest` (récursif L588) en une seule.

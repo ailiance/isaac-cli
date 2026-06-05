@@ -22,11 +22,11 @@ Binaire `isaac` — CLI Ink/React, fork de Dirac. Entry point :
 | `src/components/` | Vues Ink (`App.tsx` route les views, `ChatView`, `ConfigView`, `HistoryView`, `AuthView`, …) + tests `*.test.tsx` |
 | `src/hooks/` | React hooks Ink-spécifiques (`useTerminalSize`, `useTextInput`, `useChatInputHandler`, `useRawBackspaceKeys`, `useHomeEndKeys`) |
 | `src/controllers/` | `CliWebviewProvider` — adapte le Controller du core (qui parle webview) au CLI |
-| `src/agent/` | `DiracAgent` (boucle agent réutilisable), `DiracSessionEmitter`, `messageTranslator`, `permissionHandler` |
-| `src/acp/` | `AcpAgent` — wrap `DiracAgent` derrière une `AgentSideConnection` ACP/stdio |
+| `src/agent/` | `IsaacAgent` (boucle agent réutilisable), `IsaacSessionEmitter`, `messageTranslator`, `permissionHandler` |
+| `src/acp/` | `AcpAgent` — wrap `IsaacAgent` derrière une `AgentSideConnection` ACP/stdio |
 | `src/context/` | React context providers (`StdinContext`, `TaskContext`) |
 | `src/vscode-shim.ts`, `vscode-context.ts` | Stubs `vscode.*` pour faire tourner le core hors extension |
-| `src/exports.ts` | Surface lib programmatique (re-exports DiracAgent + types) |
+| `src/exports.ts` | Surface lib programmatique (re-exports IsaacAgent + types) |
 
 ## Pont CLI ↔ core
 

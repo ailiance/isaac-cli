@@ -19,7 +19,7 @@ Dirac uses a modular, multi-stage pipeline to generate the final system prompt. 
 ### 1. Entry Point: `src/core/prompts/system-prompt/index.ts`
 - **Function**: `getSystemPrompt(context: SystemPromptContext)`
 - **Role**: The main orchestrator. It fetches the singleton `PromptRegistry`, generates the `systemPrompt` string, and retrieves the `tools` array (if native tool calling is enabled).
-- **Output**: Returns a `{ systemPrompt: string; tools: DiracTool[] | undefined }` object.
+- **Output**: Returns a `{ systemPrompt: string; tools: IsaacTool[] | undefined }` object.
 
 ### 2. State & Registry: `src/core/prompts/system-prompt/registry/PromptRegistry.ts`
 - **Role**: A singleton class that maintains the state of registered tools.
@@ -40,7 +40,7 @@ Dirac uses a modular, multi-stage pipeline to generate the final system prompt. 
     - **Header Removal**: Strips empty markdown headers (`##`) that contain no content.
     - **Diff Protection**: Includes logic to avoid adding extra newlines inside `SEARCH/REPLACE` blocks or diff-like content, preserving the strict formatting required for file editing.
 
-### 4. Tool Management: `src/core/prompts/system-prompt/registry/DiracToolSet.ts`
+### 4. Tool Management: `src/core/prompts/system-prompt/registry/IsaacToolSet.ts`
 - **Role**: A utility class for tool filtering and conversion.
 - **`getEnabledToolSpecs(context)`**: Filters the registered tool list based on `contextRequirements`. For example:
     - `browser_action` is only included if `supportsBrowserUse` is true.
@@ -59,10 +59,8 @@ Dirac uses a modular, multi-stage pipeline to generate the final system prompt. 
 - **Safety**: Includes `escape` and `unescape` methods to prevent accidental resolution of placeholders that should remain literal.
 
 ### 7. Native Schema Conversion: `src/core/prompts/system-prompt/spec.ts`
-- **Role**: Transforms internal `DiracToolSpec` objects into the specific JSON schemas required by LLM providers.
-- **Anthropic (`toolSpecInputSchema`)**: Generates an `input_schema` object with standard property/required fields.
+- **Role**: Transforms internal `IsaacToolSpec` objects into the OpenAI function-call JSON schema — the only native format used by the sovereign provider set (vscode-lm has its own converter).
 - **OpenAI (`toolSpecFunctionDefinition`)**: Generates a standard OpenAI function definition, setting `additionalProperties: false` and `strict: false`.
-- **Gemini (`toolSpecFunctionDeclarations`)**: Uses a recursive `toGoogleSchema` function to map parameter types to Gemini's uppercase type system (e.g., `string` -> `STRING`, `array` -> `ARRAY`).
 
 ---
 
@@ -78,7 +76,7 @@ Dirac uses a modular, multi-stage pipeline to generate the final system prompt. 
     - Global rules are loaded from the user's global `.clinerules/` directory.
     - Local project rules are loaded from the workspace (supporting `.clinerules`, `.cursorrules`, etc.) and injected into the `USER'S CUSTOM INSTRUCTIONS` section.
 5.  **Native Tool Generation**:
-    - `src/core/prompts/system-prompt/registry/DiracToolSet.ts` converts all enabled tools into the provider's native format.
+    - `src/core/prompts/system-prompt/registry/IsaacToolSet.ts` converts all enabled tools into the provider's native format.
     - **Important**: In this mode, the system prompt string itself does **not** contain tool definitions, as the provider receives them as a separate structured parameter.
 6.  **Final Output**: The `systemPrompt` string and `tools` array are returned to the `Task` runner, which then passes them to the API via `src/core/api/index.ts`.
 

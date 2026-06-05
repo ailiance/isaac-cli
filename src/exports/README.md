@@ -7,7 +7,7 @@ The Dirac extension exposes an API that can be used by other extensions. To use 
 3. Get access to the API with the following code:
 
     ```ts
-    const diracExtension = vscode.extensions.getExtension<DiracAPI>("dirac-run.dirac")
+    const diracExtension = vscode.extensions.getExtension<IsaacAPI>("dirac-run.dirac")
 
     if (!diracExtension?.isActive) {
     	throw new Error("Dirac extension is not activated")

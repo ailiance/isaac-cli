@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-01
 **Status:** Approved (design) — pending implementation plan
-**Component:** `src/core/mcp/retrieval/` (new), `src/core/mcp/bootstrap.ts`, `src/core/prompts/system-prompt/registry/DiracToolSet.ts`, `cli/src/index.ts`
+**Component:** `src/core/mcp/retrieval/` (new), `src/core/mcp/bootstrap.ts`, `src/core/prompts/system-prompt/registry/IsaacToolSet.ts`, `cli/src/index.ts`
 
 ## Problem
 
@@ -40,7 +40,7 @@ Default knobs (tune empirically): **K = 8** (base cap), **K′ = 5** (find_tools
 
 ## Architecture
 
-Native tools (the 25 `DiracDefaultTool`) and `find_tools` are **always** emitted. MCP
+Native tools (the 25 `IsaacDefaultTool`) and `find_tools` are **always** emitted. MCP
 tool specs are **gated** by an "active set" of qualified names, selected by relevance.
 
 ### Components (`src/core/mcp/retrieval/`)
@@ -62,13 +62,13 @@ tool specs are **gated** by an "active set" of qualified names, selected by rele
      to the active set; the handler returns the newly-activated tool names + one-line
      descriptions so the model knows what is now callable.
 
-4. **Assembly gate** — at the per-request seam in `DiracToolSet.getEnabledToolSpecs`
+4. **Assembly gate** — at the per-request seam in `IsaacToolSet.getEnabledToolSpecs`
    (already runs every request): emit all native specs + `find_tools` + only the MCP
    specs whose `qualifiedName` is in the active set. Native filtering by
    `contextRequirements` is unchanged.
 
 5. **`find_tools` native tool** — `name: "find_tools"`, param `query: string`
-   ("describe the capability you need"). Registered like other `DiracDefaultTool`s,
+   ("describe the capability you need"). Registered like other `IsaacDefaultTool`s,
    always-on (never gated). Its handler mutates the active-set manager and returns a
    compact list of activated tools.
 

@@ -29,7 +29,7 @@ cd /Users/electron/code/ailiance-agent
 - `src/core/mcp/retrieval/config.ts` — K/K′/τ defaults + env/flag overrides.
 - `src/core/prompts/system-prompt/tools/find_tools.ts` — the `find_tools` native tool spec.
 - `src/core/task/tools/handlers/FindToolsToolHandler.ts` — the `find_tools` handler.
-- Modify: `src/shared/tools.ts` (enum), `src/core/prompts/system-prompt/tools/init.ts` (register spec), `src/core/prompts/system-prompt/registry/DiracToolSet.ts` (register handler list is elsewhere), `src/core/task/tools/ToolExecutorCoordinator.ts` (register handler), `src/core/mcp/bootstrap.ts` (gate via contextRequirements + build index/active-set), `src/core/prompts/system-prompt/types.ts` (`activeMcpTools` field), `cli/src/index.ts` (flags).
+- Modify: `src/shared/tools.ts` (enum), `src/core/prompts/system-prompt/tools/init.ts` (register spec), `src/core/prompts/system-prompt/registry/IsaacToolSet.ts` (register handler list is elsewhere), `src/core/task/tools/ToolExecutorCoordinator.ts` (register handler), `src/core/mcp/bootstrap.ts` (gate via contextRequirements + build index/active-set), `src/core/prompts/system-prompt/types.ts` (`activeMcpTools` field), `cli/src/index.ts` (flags).
 
 ---
 
@@ -771,10 +771,10 @@ Expected: FAIL — `spec.contextRequirements` is undefined.
 In `src/core/mcp/bootstrap.ts`, replace the return of `mcpToolToSpec`:
 
 ```ts
-export function mcpToolToSpec(tool: McpToolMetadata): DiracToolSpec {
+export function mcpToolToSpec(tool: McpToolMetadata): IsaacToolSpec {
 	const qualifiedName = tool.qualifiedName
 	return {
-		id: qualifiedName as DiracDefaultTool,
+		id: qualifiedName as IsaacDefaultTool,
 		name: qualifiedName,
 		description: tool.description ?? `MCP tool from plugin ${tool.pluginName}`,
 		parameters: convertJsonSchemaToParams(tool.inputSchema),
@@ -810,7 +810,7 @@ git commit -m "feat(mcp): gate MCP tool specs by active set via contextRequireme
 
 - [ ] **Step 1: Add enum member**
 
-In `src/shared/tools.ts`, inside `enum DiracDefaultTool`, add:
+In `src/shared/tools.ts`, inside `enum IsaacDefaultTool`, add:
 
 ```ts
 	FIND_TOOLS = "find_tools",
@@ -820,11 +820,11 @@ In `src/shared/tools.ts`, inside `enum DiracDefaultTool`, add:
 
 ```ts
 // src/core/prompts/system-prompt/tools/find_tools.ts
-import { DiracDefaultTool } from "@/shared/tools"
-import type { DiracToolSpec } from "../spec"
+import { IsaacDefaultTool } from "@/shared/tools"
+import type { IsaacToolSpec } from "../spec"
 
-export const find_tools: DiracToolSpec = {
-	id: DiracDefaultTool.FIND_TOOLS,
+export const find_tools: IsaacToolSpec = {
+	id: IsaacDefaultTool.FIND_TOOLS,
 	name: "find_tools",
 	description:
 		"Discover and activate additional MCP tools that are not currently available to you. " +
@@ -869,7 +869,7 @@ git commit -m "feat(mcp): add find_tools native tool spec"
 - Modify: `src/core/task/tools/ToolExecutorCoordinator.ts` (register, near where native handlers are registered — see existing `registerByName` calls)
 - Test: `src/core/task/tools/handlers/__tests__/FindToolsToolHandler.test.ts`
 
-First read how an existing simple handler (e.g. `ListSkillsHandler` / `list_skills`) is registered in `ToolExecutorCoordinator` so this follows the same pattern (`coordinator.registerByName(DiracDefaultTool.X, validator)` or a handler-instance registration — match what the file actually does).
+First read how an existing simple handler (e.g. `ListSkillsHandler` / `list_skills`) is registered in `ToolExecutorCoordinator` so this follows the same pattern (`coordinator.registerByName(IsaacDefaultTool.X, validator)` or a handler-instance registration — match what the file actually does).
 
 - [ ] **Step 1: Write the failing test**
 
@@ -918,14 +918,14 @@ Model the class shape on a sibling handler (read `src/core/task/tools/handlers/L
 // src/core/task/tools/handlers/FindToolsToolHandler.ts
 import type { ToolUse } from "@core/assistant-message"
 import { getActiveMcpToolSet } from "@core/mcp/retrieval/session"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 import type { TaskConfig } from "../types/TaskConfig"
 
 export class FindToolsToolHandler implements IFullyManagedTool {
-	readonly name = DiracDefaultTool.FIND_TOOLS
+	readonly name = IsaacDefaultTool.FIND_TOOLS
 
 	getDescription(block: ToolUse): string {
 		const q = (block.params.query as string) || ""

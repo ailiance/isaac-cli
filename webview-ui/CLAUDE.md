@@ -20,7 +20,7 @@ app/         App.tsx, Providers.tsx, main.tsx, store/appStore.ts, styles/
 features/    chat/ history/ settings/ worktrees/ dirac-rules/  (composants, stores, utils)
 entities/    task/ user/  (stores Zustand domaine)
 shared/      ui/ (primitives + shadcn) | api/ (grpc-client*, vscode.ts) | hooks/ | lib/
-context/     DiracAuthContext, PlatformContext (React context, pas store)
+context/     IsaacAuthContext, PlatformContext (React context, pas store)
 config/      platform.config.ts + platform-configs.json (vscode|standalone)
 lib/utils.ts (cn helper)
 ```

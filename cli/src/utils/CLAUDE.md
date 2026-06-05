@@ -8,7 +8,7 @@ Helpers purs/non-React du CLI `isaac` (rendu terminal, parsing input, fs, lifecy
 | Fichier | Rôle |
 |---------|------|
 | `console.ts` | Capture `originalConsole*` AVANT import du core ; `suppressConsoleUnlessVerbose` + `restoreConsole`. Source des prints "qui survivent au mute" |
-| `display.ts` | ANSI `colors`/`style`, `formatMessage`/`formatState` (DiracMessage→terminal), `Spinner` (l.375), `print*` (via originalConsole), `createContextBar` (l.498), `setTerminalTitle` (OSC, l.511) |
+| `display.ts` | ANSI `colors`/`style`, `formatMessage`/`formatState` (IsaacMessage→terminal), `Spinner` (l.375), `print*` (via originalConsole), `createContextBar` (l.498), `setTerminalTitle` (OSC, l.511) |
 | `ink.ts` | `runInkApp` (l.30) : drain des réponses sonde terminal (`drainEscapeSequencesOnly`, l.6), clear screen, render Ink puis cleanup |
 | `cleanup.ts` | `disposeCliContext`/`createInkCleanup` (l.52, flush state + dispose services + exit code), `drainStdout` (l.68, critique pour pipes) |
 | `errors.ts` | `setupSignalHandlers` (l.49) : SIGINT/SIGTERM, `unhandledRejection` (ignore les "abort"), `uncaughtException` |

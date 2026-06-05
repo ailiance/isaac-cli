@@ -8,7 +8,7 @@ Abstraction provider LLM. Contrat `ApiHandler`, factory `buildApiHandler`, trans
 |---------|------|
 | `index.ts` | Contrat `ApiHandler` (L49-54), factory `buildApiHandler` (L446) → `createHandlerForProvider` (L72), giant switch sur `apiProvider` |
 | `retry.ts` | Décorateur `@withRetry()`, `RetriableError`. Defaults : 3 retries, 1s base, 10s cap |
-| `transform/` | Conversion `DiracStorageMessage[]` ↔ shapes provider, et events stream → `ApiStreamChunk` |
+| `transform/` | Conversion `IsaacStorageMessage[]` ↔ shapes provider, et events stream → `ApiStreamChunk` |
 | `transform/stream.ts` | `ApiStream = AsyncGenerator<ApiStreamChunk>`, union `text | reasoning | usage | tool_calls` |
 | `transform/tool-call-processor.ts` | Aggregation des deltas tool-call |
 | `utils/messages_api_support.ts`, `responses_api_support.ts` | Détection de support API par modèle |
