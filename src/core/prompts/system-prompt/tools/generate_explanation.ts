@@ -1,9 +1,10 @@
 import { IsaacDefaultTool } from "@/shared/tools"
 import type { IsaacToolSpec } from "../spec"
+import type { ParamNames } from "../tool-unit"
 
 const id = IsaacDefaultTool.GENERATE_EXPLANATION
 
-export const generate_explanation: IsaacToolSpec = {
+export const generate_explanation = {
 	id,
 	name: "generate_explanation",
 	description:
@@ -32,4 +33,13 @@ export const generate_explanation: IsaacToolSpec = {
 			usage: "HEAD",
 		},
 	],
-}
+} as const satisfies IsaacToolSpec
+
+/**
+ * Lot E: typed param-name union derived from the spec literal above.
+ * The handler reads the scalar `title`/`from_ref`/`to_ref` params through this
+ * contract. The `contextRequirements` gate is preserved verbatim by
+ * `as const satisfies IsaacToolSpec`. A rename/removal of a spec parameter
+ * changes this union and breaks the handler compile (kills drift).
+ */
+export type GenerateExplanationParam = ParamNames<typeof generate_explanation>

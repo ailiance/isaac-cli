@@ -1,9 +1,10 @@
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
-import { telemetryService } from "@/services/telemetry"
-
+import { defineTool, readParam } from "@core/prompts/system-prompt/tool-unit"
+import { new_task } from "@core/prompts/system-prompt/tools/new_task"
 import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { showSystemNotification } from "@integrations/notifications"
+import { telemetryService } from "@/services/telemetry"
 import { IsaacDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IPartialBlockHandler, IToolHandler } from "../ToolExecutorCoordinator"
@@ -31,7 +32,9 @@ export class NewTaskHandler implements IToolHandler, IPartialBlockHandler {
 	}
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
-		const context: string | undefined = block.params.context
+		// Lot E: read scalar param through the typed contract derived from the
+		// spec. Renaming `context` in the spec breaks this handler's compile.
+		const context: string | undefined = readParam(new_task_unit, block.params, "context")
 
 		// Validate required parameters
 		if (!context) {
@@ -84,8 +87,6 @@ ${text}
 				images,
 				fileContentString,
 			)
-
-
 		}
 		// If no response, the user clicked the "Create New Task" button
 		const apiConfig = config.services.stateManager.getApiConfiguration()
@@ -102,7 +103,19 @@ ${text}
 			block.isNativeToolCall,
 		)
 
-
 		return formatResponse.toolResult(`The user has created a new task with the provided context.`)
 	}
 }
+
+/**
+ * Lot E — unified tool unit for `new_task`. Co-locates the prompt spec with the
+ * handler factory and the read-only flag, exposing the drift-detecting typed
+ * link between spec params and the handler. This handler takes no validator.
+ * Coexists with the legacy registration paths (no cutover yet).
+ */
+export const new_task_unit = defineTool({
+	id: IsaacDefaultTool.NEW_TASK,
+	spec: new_task,
+	readonly: true,
+	createHandler: (_validator: unknown) => new NewTaskHandler(),
+})

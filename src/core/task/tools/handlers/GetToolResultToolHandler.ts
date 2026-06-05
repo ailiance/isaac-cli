@@ -1,8 +1,10 @@
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
+import { defineTool } from "@core/prompts/system-prompt/tool-unit"
+import { get_tool_result } from "@core/prompts/system-prompt/tools/get_tool_result"
 import { IsaacDefaultTool } from "@/shared/tools"
-import type { PendingToolEntry } from "../../PendingToolRegistry"
 import type { ToolResponse } from "../../index"
+import type { PendingToolEntry } from "../../PendingToolRegistry"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
@@ -82,7 +84,8 @@ export class GetToolResultToolHandler implements IFullyManagedTool {
 
 		// Parse optional params (booleans/numbers may arrive as strings).
 		const waitRaw = block.params.wait
-		const wait = waitRaw === undefined || waitRaw === null || waitRaw === "" ? true : String(waitRaw).toLowerCase() !== "false"
+		const wait =
+			waitRaw === undefined || waitRaw === null || waitRaw === "" ? true : String(waitRaw).toLowerCase() !== "false"
 
 		const timeoutRaw = block.params.timeout_ms
 		let timeoutMs = DEFAULT_TIMEOUT_MS
@@ -218,3 +221,16 @@ export class GetToolResultToolHandler implements IFullyManagedTool {
 		return `${header}\n${body}`
 	}
 }
+
+/**
+ * Lot E — unified tool unit for `get_tool_result`. Co-locates the prompt spec
+ * with the handler factory and the read-only flag, exposing the drift-detecting
+ * typed link between spec params and the handler. This handler takes no validator.
+ * Coexists with the legacy registration paths (no cutover yet).
+ */
+export const get_tool_result_unit = defineTool({
+	id: IsaacDefaultTool.GET_TOOL_RESULT,
+	spec: get_tool_result,
+	readonly: true,
+	createHandler: (_validator: unknown) => new GetToolResultToolHandler(),
+})

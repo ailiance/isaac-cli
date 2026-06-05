@@ -1,20 +1,26 @@
 import type Anthropic from "@anthropic-ai/sdk"
 import type { ToolUse } from "@core/assistant-message"
-import { IsaacSaySubagentStatus, IsaacSubagentUsageInfo, SubagentStatusItem } from "@shared/ExtensionMessage"
 import { getHookModelContext } from "@core/hooks/hook-model-context"
 import { getHooksEnabledSafe } from "@core/hooks/hooks-utils"
 import { formatResponse } from "@core/prompts/responses"
+import { defineTool, readParam } from "@core/prompts/system-prompt/tool-unit"
+import { attempt_completion } from "@core/prompts/system-prompt/tools/attempt_completion"
 import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { showSystemNotification } from "@integrations/notifications"
 import { telemetryService } from "@services/telemetry"
 import { findLastIndex } from "@shared/array"
-import { COMPLETION_RESULT_CHANGES_FLAG } from "@shared/ExtensionMessage"
-import { SubagentRunner } from "../subagent/SubagentRunner"
+import {
+	COMPLETION_RESULT_CHANGES_FLAG,
+	IsaacSaySubagentStatus,
+	IsaacSubagentUsageInfo,
+	SubagentStatusItem,
+} from "@shared/ExtensionMessage"
 import { Logger } from "@shared/services/Logger"
 import { IsaacDefaultTool } from "@shared/tools"
 import type { ToolResponse } from "../../index"
 import { showNotificationForApproval } from "../../utils"
 import { buildUserFeedbackContent } from "../../utils/buildUserFeedbackContent"
+import { SubagentRunner } from "../subagent/SubagentRunner"
 import type { IPartialBlockHandler, IToolHandler } from "../ToolExecutorCoordinator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
@@ -65,8 +71,11 @@ export class AttemptCompletionHandler implements IToolHandler, IPartialBlockHand
 	}
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
-		const result: string | undefined = block.params.result
-		const command: string | undefined = block.params.command
+		// Lot E: read scalar params through the typed contract derived from the
+		// spec. Renaming `result`/`command` in the spec breaks this handler's
+		// compile.
+		const result: string | undefined = readParam(attempt_completion_unit, block.params, "result")
+		const command: string | undefined = readParam(attempt_completion_unit, block.params, "command")
 
 		// Validate required parameters
 		if (!result) {
@@ -285,18 +294,16 @@ Otherwise, respond with "VERIFICATION: FAILED" followed by all the details on wh
 				const isSuccess = runResult.result?.includes("VERIFICATION: SUCCESS")
 				if (isSuccess) {
 					return undefined
-				} else {
-					return `Verification Subagent Report:
+				}
+				return `Verification Subagent Report:
 ${runResult.result}
 
 The solution could not be verified successfully. Please address the issues listed above and try again.`
-				}
-			} else {
-				return `Verification Subagent Failed:
+			}
+			return `Verification Subagent Failed:
 ${runResult.error}
 
 Please verify the task manually or try again.`
-			}
 		} catch (error) {
 			clearInterval(abortPollInterval)
 			return `Verification Subagent Error: ${(error as Error).message}`
@@ -466,10 +473,7 @@ Please verify the task manually or try again.`
 			block.isNativeToolCall,
 		)
 
-		return [
-			{ type: "text" as const, text: prefix },
-			...toolResults,
-		]
+		return [{ type: "text" as const, text: prefix }, ...toolResults]
 	}
 
 	private async addNewChangesFlagToLastCompletionResultMessage(config: TaskConfig) {
@@ -566,3 +570,16 @@ Please verify the task manually or try again.`
 		}
 	}
 }
+
+/**
+ * Lot E — unified tool unit for `attempt_completion`. Co-locates the prompt spec
+ * with the handler factory and the read-only flag, exposing the drift-detecting
+ * typed link between spec params and the handler. This handler takes no validator.
+ * Coexists with the legacy registration paths (no cutover yet).
+ */
+export const attempt_completion_unit = defineTool({
+	id: IsaacDefaultTool.ATTEMPT,
+	spec: attempt_completion,
+	readonly: true,
+	createHandler: (_validator: unknown) => new AttemptCompletionHandler(),
+})

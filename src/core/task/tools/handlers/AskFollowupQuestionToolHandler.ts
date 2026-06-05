@@ -6,6 +6,8 @@ import { IsaacDefaultTool } from "@shared/tools"
 import { telemetryService } from "@/services/telemetry"
 import { ToolUse } from "../../../assistant-message"
 import { formatResponse } from "../../../prompts/responses"
+import { defineTool, readParam } from "../../../prompts/system-prompt/tool-unit"
+import { ask_followup_question } from "../../../prompts/system-prompt/tools/ask_followup_question"
 import { ToolResponse } from "../.."
 import type { IPartialBlockHandler, IToolHandler } from "../ToolExecutorCoordinator"
 import type { TaskConfig } from "../types/TaskConfig"
@@ -34,9 +36,12 @@ export class AskFollowupQuestionToolHandler implements IToolHandler, IPartialBlo
 		await uiHelpers.ask("followup" as IsaacAsk, JSON.stringify(sharedMessage), block.partial).catch(() => {})
 	}
 
-		async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
-		const question: string | undefined = block.params.question
-		const optionsRaw: string | undefined = block.params.options
+	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
+		// Lot E: read scalar params through the typed contract derived from the
+		// spec. Renaming `question`/`options` in the spec breaks this handler's
+		// compile.
+		const question: string | undefined = readParam(ask_followup_question_unit, block.params, "question")
+		const optionsRaw: string | undefined = readParam(ask_followup_question_unit, block.params, "options")
 
 		// Validate required parameter
 		if (!question) {
@@ -121,7 +126,19 @@ export class AskFollowupQuestionToolHandler implements IToolHandler, IPartialBlo
 			block.isNativeToolCall,
 		)
 
-
 		return formatResponse.toolResult(`<answer>\n${text}\n</answer>`, images, fileContentString)
 	}
 }
+
+/**
+ * Lot E — unified tool unit for `ask_followup_question`. Co-locates the prompt
+ * spec with the handler factory and the read-only flag, exposing the drift-
+ * detecting typed link between spec params and the handler. This handler takes no
+ * validator. Coexists with the legacy registration paths (no cutover yet).
+ */
+export const ask_followup_question_unit = defineTool({
+	id: IsaacDefaultTool.ASK,
+	spec: ask_followup_question,
+	readonly: true,
+	createHandler: (_validator: unknown) => new AskFollowupQuestionToolHandler(),
+})

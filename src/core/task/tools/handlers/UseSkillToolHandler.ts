@@ -1,9 +1,7 @@
 import type { ToolUse } from "@core/assistant-message"
-import {
-	getOrDiscoverSkills,
-	getSkillContent,
-	listSupportingFiles
-} from "@core/context/instructions/user-instructions/skills"
+import { getOrDiscoverSkills, getSkillContent, listSupportingFiles } from "@core/context/instructions/user-instructions/skills"
+import { defineTool, readParam } from "@core/prompts/system-prompt/tool-unit"
+import { use_skill } from "@core/prompts/system-prompt/tools/use_skill"
 import type { SkillMetadata } from "@shared/skills"
 import { telemetryService } from "@/services/telemetry"
 import { IsaacDefaultTool } from "@/shared/tools"
@@ -33,7 +31,9 @@ export class UseSkillToolHandler implements IToolHandler, IPartialBlockHandler {
 	}
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
-		const skillName: string | undefined = block.params.skill_name
+		// Lot E: read scalar param through the typed contract derived from the
+		// spec. Renaming `skill_name` in the spec breaks this handler's compile.
+		const skillName: string | undefined = readParam(use_skill_unit, block.params, "skill_name")
 
 		if (!skillName) {
 			config.taskState.consecutiveMistakeCount++
@@ -104,7 +104,6 @@ export class UseSkillToolHandler implements IToolHandler, IPartialBlockHandler {
 				true,
 				undefined,
 				block.isNativeToolCall,
-
 			)
 
 			const { docs, scripts } = await listSupportingFiles(skillContent.path)
@@ -130,3 +129,16 @@ export class UseSkillToolHandler implements IToolHandler, IPartialBlockHandler {
 		}
 	}
 }
+
+/**
+ * Lot E — unified tool unit for `use_skill`. Co-locates the prompt spec with the
+ * handler factory and the read-only flag, exposing the drift-detecting typed
+ * link between spec params and the handler. This handler takes no validator.
+ * Coexists with the legacy registration paths (no cutover yet).
+ */
+export const use_skill_unit = defineTool({
+	id: IsaacDefaultTool.USE_SKILL,
+	spec: use_skill,
+	readonly: true,
+	createHandler: (_validator: unknown) => new UseSkillToolHandler(),
+})

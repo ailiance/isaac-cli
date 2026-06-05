@@ -1,9 +1,11 @@
 import { BrowserAction, BrowserActionResult, browserActions, IsaacSayBrowserAction } from "@shared/ExtensionMessage"
-import { IsaacDefaultTool } from "@/shared/tools"
 import { telemetryService } from "@/services/telemetry"
+import { IsaacDefaultTool } from "@/shared/tools"
 
 import { ToolUse } from "../../../assistant-message"
 import { formatResponse } from "../../../prompts/responses"
+import { defineTool, readParam } from "../../../prompts/system-prompt/tool-unit"
+import { browser_action } from "../../../prompts/system-prompt/tools/browser_action"
 import { ToolResponse } from "../.."
 import { showNotificationForApproval } from "../../utils"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
@@ -64,10 +66,15 @@ export class BrowserToolHandler implements IFullyManagedTool {
 	}
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
-		const action: BrowserAction | undefined = block.params.action as BrowserAction
-		const url: string | undefined = block.params.url
-		const coordinate: string | undefined = block.params.coordinate
-		const text: string | undefined = block.params.text
+		// Lot E: read scalar params through the typed contract derived from the
+		// spec. Renaming `action`/`url`/`coordinate`/`text` in the spec breaks
+		// this handler's compile. `action` is cast to the `BrowserAction` union.
+		const action: BrowserAction | undefined = readParam(browser_action_unit, block.params, "action") as
+			| BrowserAction
+			| undefined
+		const url: string | undefined = readParam(browser_action_unit, block.params, "url")
+		const coordinate: string | undefined = readParam(browser_action_unit, block.params, "coordinate")
+		const text: string | undefined = readParam(browser_action_unit, block.params, "text")
 
 		// Validate action parameter - following original pattern
 		if (!action || !browserActions.includes(action)) {
@@ -200,7 +207,9 @@ export class BrowserToolHandler implements IFullyManagedTool {
 						browserActionResult.screenshot ? [browserActionResult.screenshot] : [],
 					)
 					const apiConfig = config.services.stateManager.getApiConfiguration()
-					const provider = (config.mode === "plan" ? apiConfig.planModeApiProvider : apiConfig.actModeApiProvider) as string
+					const provider = (
+						config.mode === "plan" ? apiConfig.planModeApiProvider : apiConfig.actModeApiProvider
+					) as string
 
 					telemetryService.captureToolUsage(
 						config.ulid,
@@ -213,8 +222,6 @@ export class BrowserToolHandler implements IFullyManagedTool {
 						block.isNativeToolCall,
 					)
 
-
-
 					return result
 
 				case "close":
@@ -222,7 +229,9 @@ export class BrowserToolHandler implements IFullyManagedTool {
 						`The browser has been closed. You may now proceed to using other tools.`,
 					)
 					const apiConfigClose = config.services.stateManager.getApiConfiguration()
-					const providerClose = (config.mode === "plan" ? apiConfigClose.planModeApiProvider : apiConfigClose.actModeApiProvider) as string
+					const providerClose = (
+						config.mode === "plan" ? apiConfigClose.planModeApiProvider : apiConfigClose.actModeApiProvider
+					) as string
 
 					telemetryService.captureToolUsage(
 						config.ulid,
@@ -235,8 +244,6 @@ export class BrowserToolHandler implements IFullyManagedTool {
 						block.isNativeToolCall,
 					)
 
-
-
 					return closeResult
 			}
 		} catch (error) {
@@ -245,3 +252,16 @@ export class BrowserToolHandler implements IFullyManagedTool {
 		}
 	}
 }
+
+/**
+ * Lot E — unified tool unit for `browser_action`. Co-locates the prompt spec with
+ * the handler factory and the read-only flag, exposing the drift-detecting typed
+ * link between spec params and the handler. This handler takes no validator.
+ * Coexists with the legacy registration paths (no cutover yet).
+ */
+export const browser_action_unit = defineTool({
+	id: IsaacDefaultTool.BROWSER,
+	spec: browser_action,
+	readonly: true,
+	createHandler: (_validator: unknown) => new BrowserToolHandler(),
+})

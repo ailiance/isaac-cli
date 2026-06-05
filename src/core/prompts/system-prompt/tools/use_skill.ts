@@ -1,9 +1,10 @@
 import { IsaacDefaultTool } from "@/shared/tools"
 import type { IsaacToolSpec } from "../spec"
+import type { ParamNames } from "../tool-unit"
 
 const id = IsaacDefaultTool.USE_SKILL
 
-export const use_skill: IsaacToolSpec = {
+export const use_skill = {
 	id,
 	name: "use_skill",
 	description:
@@ -16,4 +17,13 @@ export const use_skill: IsaacToolSpec = {
 			instruction: "The name of the skill to activate (must match exactly one of the available skill names)",
 		},
 	],
-}
+} as const satisfies IsaacToolSpec
+
+/**
+ * Lot E: typed param-name union derived from the spec literal above.
+ * The handler reads the scalar `skill_name` param through this contract. The
+ * `contextRequirements` gate is preserved verbatim by `as const satisfies
+ * IsaacToolSpec`. A rename/removal of a spec parameter changes this union and
+ * breaks the handler compile (kills drift).
+ */
+export type UseSkillParam = ParamNames<typeof use_skill>

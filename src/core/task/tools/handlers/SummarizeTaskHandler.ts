@@ -4,6 +4,8 @@ import { getHooksEnabledSafe } from "@core/hooks/hooks-utils"
 import { executePreCompactHookWithCleanup, HookCancellationError } from "@core/hooks/precompact-executor"
 import { continuationPrompt } from "@core/prompts/contextManagement"
 import { formatResponse } from "@core/prompts/responses"
+import { defineTool, readParam } from "@core/prompts/system-prompt/tool-unit"
+import { summarize_task } from "@core/prompts/system-prompt/tools/summarize_task"
 import { StateManager } from "@core/storage/StateManager"
 import { resolveWorkspacePath } from "@core/workspace"
 import { extractFileContent } from "@integrations/misc/extract-file-content"
@@ -28,7 +30,10 @@ export class SummarizeTaskHandler implements IToolHandler, IPartialBlockHandler 
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
 		try {
-			const context: string | undefined = block.params.context
+			// Lot E: read scalar param through the typed contract derived from the
+			// spec. Renaming `context` in the spec breaks this handler's compile.
+			// The array `required_files` is read raw as `string[]`.
+			const context: string | undefined = readParam(summarize_task_unit, block.params, "context")
 			const requiredFiles: string[] | undefined = block.params.required_files
 
 			// Validate required parameters
@@ -293,3 +298,16 @@ export class SummarizeTaskHandler implements IToolHandler, IPartialBlockHandler 
 		await uiHelpers.say("tool", partialMessage, undefined, undefined, block.partial)
 	}
 }
+
+/**
+ * Lot E — unified tool unit for `summarize_task`. Co-locates the prompt spec with
+ * the handler factory and the read-only flag, exposing the drift-detecting typed
+ * link between spec params and the handler. Coexists with the legacy registration
+ * paths (no cutover yet).
+ */
+export const summarize_task_unit = defineTool({
+	id: IsaacDefaultTool.SUMMARIZE_TASK,
+	spec: summarize_task,
+	readonly: true,
+	createHandler: (validator: unknown) => new SummarizeTaskHandler(validator as ToolValidator),
+})

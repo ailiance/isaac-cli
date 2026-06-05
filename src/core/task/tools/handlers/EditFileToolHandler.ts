@@ -1,5 +1,7 @@
 import { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
+import { defineTool } from "@core/prompts/system-prompt/tool-unit"
+import { edit_file } from "@core/prompts/system-prompt/tools/edit_file"
 import { telemetryService } from "@/services/telemetry"
 
 import { IsaacDefaultTool } from "@/shared/tools"
@@ -52,20 +54,26 @@ export class EditFileToolHandler implements IFullyManagedTool {
 		return `[${block.name}${pathText}]`
 	}
 
-		async handlePartialBlock(block: ToolUse, uiHelpers: StronglyTypedUIHelpers): Promise<void> {
+	async handlePartialBlock(block: ToolUse, uiHelpers: StronglyTypedUIHelpers): Promise<void> {
 		let files = block.params.files
 		if (typeof files === "string") {
-			try { files = JSON.parse(files) } catch (e) {}
+			try {
+				files = JSON.parse(files)
+			} catch (e) {}
 		}
 		const relPath = Array.isArray(files) && files[0]?.path ? files[0].path : ""
 		const filesCount = Array.isArray(files) ? files.length : 0
-		const editsCount = Array.isArray(files) ? files.reduce((acc, f) => {
-			let edits = f.edits
-			if (typeof edits === "string") {
-				try { edits = JSON.parse(edits) } catch (e) {}
-			}
-			return acc + (Array.isArray(edits) ? edits.length : 0)
-		}, 0) : 0
+		const editsCount = Array.isArray(files)
+			? files.reduce((acc, f) => {
+					let edits = f.edits
+					if (typeof edits === "string") {
+						try {
+							edits = JSON.parse(edits)
+						} catch (e) {}
+					}
+					return acc + (Array.isArray(edits) ? edits.length : 0)
+				}, 0)
+			: 0
 
 		const message = JSON.stringify({
 			tool: "editFile",
@@ -125,7 +133,6 @@ export class EditFileToolHandler implements IFullyManagedTool {
 		await config.callbacks.removeLastPartialMessageIfExistsWithType("say", "tool")
 		await config.callbacks.removeLastPartialMessageIfExistsWithType("ask", "tool")
 
-
 		// Return the result for the current block (either from cache or fallback)
 		if (block.call_id && this.resultsCache.has(block.call_id)) {
 			return this.resultsCache.get(block.call_id)!
@@ -135,13 +142,13 @@ export class EditFileToolHandler implements IFullyManagedTool {
 		let files = block.params.files
 		let wasStringified = false
 		if (typeof files === "string") {
-			try { 
-				files = JSON.parse(files) 
+			try {
+				files = JSON.parse(files)
 				block.params.files = files
 				wasStringified = true
 			} catch (e) {}
 		}
-		
+
 		let result: ToolResponse
 		if (!Array.isArray(files)) {
 			const relPath = ""
@@ -163,13 +170,18 @@ export class EditFileToolHandler implements IFullyManagedTool {
 
 				const { absolutePath, displayPath } = this.processor.resolvePath(config, fe.path)
 				if (!singleBlockBatches.has(absolutePath)) {
-					singleBlockBatches.set(absolutePath, { absolutePath, displayPath, blocks: [], wasStringified: wasStringified || editsWasStringified })
+					singleBlockBatches.set(absolutePath, {
+						absolutePath,
+						displayPath,
+						blocks: [],
+						wasStringified: wasStringified || editsWasStringified,
+					})
 				} else if (wasStringified || editsWasStringified) {
 					singleBlockBatches.get(absolutePath)!.wasStringified = true
 				}
 				singleBlockBatches.get(absolutePath)!.blocks.push({
 					...block,
-					params: { ...block.params, path: fe.path, edits: fe.edits }
+					params: { ...block.params, path: fe.path, edits: fe.edits },
 				})
 			}
 			const resultsMap = await this.processor.executeMultiFileBatch(config, singleBlockBatches)
@@ -191,7 +203,6 @@ export class EditFileToolHandler implements IFullyManagedTool {
 			undefined,
 			block.isNativeToolCall,
 		)
-
 
 		return result
 	}
@@ -224,3 +235,17 @@ export class EditFileToolHandler implements IFullyManagedTool {
 		}
 	}
 }
+
+/**
+ * Lot E — unified tool unit for `edit_file`. Co-locates the prompt spec with the
+ * handler factory and the mutating flag, exposing the drift-detecting typed link
+ * between spec params and the handler. This tool only has the array param `files`
+ * (JSON-coerced in the handler); no scalar `readParam` call applies. Coexists
+ * with the legacy registration paths (no cutover yet).
+ */
+export const edit_file_unit = defineTool({
+	id: IsaacDefaultTool.EDIT_FILE,
+	spec: edit_file,
+	readonly: false,
+	createHandler: (validator: unknown) => new EditFileToolHandler(validator as ToolValidator),
+})

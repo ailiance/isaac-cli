@@ -1,5 +1,7 @@
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
+import { defineTool, readParam } from "@core/prompts/system-prompt/tool-unit"
+import { plan_mode_respond } from "@core/prompts/system-prompt/tools/plan_mode_respond"
 import { findLast, parsePartialArrayString } from "@shared/array"
 import { telemetryService } from "@/services/telemetry"
 import { IsaacPlanModeResponse } from "@/shared/ExtensionMessage"
@@ -38,9 +40,12 @@ export class PlanModeRespondHandler implements IToolHandler, IPartialBlockHandle
 	}
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
-		const response: string | undefined = block.params.response
+		// Lot E: read scalar params through the typed contract derived from the
+		// spec. Renaming `response`/`needs_more_exploration` in the spec breaks
+		// this handler's compile. `options` is a legacy alias not in the spec.
+		const response: string | undefined = readParam(plan_mode_respond_unit, block.params, "response")
 		const optionsRaw: string | undefined = block.params.options
-		const needsMoreExploration: boolean = block.params.needs_more_exploration === "true"
+		const needsMoreExploration: boolean = readParam(plan_mode_respond_unit, block.params, "needs_more_exploration") === "true"
 
 		// Validate required parameters
 		if (!response) {
@@ -163,7 +168,6 @@ export class PlanModeRespondHandler implements IToolHandler, IPartialBlockHandle
 				block.isNativeToolCall,
 			)
 
-
 			return result
 		}
 		// if we didn't switch to ACT MODE, then we can just send the user_feedback message
@@ -181,7 +185,19 @@ export class PlanModeRespondHandler implements IToolHandler, IPartialBlockHandle
 			block.isNativeToolCall,
 		)
 
-
 		return formatResponse.toolResult(`<user_message>\n${text}\n</user_message>`, images, fileContentString)
 	}
 }
+
+/**
+ * Lot E — unified tool unit for `plan_mode_respond`. Co-locates the prompt spec
+ * with the handler factory and the read-only flag, exposing the drift-detecting
+ * typed link between spec params and the handler. This handler takes no validator.
+ * Coexists with the legacy registration paths (no cutover yet).
+ */
+export const plan_mode_respond_unit = defineTool({
+	id: IsaacDefaultTool.PLAN_MODE,
+	spec: plan_mode_respond,
+	readonly: true,
+	createHandler: (_validator: unknown) => new PlanModeRespondHandler(),
+})

@@ -1,5 +1,7 @@
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
+import { defineTool, readParam } from "@core/prompts/system-prompt/tool-unit"
+import { execute_command } from "@core/prompts/system-prompt/tools/execute_command"
 // ailiance-agent fork: hard-deny zone gate
 import { classifyCommand, HARD_DENY_EXIT_CODE } from "@core/safety/zoneClassifier"
 import { WorkspacePathAdapter } from "@core/workspace/WorkspacePathAdapter"
@@ -150,8 +152,11 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
 		const rawCommands = coerceToStringArray(block.params.commands)
-		const script = block.params.script as string | undefined
-		const language = (block.params.language as string | undefined) || "bash"
+		// Lot E: read scalar params through the typed contract derived from the
+		// spec. Renaming `script`/`language` in the spec breaks this handler's
+		// compile. The array `commands` is read via `coerceToStringArray`.
+		const script = readParam(execute_command_unit, block.params, "script")
+		const language = readParam(execute_command_unit, block.params, "language") || "bash"
 
 		// Validate required parameters
 		let validation: { ok: boolean; error?: string; paramName?: string }
@@ -746,3 +751,16 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 		return `${interpreter} << '${delimiter}'\n${script}\n${delimiter}`
 	}
 }
+
+/**
+ * Lot E — unified tool unit for `execute_command`. Co-locates the prompt spec
+ * with the handler factory and the mutating flag, exposing the drift-detecting
+ * typed link between spec params and the handler. Coexists with the legacy
+ * registration paths (no cutover yet).
+ */
+export const execute_command_unit = defineTool({
+	id: IsaacDefaultTool.BASH,
+	spec: execute_command,
+	readonly: false,
+	createHandler: (validator: unknown) => new ExecuteCommandToolHandler(validator as ToolValidator),
+})

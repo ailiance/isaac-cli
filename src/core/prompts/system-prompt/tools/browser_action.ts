@@ -1,9 +1,10 @@
 import { IsaacDefaultTool } from "@/shared/tools"
 import type { IsaacToolSpec } from "../spec"
+import type { ParamNames } from "../tool-unit"
 
 const id = IsaacDefaultTool.BROWSER
 
-export const browser_action: IsaacToolSpec = {
+export const browser_action = {
 	id,
 	name: "browser_action",
 	description: `Request to interact with a Puppeteer-controlled browser. Every action, except \`close\`, will be responded to with a screenshot of the browser's current state, along with any new console logs. You may only perform one browser action per message, and wait for the user's response including a screenshot and logs to determine the next action.
@@ -46,4 +47,14 @@ export const browser_action: IsaacToolSpec = {
 			instruction: `Use this for providing the text for the \`type\` action. Example: 'Hello, world!'`,
 		},
 	],
-}
+} as const satisfies IsaacToolSpec
+
+/**
+ * Lot E: typed param-name union derived from the spec literal above.
+ * The handler reads the scalar `action`/`url`/`coordinate`/`text` params through
+ * this contract (`action` cast to the `BrowserAction` union). The
+ * `contextRequirements` gate and the `{{BROWSER_VIEWPORT_*}}` placeholders are
+ * preserved verbatim by `as const satisfies IsaacToolSpec`. A rename/removal of a
+ * spec parameter changes this union and breaks the handler compile (kills drift).
+ */
+export type BrowserActionParam = ParamNames<typeof browser_action>

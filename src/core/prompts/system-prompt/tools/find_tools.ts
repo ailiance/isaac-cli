@@ -1,7 +1,8 @@
 import { IsaacDefaultTool } from "@/shared/tools"
 import type { IsaacToolSpec } from "../spec"
+import type { ParamNames } from "../tool-unit"
 
-export const find_tools: IsaacToolSpec = {
+export const find_tools = {
 	id: IsaacDefaultTool.FIND_TOOLS,
 	name: "find_tools",
 	description:
@@ -17,4 +18,12 @@ export const find_tools: IsaacToolSpec = {
 			instruction: "A short natural-language description of the capability or tool you need.",
 		},
 	],
-}
+} as const satisfies IsaacToolSpec
+
+/**
+ * Lot E: typed param-name union derived from the spec literal above.
+ * The handler reads the scalar `query` param through this contract; a
+ * rename/removal of a spec parameter changes this union and breaks the handler
+ * compile (kills drift).
+ */
+export type FindToolsParam = ParamNames<typeof find_tools>

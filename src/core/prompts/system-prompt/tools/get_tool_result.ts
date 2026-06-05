@@ -1,9 +1,10 @@
 import { IsaacDefaultTool } from "@/shared/tools"
 import type { IsaacToolSpec } from "../spec"
+import type { ParamNames } from "../tool-unit"
 
 const id = IsaacDefaultTool.GET_TOOL_RESULT
 
-export const get_tool_result: IsaacToolSpec = {
+export const get_tool_result = {
 	id,
 	name: "get_tool_result",
 	description:
@@ -32,4 +33,14 @@ export const get_tool_result: IsaacToolSpec = {
 			usage: "60000 (optional)",
 		},
 	],
-}
+} as const satisfies IsaacToolSpec
+
+/**
+ * Lot E: typed param-name union derived from the spec literal above.
+ * The handler reads `task_id`/`wait`/`timeout_ms` with bespoke null/empty-string
+ * handling and numeric coercion that `readParam` (which String()s non-undefined
+ * values) would not preserve, so the scalar reads are intentionally left raw; the
+ * typed link is preserved via this export + the `get_tool_result_unit`. A
+ * rename/removal of a spec parameter changes this union and breaks the unit.
+ */
+export type GetToolResultParam = ParamNames<typeof get_tool_result>

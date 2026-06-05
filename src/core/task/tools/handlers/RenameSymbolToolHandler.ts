@@ -9,6 +9,8 @@ import { getReadablePath } from "@utils/path"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { formatResponse } from "@/core/prompts/responses"
+import { defineTool, readParam } from "@/core/prompts/system-prompt/tool-unit"
+import { rename_symbol } from "@/core/prompts/system-prompt/tools/rename_symbol"
 import { HostProvider } from "@/hosts/host-provider"
 import { getDiagnosticsProviders } from "@/integrations/diagnostics/getDiagnosticsProviders"
 import { SymbolIndexService, SymbolLocation } from "@/services/symbol-index/SymbolIndexService"
@@ -20,8 +22,8 @@ import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
-import { ToolResultUtils } from "../utils/ToolResultUtils"
 import { coerceToStringArray } from "../utils/coerceArray"
+import { ToolResultUtils } from "../utils/ToolResultUtils"
 
 export class RenameSymbolToolHandler implements IFullyManagedTool {
 	readonly name = IsaacDefaultTool.RENAME_SYMBOL
@@ -74,8 +76,11 @@ export class RenameSymbolToolHandler implements IFullyManagedTool {
 	}
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
-		const existingSymbol = block.params.existing_symbol as string
-		const newSymbol = block.params.new_symbol as string
+		// Lot E: read scalar params through the typed contract derived from the
+		// spec. Renaming `existing_symbol`/`new_symbol` in the spec breaks this
+		// handler's compile. The array `paths` is read via `coerceToStringArray`.
+		const existingSymbol = readParam(rename_symbol_unit, block.params, "existing_symbol") as string
+		const newSymbol = readParam(rename_symbol_unit, block.params, "new_symbol") as string
 		const relPaths = coerceToStringArray(block.params.paths)
 
 		if (!existingSymbol || !newSymbol || relPaths.length === 0) {
@@ -412,3 +417,16 @@ export class RenameSymbolToolHandler implements IFullyManagedTool {
 		return res.join("\n")
 	}
 }
+
+/**
+ * Lot E — unified tool unit for `rename_symbol`. Co-locates the prompt spec with
+ * the handler factory and the mutating flag, exposing the drift-detecting typed
+ * link between spec params and the handler. Coexists with the legacy registration
+ * paths (no cutover yet).
+ */
+export const rename_symbol_unit = defineTool({
+	id: IsaacDefaultTool.RENAME_SYMBOL,
+	spec: rename_symbol,
+	readonly: false,
+	createHandler: (validator: unknown) => new RenameSymbolToolHandler(validator as ToolValidator),
+})

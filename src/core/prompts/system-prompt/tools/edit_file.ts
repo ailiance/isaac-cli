@@ -1,10 +1,11 @@
 import { IsaacDefaultTool } from "@/shared/tools"
 import { getDelimiter } from "../../../../utils/line-hashing"
 import type { IsaacToolSpec } from "../spec"
+import type { ParamNames } from "../tool-unit"
 
 const id = IsaacDefaultTool.EDIT_FILE
 
-export const edit_file: IsaacToolSpec = {
+export const edit_file = {
 	id,
 	name: "edit_file",
 	description: `Edit one or more files by replacing, inserting after, or inserting before specific lines.
@@ -76,4 +77,13 @@ You MUST batch all non-overlapping edits into a single tool call. As long as the
 			},
 		},
 	],
-}
+} as const satisfies IsaacToolSpec
+
+/**
+ * Lot E: typed param-name union derived from the spec literal above.
+ * This tool only has the array param `files` (read after JSON-coercion in the
+ * handler), so no scalar `readParam` call applies; the typed link is preserved
+ * via this export + the `edit_file_unit`. The nested `enum`/`pattern`/`items`
+ * JSON Schema fields are preserved verbatim by `as const satisfies IsaacToolSpec`.
+ */
+export type EditFileParam = ParamNames<typeof edit_file>

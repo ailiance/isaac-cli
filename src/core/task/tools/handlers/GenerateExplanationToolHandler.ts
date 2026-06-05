@@ -1,19 +1,20 @@
 import type { ToolUse } from "@core/assistant-message"
 import {
-    buildDiffContent,
-    type ChangedFile,
-    detectBinaryFile,
-    openDiffView,
-    setupCommentController,
-    streamAIExplanationComments,
-    stringifyConversationHistory,
+	buildDiffContent,
+	type ChangedFile,
+	detectBinaryFile,
+	openDiffView,
+	setupCommentController,
+	streamAIExplanationComments,
+	stringifyConversationHistory,
 } from "@core/controller/task/explainChangesShared"
 import { formatResponse } from "@core/prompts/responses"
-import { telemetryService } from "@/services/telemetry"
-
+import { defineTool, readParam } from "@core/prompts/system-prompt/tool-unit"
+import { generate_explanation } from "@core/prompts/system-prompt/tools/generate_explanation"
 import fs from "fs/promises"
 import path from "path"
 import simpleGit from "simple-git"
+import { telemetryService } from "@/services/telemetry"
 import type { IsaacSayGenerateExplanation } from "@/shared/ExtensionMessage"
 import { Logger } from "@/shared/services/Logger"
 import { IsaacDefaultTool } from "@/shared/tools"
@@ -58,9 +59,12 @@ export class GenerateExplanationToolHandler implements IToolHandler, IPartialBlo
 	}
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
-		const title: string | undefined = block.params.title
-		const fromRef: string | undefined = block.params.from_ref
-		const toRef: string | undefined = block.params.to_ref // Optional - if not provided, compare to working directory
+		// Lot E: read scalar params through the typed contract derived from the
+		// spec. Renaming `title`/`from_ref`/`to_ref` in the spec breaks this
+		// handler's compile.
+		const title: string | undefined = readParam(generate_explanation_unit, block.params, "title")
+		const fromRef: string | undefined = readParam(generate_explanation_unit, block.params, "from_ref")
+		const toRef: string | undefined = readParam(generate_explanation_unit, block.params, "to_ref") // Optional - if not provided, compare to working directory
 
 		// Validate required parameters
 		if (!title) {
@@ -294,7 +298,6 @@ export class GenerateExplanationToolHandler implements IToolHandler, IPartialBlo
 				block.isNativeToolCall,
 			)
 
-
 			return formatResponse.toolResult(
 				`Successfully generated ${commentCount} explanation comment${commentCount === 1 ? "" : "s"} for ${changedFiles.length} changed file${changedFiles.length === 1 ? "" : "s"} between ${refDescription}. The diff view is now open with inline explanations.`,
 			)
@@ -328,8 +331,20 @@ export class GenerateExplanationToolHandler implements IToolHandler, IPartialBlo
 				block.isNativeToolCall,
 			)
 
-
 			return formatResponse.toolError(`Failed to generate explanations: ${errorMessage}`)
 		}
 	}
 }
+
+/**
+ * Lot E — unified tool unit for `generate_explanation`. Co-locates the prompt
+ * spec with the handler factory and the read-only flag, exposing the drift-
+ * detecting typed link between spec params and the handler. This handler takes no
+ * validator. Coexists with the legacy registration paths (no cutover yet).
+ */
+export const generate_explanation_unit = defineTool({
+	id: IsaacDefaultTool.GENERATE_EXPLANATION,
+	spec: generate_explanation,
+	readonly: true,
+	createHandler: (_validator: unknown) => new GenerateExplanationToolHandler(),
+})
