@@ -1,6 +1,6 @@
 import { AgentConfigLoader } from "@core/task/tools/subagent/AgentConfigLoader"
 import { IsaacDefaultTool } from "@/shared/tools"
-import { type IsaacToolSpec, toolSpecFunctionDeclarations, toolSpecFunctionDefinition, toolSpecInputSchema } from "../spec"
+import { type IsaacToolSpec, toolSpecFunctionDefinition } from "../spec"
 import { SystemPromptContext } from "../types"
 
 export class IsaacToolSet {
@@ -81,30 +81,16 @@ export class IsaacToolSet {
 	}
 
 	/**
-	 * Get the appropriate native tool converter for the given provider
+	 * Get the appropriate native tool converter for the given provider.
+	 * All supported providers (openai, dirac, openrouter, lmstudio, litellm, vscode-lm)
+	 * use the OpenAI-compatible tool schema.
 	 */
-	public static getNativeConverter(providerId: string, modelId?: string) {
-		switch (providerId) {
-			case "minimax":
-			case "anthropic":
-			case "bedrock":
-				return toolSpecInputSchema
-			case "gemini":
-				return toolSpecFunctionDeclarations
-			case "vertex":
-				if (modelId?.includes("gemini")) {
-					return toolSpecFunctionDeclarations
-				}
-				return toolSpecInputSchema
-			default:
-				// Default to OpenAI Compatible converter
-				return (tool: IsaacToolSpec, ctx: SystemPromptContext) =>
-					toolSpecFunctionDefinition(tool, ctx, ctx.providerInfo?.model?.info?.supportsStrictTools ?? false)
-		}
+	public static getNativeConverter(_providerId: string, _modelId?: string) {
+		return (tool: IsaacToolSpec, ctx: SystemPromptContext) =>
+			toolSpecFunctionDefinition(tool, ctx, ctx.providerInfo?.model?.info?.supportsStrictTools ?? false)
 	}
 
 	public static getNativeTools(context: SystemPromptContext) {
-
 		// Base set
 		const toolConfigs = IsaacToolSet.getEnabledToolSpecs(context)
 

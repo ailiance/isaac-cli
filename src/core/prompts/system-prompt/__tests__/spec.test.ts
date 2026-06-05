@@ -2,7 +2,7 @@ import { expect } from "chai"
 import { describe, it } from "mocha"
 import { IsaacDefaultTool } from "@/shared/tools"
 import type { IsaacToolSpec } from "../spec"
-import { toolSpecFunctionDeclarations, toolSpecFunctionDefinition, toolSpecInputSchema } from "../spec"
+import { toolSpecFunctionDefinition } from "../spec"
 import type { SystemPromptContext } from "../types"
 
 const mockContext: SystemPromptContext = {
@@ -34,20 +34,20 @@ const makeTool = (overrides?: Partial<IsaacToolSpec>): IsaacToolSpec => ({
 	...overrides,
 })
 
-describe("toolSpecFunctionDeclarations (Gemini)", () => {
+describe("toolSpecFunctionDefinition (OpenAI)", () => {
 	it("includes parameter descriptions from instruction field", () => {
-		const result = toolSpecFunctionDeclarations(makeTool(), mockContext)
+		const result = toolSpecFunctionDefinition(makeTool(), mockContext) as any
 
-		const pathParam = result.parameters?.properties?.["path"] as any
+		const pathParam = result.function.parameters.properties["path"]
 		expect(pathParam).to.exist
 		expect(pathParam.description).to.be.a("string")
 		expect(pathParam.description).to.include("path of the file to read")
 	})
 
 	it("includes descriptions for all parameters", () => {
-		const result = toolSpecFunctionDeclarations(makeTool(), mockContext)
+		const result = toolSpecFunctionDefinition(makeTool(), mockContext) as any
 
-		const props = result.parameters?.properties as any
+		const props = result.function.parameters.properties
 		expect(props["path"].description).to.be.a("string").and.not.be.empty
 		expect(props["optional_param"].description).to.be.a("string").and.not.be.empty
 	})
@@ -62,33 +62,10 @@ describe("toolSpecFunctionDeclarations (Gemini)", () => {
 				},
 			],
 		})
-		const result = toolSpecFunctionDeclarations(tool, mockContext)
+		const result = toolSpecFunctionDefinition(tool, mockContext) as any
 
-		const param = result.parameters?.properties?.["dynamic"] as any
+		const param = result.function.parameters.properties["dynamic"]
 		expect(param.description).to.equal("Dynamic value: /test/project")
-	})
-
-	it("omits description when instruction is empty", () => {
-		const tool = makeTool({
-			parameters: [{ name: "empty", required: false, instruction: "" }],
-		})
-		const result = toolSpecFunctionDeclarations(tool, mockContext)
-
-		const param = result.parameters?.properties?.["empty"] as any
-		expect(param.description).to.be.undefined
-	})
-})
-
-describe("Gemini and Anthropic parameter descriptions match", () => {
-	it("both converters produce the same description text", () => {
-		const tool = makeTool()
-		const gemini = toolSpecFunctionDeclarations(tool, mockContext)
-		const anthropic = toolSpecInputSchema(tool, mockContext)
-
-		const geminiDesc = (gemini.parameters?.properties?.["path"] as any)?.description
-		const anthropicDesc = (anthropic.input_schema as any).properties["path"]?.description
-
-		expect(geminiDesc).to.equal(anthropicDesc)
 	})
 })
 
@@ -109,22 +86,15 @@ describe("native tool placeholder replacement", () => {
 		})
 
 		const openAI = toolSpecFunctionDefinition(tool, context)
-		const anthropic = toolSpecInputSchema(tool, context)
-		const gemini = toolSpecFunctionDeclarations(tool, context)
 
 		const openAIDesc = ((openAI as any).function.parameters.properties.path as any).description as string
-		const anthropicDesc = ((anthropic as any).input_schema.properties.path as any).description as string
-		const geminiDesc = (gemini.parameters?.properties?.["path"] as any)?.description as string
 
-		for (const desc of [openAIDesc, anthropicDesc, geminiDesc]) {
-			expect(desc).to.include("/test/project")
-			expect(desc).to.include("Use @workspace:path syntax")
-			expect(desc).to.not.include("{{CWD}}")
-			expect(desc).to.not.include("{{MULTI_ROOT_HINT}}")
-		}
+		expect(openAIDesc).to.include("/test/project")
+		expect(openAIDesc).to.include("Use @workspace:path syntax")
+		expect(openAIDesc).to.not.include("{{CWD}}")
+		expect(openAIDesc).to.not.include("{{MULTI_ROOT_HINT}}")
 	})
 })
-
 
 describe("tools without parameters", () => {
 	const noParamTool: IsaacToolSpec = {
@@ -141,25 +111,6 @@ describe("tools without parameters", () => {
 			properties: {},
 			required: [],
 			additionalProperties: false,
-		})
-	})
-
-	it("Anthropic: includes empty properties and required in input_schema", () => {
-		const result = toolSpecInputSchema(noParamTool, mockContext)
-		expect(result.input_schema).to.deep.equal({
-			type: "object",
-			properties: {},
-			required: [],
-		})
-	})
-
-	it("Gemini: includes empty parameters object", () => {
-		const result = toolSpecFunctionDeclarations(noParamTool, mockContext)
-		expect(result.parameters).to.exist
-		expect(result.parameters).to.deep.equal({
-			type: "OBJECT",
-			properties: {},
-			required: [],
 		})
 	})
 })
