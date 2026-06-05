@@ -3,7 +3,7 @@ import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import Fuse from "fuse.js"
 import { KeyboardEvent, useEffect, useId, useMemo, useRef, useState } from "react"
 import styled from "styled-components"
-import { highlight } from "../../../history/components/HistoryView/HistoryView"
+import { escapeHtml, highlight } from "../../../history/components/HistoryView/HistoryView"
 
 interface ModelAutocompleteProps {
 	models: Record<string, ModelInfo>
@@ -61,6 +61,8 @@ export const ModelAutocomplete = ({
 	const searchableItems = useMemo(() => {
 		return modelIds.map((id) => ({
 			id,
+			// Raw id: fuse searches this and highlight() escapes it on the search path.
+			// The no-search render path escapes via escapeHtml(item.html) at render time.
 			html: id,
 		}))
 	}, [modelIds])
@@ -79,7 +81,8 @@ export const ModelAutocomplete = ({
 
 	const modelSearchResults = useMemo(() => {
 		if (!searchTerm) {
-			return searchableItems
+			// No highlight pass here, so escape the raw id before it reaches dangerouslySetInnerHTML.
+			return searchableItems.map((item) => ({ ...item, html: escapeHtml(item.html) }))
 		}
 		return highlight(fuse.search(searchTerm), "model-item-highlight")
 	}, [searchableItems, searchTerm, fuse])

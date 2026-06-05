@@ -9,7 +9,7 @@ import { useMount } from "react-use"
 import styled from "styled-components"
 import { useSettingsStore } from "@/features/settings/store/settingsStore"
 import { StateServiceClient } from "@/shared/api/grpc-client"
-import { highlight } from "../../history/components/HistoryView/HistoryView"
+import { escapeHtml, highlight } from "../../history/components/HistoryView/HistoryView"
 import { ContextWindowSwitcher } from "./common/ContextWindowSwitcher"
 import { ModelInfoView } from "./common/ModelInfoView"
 import ReasoningEffortSelector from "./ReasoningEffortSelector"
@@ -114,6 +114,8 @@ const OpenRouterModelPicker: React.FC<OpenRouterModelPickerProps> = ({ isPopup, 
 	const searchableItems = useMemo(() => {
 		return modelIds.map((id) => ({
 			id,
+			// Raw id: fuse searches this and highlight() escapes it on the search path.
+			// The no-search render path escapes via escapeHtml(item.html) at render time.
 			html: id,
 		}))
 	}, [modelIds])
@@ -133,13 +135,18 @@ const OpenRouterModelPicker: React.FC<OpenRouterModelPickerProps> = ({ isPopup, 
 	const modelSearchResults = useMemo(() => {
 		// IMPORTANT: highlightjs has a bug where if you use sort/localCompare - "// results.sort((a, b) => a.id.localeCompare(b.id)) ...sorting like this causes ids in objects to be reordered and mismatched"
 
-		// First, get all favorited models
-		const favoritedModels = searchableItems.filter((item) => favoritedModelIds.includes(item.id))
+		// First, get all favorited models. These bypass highlight(), so escape the raw
+		// id before it reaches dangerouslySetInnerHTML.
+		const favoritedModels = searchableItems
+			.filter((item) => favoritedModelIds.includes(item.id))
+			.map((item) => ({ ...item, html: escapeHtml(item.html) }))
 
 		// Then get search results for non-favorited models
 		const searchResults = searchTerm
 			? highlight(fuse.search(searchTerm), "model-item-highlight").filter((item) => !favoritedModelIds.includes(item.id))
-			: searchableItems.filter((item) => !favoritedModelIds.includes(item.id))
+			: searchableItems
+					.filter((item) => !favoritedModelIds.includes(item.id))
+					.map((item) => ({ ...item, html: escapeHtml(item.html) }))
 
 		// Combine favorited models with search results
 		return [...favoritedModels, ...searchResults]

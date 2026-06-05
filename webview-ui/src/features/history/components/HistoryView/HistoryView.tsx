@@ -461,6 +461,17 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 	)
 }
 
+// Escapes HTML-significant characters so dynamic strings can be safely injected
+// via dangerouslySetInnerHTML (used by highlight() below and by the model pickers
+// for the no-search-term render path). Prevents XSS from provider/model-supplied ids.
+export const escapeHtml = (text: string): string =>
+	text
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;")
+
 // https://gist.github.com/evenfrost/1ba123656ded32fb7a0cd4651efd4db0
 export const highlight = (fuseSearchResult: FuseResult<any>[], highlightClassName = "history-item-highlight") => {
 	const set = (obj: Record<string, any>, path: string, value: any) => {
@@ -500,9 +511,13 @@ export const highlight = (fuseSearchResult: FuseResult<any>[], highlightClassNam
 		return merged
 	}
 
+	// The result of this function is injected via dangerouslySetInnerHTML, so any
+	// dynamic substring of inputText (model ids, task text, etc.) MUST be escaped
+	// to prevent XSS. Only the static <span class="..."> wrapper is left as raw
+	// markup (highlightClassName is always a hard-coded literal).
 	const generateHighlightedText = (inputText: string, regions: [number, number][] = []) => {
 		if (regions.length === 0) {
-			return inputText
+			return escapeHtml(inputText)
 		}
 
 		// Sort and merge overlapping regions
@@ -517,16 +532,16 @@ export const highlight = (fuseSearchResult: FuseResult<any>[], highlightClassNam
 			const lastRegionNextIndex = end + 1
 
 			content += [
-				inputText.substring(nextUnhighlightedRegionStartingIndex, start),
+				escapeHtml(inputText.substring(nextUnhighlightedRegionStartingIndex, start)),
 				`<span class="${highlightClassName}">`,
-				inputText.substring(start, lastRegionNextIndex),
+				escapeHtml(inputText.substring(start, lastRegionNextIndex)),
 				"</span>",
 			].join("")
 
 			nextUnhighlightedRegionStartingIndex = lastRegionNextIndex
 		})
 
-		content += inputText.substring(nextUnhighlightedRegionStartingIndex)
+		content += escapeHtml(inputText.substring(nextUnhighlightedRegionStartingIndex))
 
 		return content
 	}

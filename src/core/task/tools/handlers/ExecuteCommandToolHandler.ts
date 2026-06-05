@@ -17,8 +17,8 @@ import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
-import { coerceToStringArray } from "../utils/coerceArray"
 import { isSafeCommand } from "../utils/CommandSafetyChecker"
+import { coerceToStringArray } from "../utils/coerceArray"
 import { applyModelContentFixes } from "../utils/ModelContentProcessor"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
 
@@ -185,7 +185,14 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 		}
 
 		if (script) {
-			const wrappedCommand = this.wrapScript(script, language)
+			let wrappedCommand: string
+			try {
+				wrappedCommand = this.wrapScript(script, language)
+			} catch (err) {
+				config.taskState.consecutiveMistakeCount++
+				const message = err instanceof Error ? err.message : String(err)
+				return formatResponse.toolError(message)
+			}
 			const langDisplay = language.charAt(0).toUpperCase() + language.slice(1)
 			commandsToProcess.push({
 				command: wrappedCommand,
@@ -385,7 +392,10 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 			}
 
 			// Permission validation
-			const permissionResult = config.services.commandPermissionController.validateCommand(actualCommand, isYolo || config.isSubagentExecution)
+			const permissionResult = config.services.commandPermissionController.validateCommand(
+				actualCommand,
+				isYolo || config.isSubagentExecution,
+			)
 			if (!permissionResult.allowed && !wasManuallyApproved && !isYolo && !config.isSubagentExecution) {
 				let errorMessage = `Command "${actualCommand}" was denied by DIRAC_COMMAND_PERMISSIONS.`
 				if (permissionResult.failedSegment) {
@@ -704,23 +714,33 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 		return formatResponse.toolResult(results.join("\n\n"))
 	}
 
+	// Strict whitelist of allowed script interpreters. Maps the LLM-provided
+	// `language` to a fixed, known-safe interpreter binary. Anything not in this
+	// map is rejected — we never fall back to the raw `language` value, which
+	// would otherwise be injected verbatim into the shell command and allow RCE
+	// (e.g. language="bash -c 'rm -rf ~'" or arbitrary heredoc escapes).
+	private static readonly ALLOWED_INTERPRETERS: Readonly<Record<string, string>> = {
+		bash: "bash",
+		sh: "sh",
+		python: "python3",
+		python3: "python3",
+		node: "node",
+		javascript: "node",
+		ruby: "ruby",
+		perl: "perl",
+	}
+
 	private wrapScript(script: string, language: string): string {
 		const delimiter = `EOF_DIRAC_SCRIPT_${Math.random().toString(36).substring(2, 10).toUpperCase()}`
 		const normalizedLanguage = language.toLowerCase().trim()
 
-		let interpreter = "bash"
-		if (normalizedLanguage === "python" || normalizedLanguage === "python3") {
-			interpreter = "python3"
-		} else if (normalizedLanguage === "node" || normalizedLanguage === "javascript") {
-			interpreter = "node"
-		} else if (normalizedLanguage === "sh") {
-			interpreter = "sh"
-		} else if (normalizedLanguage === "ruby") {
-			interpreter = "ruby"
-		} else if (normalizedLanguage === "perl") {
-			interpreter = "perl"
-		} else {
-			interpreter = normalizedLanguage
+		const interpreter = ExecuteCommandToolHandler.ALLOWED_INTERPRETERS[normalizedLanguage]
+		if (!interpreter) {
+			const allowed = Object.keys(ExecuteCommandToolHandler.ALLOWED_INTERPRETERS).join(", ")
+			throw new Error(
+				`Unsupported script language "${language}". Allowed values: ${allowed}. ` +
+					`Use one of these, or pass the command via the 'commands' parameter instead.`,
+			)
 		}
 
 		return `${interpreter} << '${delimiter}'\n${script}\n${delimiter}`
