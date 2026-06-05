@@ -284,7 +284,7 @@ function getUserPromptSubmitTemplate(): string {
 #
 # UserPromptSubmit Hook
 # 
-# Executes when the user submits a prompt to Dirac.
+# Executes when the user submits a prompt to Isaac.
 # 
 # Input: { taskId, userPromptSubmit: { prompt: string }, diracVersion, timestamp, ... }
 # Output: { cancel: boolean, contextModification?: string, errorMessage?: string }
@@ -318,7 +318,7 @@ function getNotificationTemplate(): string {
 #
 # Notification Hook
 #
-# Executes when Dirac reaches a user-attention boundary or emits lifecycle notifications.
+# Executes when Isaac reaches a user-attention boundary or emits lifecycle notifications.
 #
 # Input: {
 #   taskId,

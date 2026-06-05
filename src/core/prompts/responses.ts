@@ -4,7 +4,7 @@ import * as diff from "diff"
 import * as path from "path"
 import type { FileInfo } from "../../services/glob/list-files"
 import { Mode } from "../../shared/storage/types"
-import { DiracIgnoreController, LOCK_TEXT_SYMBOL } from "../ignore/DiracIgnoreController"
+import { IsaacIgnoreController, LOCK_TEXT_SYMBOL } from "../ignore/IsaacIgnoreController"
 
 const CONTEXT_WINDOW_WARNING_THRESHOLD_PERCENT = 50
 
@@ -146,7 +146,7 @@ Otherwise, if you have not completed the task and do not need additional informa
 		absolutePath: string,
 		files: FileInfo[],
 		didHitLimit: boolean,
-		diracIgnoreController?: DiracIgnoreController,
+		diracIgnoreController?: IsaacIgnoreController,
 	): string => {
 		const pathMap = new Map<string, FileInfo>(files.map((f) => [f.path, f]))
 
@@ -286,8 +286,8 @@ Otherwise, if you have not completed the task and do not need additional informa
 	diracIgnoreInstructions: (content: string) =>
 		`# .diracignore\n\n(The following is provided by a root-level .diracignore file where the user has specified files and directories that should not be accessed. When using list_files, you'll notice a ${LOCK_TEXT_SYMBOL} next to files that are blocked. Attempting to access the file's contents e.g. through read_file will result in an error.)\n\n${content}\n.diracignore`,
 
-	diracRulesGlobalDirectoryInstructions: (globalDiracRulesFilePath: string, content: string) =>
-		`# .diracrules/\n\nThe following is provided by a global .diracrules/ directory, located at ${globalDiracRulesFilePath.toPosix()}, where the user has specified instructions for all working directories:\n\n${content}`,
+	diracRulesGlobalDirectoryInstructions: (globalIsaacRulesFilePath: string, content: string) =>
+		`# .diracrules/\n\nThe following is provided by a global .diracrules/ directory, located at ${globalIsaacRulesFilePath.toPosix()}, where the user has specified instructions for all working directories:\n\n${content}`,
 
 	diracRulesLocalDirectoryInstructions: (cwd: string, content: string) =>
 		`# .diracrules/\n\nThe following is provided by a root-level .diracrules/ directory where the user has specified instructions for this working directory (${cwd.toPosix()})\n\n${content}`,

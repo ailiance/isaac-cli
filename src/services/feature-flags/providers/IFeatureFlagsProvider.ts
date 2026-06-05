@@ -1,6 +1,6 @@
 /**
  * Interface for feature flags providers
- * Allows switching between different feature flag providers (Dirac, etc.)
+ * Allows switching between different feature flag providers (Isaac, etc.)
  */
 
 /**

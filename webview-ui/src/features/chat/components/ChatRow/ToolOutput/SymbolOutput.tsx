@@ -1,11 +1,11 @@
-import { DiracMessage } from "@shared/ExtensionMessage"
+import { IsaacMessage } from "@shared/ExtensionMessage"
 import { Check, X } from "lucide-react"
 import CodeAccordian from "@/shared/ui/CodeAccordian"
 import { DiffEditRow } from "../../DiffEditRow"
 import MultiFileResultsDisplay from "../../MultiFileResultsDisplay"
 import { BaseToolOutputProps } from "./shared"
 import { FileServiceClient } from "@/shared/api/grpc-client"
-import { StringRequest } from "@shared/proto/dirac/common"
+import { StringRequest } from "@shared/proto/isaac/common"
 
 const handlePathClick = (path: string) => {
 	FileServiceClient.openFileRelativePath(StringRequest.create({ value: path })).catch((err: any) =>
@@ -14,7 +14,7 @@ const handlePathClick = (path: string) => {
 }
 
 interface SymbolOutputProps extends BaseToolOutputProps {
-	message: DiracMessage
+	message: IsaacMessage
 }
 
 export const SymbolOutput = ({ tool, unit, isExpanded, onToggleExpand, message }: SymbolOutputProps) => {

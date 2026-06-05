@@ -65,8 +65,8 @@ function createCallbacks(): CommandExecutorCallbacks {
 		say: async () => undefined,
 		ask: async () => ({ response: "messageResponse" }),
 		updateBackgroundCommandState: () => {},
-		updateDiracMessage: async () => {},
-		getDiracMessages: () => [],
+		updateIsaacMessage: async () => {},
+		getIsaacMessages: () => [],
 		addToUserMessageContent: () => {},
 		getEnvironmentVariables: async () => undefined,
 	}

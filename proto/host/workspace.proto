@@ -2,11 +2,11 @@ syntax = "proto3";
 
 package host;
 
-import "dirac/common.proto";
+import "isaac/common.proto";
 
-option go_package = "github.com/dirac/grpc-go/host";
+option go_package = "github.com/isaac/grpc-go/host";
 option java_multiple_files = true;
-option java_package = "bot.dirac.host.proto";
+option java_package = "bot.isaac.host.proto";
 
 // Provides methods for working with workspaces/projects.
 service WorkspaceService {
@@ -27,8 +27,8 @@ service WorkspaceService {
   // Opens the IDE file explorer panel and selects a file or directory.
   rpc openInFileExplorerPanel(OpenInFileExplorerPanelRequest) returns (OpenInFileExplorerPanelResponse);
 
-  // Opens and focuses the Dirac sidebar panel in the host IDE.
-  rpc openDiracSidebarPanel(OpenDiracSidebarPanelRequest) returns (OpenDiracSidebarPanelResponse);
+  // Opens and focuses the Isaac sidebar panel in the host IDE.
+  rpc openIsaacSidebarPanel(OpenIsaacSidebarPanelRequest) returns (OpenIsaacSidebarPanelResponse);
 
   // Opens and focuses the terminal panel.
   rpc openTerminalPanel(OpenTerminalRequest) returns (OpenTerminalResponse);
@@ -65,12 +65,12 @@ message SaveOpenDocumentIfDirtyResponse {
 }
 
 message GetDiagnosticsRequest {
-  optional dirac.Metadata metadata = 1;
+  optional isaac.Metadata metadata = 1;
   repeated string file_paths = 2;
 }
 
 message GetDiagnosticsResponse {
-  repeated dirac.FileDiagnostics file_diagnostics = 1;
+  repeated isaac.FileDiagnostics file_diagnostics = 1;
 }
 
 // Request for host-side workspace search (files/folders) used by mentions autocomplete
@@ -101,8 +101,8 @@ message OpenInFileExplorerPanelRequest {
   string path = 1;
 }
 message OpenInFileExplorerPanelResponse {}
-message OpenDiracSidebarPanelRequest {}
-message OpenDiracSidebarPanelResponse {}
+message OpenIsaacSidebarPanelRequest {}
+message OpenIsaacSidebarPanelResponse {}
 message OpenTerminalRequest {}
 message OpenTerminalResponse {}
 

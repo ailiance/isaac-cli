@@ -1,13 +1,13 @@
 import {
-    DiracAskQuestion,
-    DiracMessage,
-    DiracPlanModeResponse,
-    DiracSayGenerateExplanation,
-    DiracSayTool,
+    IsaacAskQuestion,
+    IsaacMessage,
+    IsaacPlanModeResponse,
+    IsaacSayGenerateExplanation,
+    IsaacSayTool,
     COMPLETION_RESULT_CHANGES_FLAG,
     Mode,
 } from "@shared/ExtensionMessage"
-import { BooleanRequest, StringRequest } from "@shared/proto/dirac/common"
+import { BooleanRequest, StringRequest } from "@shared/proto/isaac/common"
 import {
     ArrowRightIcon,
     CheckIcon,
@@ -45,10 +45,10 @@ import { QuoteButtonState } from "./types"
 import { HEADER_CLASSNAMES } from "./ToolOutput/shared"
 
 interface MessageRendererProps {
-	message: DiracMessage
+	message: IsaacMessage
 	isExpanded: boolean
 	onToggleExpand: (ts: number) => void
-	lastModifiedMessage?: DiracMessage
+	lastModifiedMessage?: IsaacMessage
 	isLast: boolean
 	onHeightChange?: (isTaller: boolean) => void
 	inputValue?: string
@@ -183,7 +183,7 @@ export const MessageRenderer = ({
 						/>
 					)
 				case "user_feedback_diff": {
-					const tool = JSON.parse(message.text || "{}") as DiracSayTool
+					const tool = JSON.parse(message.text || "{}") as IsaacSayTool
 					return (
 						<div className="w-full -mt-2.5">
 							<CodeAccordian
@@ -213,7 +213,7 @@ export const MessageRenderer = ({
 				case "checkpoint_created":
 					return <CheckmarkControl isCheckpointCheckedOut={message.isCheckpointCheckedOut} messageTs={message.ts} />
 				case "generate_explanation": {
-					let explanationInfo: DiracSayGenerateExplanation = {
+					let explanationInfo: IsaacSayGenerateExplanation = {
 						title: "code changes",
 						fromRef: "",
 						toRef: "",
@@ -299,7 +299,7 @@ export const MessageRenderer = ({
 								<span className="font-medium text-foreground">Shell Integration Unavailable</span>
 							</div>
 							<div className="text-foreground opacity-80">
-								Dirac may have trouble viewing the command's output. Please update VSCode (
+								Isaac may have trouble viewing the command's output. Please update VSCode (
 								<code>CMD/CTRL + Shift + P</code> → "Update") and make sure you're using a supported shell: zsh,
 								bash, fish, or PowerShell (<code>CMD/CTRL + Shift + P</code> → "Terminal: Select Default
 								Profile").
@@ -441,7 +441,7 @@ export const MessageRenderer = ({
 					let options: string[] | undefined
 					let selected: string | undefined
 					try {
-						const parsedMessage = JSON.parse(message.text || "{}") as DiracAskQuestion
+						const parsedMessage = JSON.parse(message.text || "{}") as IsaacAskQuestion
 						question = parsedMessage.question
 						options = parsedMessage.options
 						selected = parsedMessage.selected
@@ -490,7 +490,7 @@ export const MessageRenderer = ({
 						<div>
 							<div className={HEADER_CLASSNAMES}>
 								<FilePlus2Icon className="size-2" />
-								<span className="text-foreground font-bold">Dirac wants to start a new task:</span>
+								<span className="text-foreground font-bold">Isaac wants to start a new task:</span>
 							</div>
 							<NewTaskPreview context={message.text || ""} />
 						</div>
@@ -500,7 +500,7 @@ export const MessageRenderer = ({
 						<div>
 							<div className={HEADER_CLASSNAMES}>
 								<FilePlus2Icon className="size-2" />
-								<span className="text-foreground font-bold">Dirac wants to condense your conversation:</span>
+								<span className="text-foreground font-bold">Isaac wants to condense your conversation:</span>
 							</div>
 							<NewTaskPreview context={message.text || ""} />
 						</div>
@@ -510,7 +510,7 @@ export const MessageRenderer = ({
 						<div>
 							<div className={HEADER_CLASSNAMES}>
 								<FilePlus2Icon className="size-2" />
-								<span className="text-foreground font-bold">Dirac wants to create a Github issue:</span>
+								<span className="text-foreground font-bold">Isaac wants to create a Github issue:</span>
 							</div>
 							<ReportBugPreview data={message.text || ""} />
 						</div>
@@ -520,7 +520,7 @@ export const MessageRenderer = ({
 					let options: string[] | undefined
 					let selected: string | undefined
 					try {
-						const parsedMessage = JSON.parse(message.text || "{}") as DiracPlanModeResponse
+						const parsedMessage = JSON.parse(message.text || "{}") as IsaacPlanModeResponse
 						response = parsedMessage.response
 						options = parsedMessage.options
 						selected = parsedMessage.selected

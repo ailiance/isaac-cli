@@ -5,14 +5,14 @@ import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
 import { getWorkspaceBasename, resolveWorkspacePath } from "@core/workspace"
 import { processFilesIntoText } from "@integrations/misc/extract-text"
-import { DiracSayTool } from "@shared/ExtensionMessage"
+import { IsaacSayTool } from "@shared/ExtensionMessage"
 import { getLastApiReqTotalTokens } from "@shared/getApiMetrics"
 import { stripHashes } from "@utils/line-hashing"
 import { arePathsEqual, getReadablePath, isLocatedInWorkspace } from "@utils/path"
 import { applyPatch } from "diff"
 import { computeDiffFromContents, type DiffStructure } from "@shared/utils/diff"
 import { telemetryService } from "@/services/telemetry"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import { showNotificationForApproval } from "../../utils"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
@@ -24,7 +24,7 @@ import { applyModelContentFixes } from "../utils/ModelContentProcessor"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
 
 export class WriteToFileToolHandler implements IFullyManagedTool {
-	readonly name = DiracDefaultTool.FILE_NEW // This handler supports write_to_file and new_rule
+	readonly name = IsaacDefaultTool.FILE_NEW // This handler supports write_to_file and new_rule
 
 	constructor(private validator: ToolValidator) {}
 
@@ -54,7 +54,7 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 			const { relPath, absolutePath, fileExists, content, newContent } = result
 
 			// Create and show partial UI message
-			const sharedMessageProps: DiracSayTool = {
+			const sharedMessageProps: IsaacSayTool = {
 				tool: fileExists ? "editedExistingFile" : "newFileCreated",
 				path: getReadablePath(
 					config.cwd,
@@ -109,14 +109,14 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 			)
 		}
 
-		if (block.name === DiracDefaultTool.FILE_NEW && !rawContent) {
+		if (block.name === IsaacDefaultTool.FILE_NEW && !rawContent) {
 			config.taskState.consecutiveMistakeCount++
 			await config.services.diffViewProvider.reset()
 
 			// Use progressive error with token budget awareness
 			const relPath = rawRelPath || "unknown"
 			const contextWindow = config.api.getModel().info.contextWindow ?? 128_000
-			const lastApiReqTotalTokens = getLastApiReqTotalTokens(config.messageState.getDiracMessages())
+			const lastApiReqTotalTokens = getLastApiReqTotalTokens(config.messageState.getIsaacMessages())
 			const contextUsagePercent = contextWindow > 0 ? Math.round((lastApiReqTotalTokens / contextWindow) * 100) : undefined
 			const errorMessage = formatResponse.writeToFileMissingContentError(
 				relPath,
@@ -126,9 +126,9 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 
 			await config.callbacks.say(
 				"error",
-				`Dirac tried to use write_to_file for '${relPath}' without providing a value for 'content'. ${
+				`Isaac tried to use write_to_file for '${relPath}' without providing a value for 'content'. ${
 					config.taskState.consecutiveMistakeCount >= 2
-						? "This has happened multiple times — Dirac will try a different approach."
+						? "This has happened multiple times — Isaac will try a different approach."
 						: "Retrying..."
 				}`,
 			)
@@ -153,7 +153,7 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 			const { relPath, absolutePath, fileExists, content, newContent, workspaceContext } = result
 
 			// Handle approval flow
-			const sharedMessageProps: DiracSayTool = {
+			const sharedMessageProps: IsaacSayTool = {
 				tool: fileExists ? "editedExistingFile" : "newFileCreated",
 				path: getReadablePath(config.cwd, relPath),
 				content: content,
@@ -165,7 +165,7 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 			// v0.6 Sprint 1-F: structured hunks for unified +/- rendering in webview/CLI.
 			// Compute from originalContent (empty for new files) and newContent.
 			const originalForDiff = fileExists ? config.services.diffViewProvider.originalContent || "" : ""
-			let editSummaries: DiracSayTool["editSummaries"]
+			let editSummaries: IsaacSayTool["editSummaries"]
 			// Performance guard mirroring BatchProcessor (skip when buffers are huge)
 			if (originalForDiff.length + newContent.length <= 1_000_000) {
 				const computed = computeDiffFromContents(originalForDiff, newContent)
@@ -189,7 +189,7 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 				content: content,
 				operationIsLocatedInWorkspace: await isLocatedInWorkspace(relPath),
 				editSummaries,
-			} satisfies DiracSayTool)
+			} satisfies IsaacSayTool)
 
 			const shouldAutoApprove = await config.callbacks.shouldAutoApproveToolWithPath(block.name, relPath)
 			if (shouldAutoApprove) {
@@ -221,7 +221,7 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 				})
 			} else {
 				// Manual approval flow with detailed feedback handling
-				const notificationMessage = `Dirac wants to ${fileExists ? "edit" : "create"} ${getWorkspaceBasename(relPath, "WriteToFile.notification")}`
+				const notificationMessage = `Isaac wants to ${fileExists ? "edit" : "create"} ${getWorkspaceBasename(relPath, "WriteToFile.notification")}`
 
 				// Show notification
 				showNotificationForApproval(notificationMessage, config.autoApprovalSettings.enableNotifications)
@@ -337,8 +337,8 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 				throw error
 			}
 
-			// Mark the file as edited by Dirac
-			config.services.fileContextTracker.markFileAsEditedByDirac(relPath)
+			// Mark the file as edited by Isaac
+			config.services.fileContextTracker.markFileAsEditedByIsaac(relPath)
 
 			// Save the changes and get the result
 			let saveResult: { newProblemsMessage?: string; userEdits?: string; autoFormattingEdits?: string; finalContent?: string }
@@ -456,7 +456,7 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 		}
 
 		// Check diracignore access first
-		const accessValidation = this.validator.checkDiracIgnorePath(resolvedPath)
+		const accessValidation = this.validator.checkIsaacIgnorePath(resolvedPath)
 		if (!accessValidation.ok) {
 			// Show error to user
 			await config.callbacks.say("diracignore_error", resolvedPath)
@@ -518,7 +518,7 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 			const stats = await fs.stat(absolutePath)
 			if (stats.isDirectory()) {
 				const errorResponse = formatResponse.toolError(`Cannot write to '${relPath}' because it is a directory.`)
-				await config.callbacks.say("error", `Dirac tried to write to '${relPath}', but it is a directory.`)
+				await config.callbacks.say("error", `Isaac tried to write to '${relPath}', but it is a directory.`)
 				return { fileExists: true, ok: false, errorResponse }
 			}
 
@@ -528,12 +528,12 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 			} catch (error: any) {
 				if (error.code === "EACCES") {
 					const errorResponse = formatResponse.toolError(formatResponse.filePermissionError(relPath, "write to"))
-					await config.callbacks.say("error", `Dirac tried to write to '${relPath}', but permission was denied.`)
+					await config.callbacks.say("error", `Isaac tried to write to '${relPath}', but permission was denied.`)
 					return { fileExists: true, ok: false, errorResponse }
 				}
  else if (error.code === "EROFS") {
 					const errorResponse = formatResponse.toolError(formatResponse.readOnlyError(relPath))
-					await config.callbacks.say("error", `Dirac tried to write to '${relPath}', but the file system is read-only.`)
+					await config.callbacks.say("error", `Isaac tried to write to '${relPath}', but the file system is read-only.`)
 					return { fileExists: true, ok: false, errorResponse }
 				}
 				// Ignore other access errors here, they will be caught by the outer try/catch if they are critical
@@ -547,15 +547,15 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 				return { fileExists: false, ok: true }
 			} else if (error.code === "ENOTDIR") {
 				const errorResponse = formatResponse.toolError(formatResponse.pathConflictError(relPath))
-				await config.callbacks.say("error", `Dirac tried to write to '${relPath}', but a parent component is not a directory.`)
+				await config.callbacks.say("error", `Isaac tried to write to '${relPath}', but a parent component is not a directory.`)
 				return { fileExists: false, ok: false, errorResponse }
 			} else if (error.code === "EACCES") {
 				const errorResponse = formatResponse.toolError(formatResponse.filePermissionError(relPath, "access"))
-				await config.callbacks.say("error", `Dirac tried to access '${relPath}', but permission was denied.`)
+				await config.callbacks.say("error", `Isaac tried to access '${relPath}', but permission was denied.`)
 				return { fileExists: false, ok: false, errorResponse }
 			} else if (error.code === "EROFS") {
 				const errorResponse = formatResponse.toolError(formatResponse.readOnlyError(relPath))
-				await config.callbacks.say("error", `Dirac tried to write to '${relPath}', but the file system is read-only.`)
+				await config.callbacks.say("error", `Isaac tried to write to '${relPath}', but the file system is read-only.`)
 				return { fileExists: false, ok: false, errorResponse }
 			} else {
 				throw error

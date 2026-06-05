@@ -1,7 +1,7 @@
 /**
  * Rule frontmatter conditional evaluation.
  *
- * This module implements a small conditional "DSL" for Dirac Rules YAML frontmatter.
+ * This module implements a small conditional "DSL" for Isaac Rules YAML frontmatter.
  * It is used to decide whether a rule should be activated for a given request context.
  *
  * Notes:

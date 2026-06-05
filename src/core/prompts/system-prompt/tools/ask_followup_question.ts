@@ -1,9 +1,9 @@
-import { DiracDefaultTool } from "@/shared/tools"
-import type { DiracToolSpec } from "../spec"
+import { IsaacDefaultTool } from "@/shared/tools"
+import type { IsaacToolSpec } from "../spec"
 
-const id = DiracDefaultTool.ASK
+const id = IsaacDefaultTool.ASK
 
-export const ask_followup_question: DiracToolSpec = {
+export const ask_followup_question: IsaacToolSpec = {
 	id,
 	name: "ask_followup_question",
 	description: "Asks the user a clarifying question when you encounter ambiguities or need more details.",

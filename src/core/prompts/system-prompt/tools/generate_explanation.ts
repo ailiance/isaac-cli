@@ -1,9 +1,9 @@
-import { DiracDefaultTool } from "@/shared/tools"
-import type { DiracToolSpec } from "../spec"
+import { IsaacDefaultTool } from "@/shared/tools"
+import type { IsaacToolSpec } from "../spec"
 
-const id = DiracDefaultTool.GENERATE_EXPLANATION
+const id = IsaacDefaultTool.GENERATE_EXPLANATION
 
-export const generate_explanation: DiracToolSpec = {
+export const generate_explanation: IsaacToolSpec = {
 	id,
 	name: "generate_explanation",
 	description:

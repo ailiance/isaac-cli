@@ -1,5 +1,5 @@
 import { mentionRegexGlobal } from "@shared/context-mentions"
-import { StringRequest } from "@shared/proto/dirac/common"
+import { StringRequest } from "@shared/proto/isaac/common"
 import { FileServiceClient } from "@/shared/api/grpc-client"
 import { validateSlashCommand } from "@/shared/lib/slash-commands"
 

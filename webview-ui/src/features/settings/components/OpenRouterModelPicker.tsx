@@ -1,6 +1,6 @@
 import { CLAUDE_SONNET_1M_SUFFIX, openRouterDefaultModelId } from "@shared/api"
 import type { Mode } from "@shared/ExtensionMessage"
-import { StringRequest } from "@shared/proto/dirac/common"
+import { StringRequest } from "@shared/proto/isaac/common"
 import { VSCodeLink, VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import Fuse from "fuse.js"
 import type React from "react"
@@ -374,7 +374,7 @@ const OpenRouterModelPicker: React.FC<OpenRouterModelPickerProps> = ({ isPopup, 
 					<VSCodeLink href="https://openrouter.ai/models" style={{ display: "inline", fontSize: "inherit" }}>
 						OpenRouter.
 					</VSCodeLink>
-					If you're unsure which model to choose, Dirac works best with{" "}
+					If you're unsure which model to choose, Isaac works best with{" "}
 					<VSCodeLink
 						onClick={() => handleModelChange("anthropic/claude-sonnet-4.6")}
 						style={{ display: "inline", fontSize: "inherit" }}>

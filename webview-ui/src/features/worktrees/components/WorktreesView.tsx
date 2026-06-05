@@ -1,12 +1,12 @@
-import { EmptyRequest } from "@shared/proto/dirac/common"
-import { NewTaskRequest } from "@shared/proto/dirac/task"
-import type { MergeWorktreeResult, Worktree as WorktreeProto } from "@shared/proto/dirac/worktree"
+import { EmptyRequest } from "@shared/proto/isaac/common"
+import { NewTaskRequest } from "@shared/proto/isaac/task"
+import type { MergeWorktreeResult, Worktree as WorktreeProto } from "@shared/proto/isaac/worktree"
 import {
     CreateWorktreeIncludeRequest,
     DeleteWorktreeRequest,
     MergeWorktreeRequest,
     SwitchWorktreeRequest,
-} from "@shared/proto/dirac/worktree"
+} from "@shared/proto/isaac/worktree"
 import { VSCodeButton, VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 import { AlertCircle, Check, ExternalLink, FolderOpen, GitBranch, GitMerge, Loader2, Plus, Trash2, X } from "lucide-react"
 import { memo, useCallback, useEffect, useState } from "react"
@@ -216,8 +216,8 @@ const WorktreesView = ({ onDone }: WorktreesViewProps) => {
 		}
 	}, [mergeWorktree, getMainBranch, deleteAfterMerge, loadWorktrees])
 
-	// Ask Dirac to resolve conflicts
-	const handleAskDiracToResolve = useCallback(async () => {
+	// Ask Isaac to resolve conflicts
+	const handleAskIsaacToResolve = useCallback(async () => {
 		if (!mergeResult || !mergeResult.hasConflicts) return
 
 		const conflictList = mergeResult.conflictingFiles.join(", ")
@@ -232,7 +232,7 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 			// Close worktrees view to show the chat with the new task
 			onDone()
 		} catch (err: any) {
-			setMergeError(err instanceof Error ? err.message : "Failed to create task for Dirac")
+			setMergeError(err instanceof Error ? err.message : "Failed to create task for Isaac")
 		}
 	}, [mergeResult, mergeWorktree, closeMergeModal, onDone])
 
@@ -251,7 +251,7 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 				{/* Description */}
 				<p className="text-sm text-[var(--vscode-descriptionForeground)] m-0 mb-4">
 					Git worktrees let you work on multiple branches at the same time, each in its own folder. Open worktrees in
-					their own windows so Dirac can work on multiple tasks in parallel.{" "}
+					their own windows so Isaac can work on multiple tasks in parallel.{" "}
 					<a
 						className="text-[var(--vscode-textLink-foreground)] hover:text-[var(--vscode-textLink-activeForeground)]"
 						href="https://dirac.run/docs/features/worktrees"
@@ -573,8 +573,8 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 								</div>
 
 								<div className="flex flex-col gap-2">
-									<VSCodeButton onClick={handleAskDiracToResolve} style={{ width: "100%" }}>
-										Ask Dirac to Resolve
+									<VSCodeButton onClick={handleAskIsaacToResolve} style={{ width: "100%" }}>
+										Ask Isaac to Resolve
 									</VSCodeButton>
 									<VSCodeButton appearance="secondary" onClick={closeMergeModal} style={{ width: "100%" }}>
 										I'll Resolve Manually

@@ -1,9 +1,9 @@
-import { DiracDefaultTool } from "@/shared/tools"
-import type { DiracToolSpec } from "../spec"
+import { IsaacDefaultTool } from "@/shared/tools"
+import type { IsaacToolSpec } from "../spec"
 
-const id = DiracDefaultTool.FILE_NEW
+const id = IsaacDefaultTool.FILE_NEW
 
-export const write_to_file: DiracToolSpec = {
+export const write_to_file: IsaacToolSpec = {
 	id,
 	name: "write_to_file",
 	description: "Creates a new file or completely overwrites an existing file. Automatically creates required directories.",

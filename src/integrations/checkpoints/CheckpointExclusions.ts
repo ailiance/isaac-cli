@@ -7,7 +7,7 @@ import { GIT_DISABLED_SUFFIX } from "./CheckpointGitOperations"
 /**
  * CheckpointExclusions Module
  *
- * A specialized module within Dirac's Checkpoints system that manages file exclusion rules
+ * A specialized module within Isaac's Checkpoints system that manages file exclusion rules
  * for the checkpoint tracking process. It provides:
  *
  * File Filtering:

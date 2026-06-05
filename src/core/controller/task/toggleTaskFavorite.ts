@@ -1,5 +1,5 @@
-import { Empty } from "@shared/proto/dirac/common"
-import { TaskFavoriteRequest } from "@shared/proto/dirac/task"
+import { Empty } from "@shared/proto/isaac/common"
+import { TaskFavoriteRequest } from "@shared/proto/isaac/task"
 import { Logger } from "@/shared/services/Logger"
 import { Controller } from "../"
 

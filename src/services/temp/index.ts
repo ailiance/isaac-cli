@@ -1,1 +1,1 @@
-export { DiracTempManager } from "./DiracTempManager"
+export { IsaacTempManager } from "./IsaacTempManager"

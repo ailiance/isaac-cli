@@ -1,20 +1,20 @@
 // Core content types
 export type {
-	DiracAssistantContent,
-	DiracAssistantRedactedThinkingBlock,
-	DiracAssistantThinkingBlock,
-	DiracAssistantToolUseBlock,
-	DiracContent,
-	DiracDocumentContentBlock,
-	DiracImageContentBlock,
-	DiracMessageRole,
-	DiracPromptInputContent,
-	DiracReasoningDetailParam,
-	DiracStorageMessage,
-	DiracTextContentBlock,
-	DiracToolResponseContent,
-	DiracUserContent,
-	DiracUserToolResultContentBlock,
+	IsaacAssistantContent,
+	IsaacAssistantRedactedThinkingBlock,
+	IsaacAssistantThinkingBlock,
+	IsaacAssistantToolUseBlock,
+	IsaacContent,
+	IsaacDocumentContentBlock,
+	IsaacImageContentBlock,
+	IsaacMessageRole,
+	IsaacPromptInputContent,
+	IsaacReasoningDetailParam,
+	IsaacStorageMessage,
+	IsaacTextContentBlock,
+	IsaacToolResponseContent,
+	IsaacUserContent,
+	IsaacUserToolResultContentBlock,
 } from "./content"
-export { cleanContentBlock, convertDiracStorageToAnthropicMessage, REASONING_DETAILS_PROVIDERS } from "./content"
-export type { DiracMessageMetricsInfo, DiracMessageModelInfo } from "./metrics"
+export { cleanContentBlock, convertIsaacStorageToAnthropicMessage, REASONING_DETAILS_PROVIDERS } from "./content"
+export type { IsaacMessageMetricsInfo, IsaacMessageModelInfo } from "./metrics"

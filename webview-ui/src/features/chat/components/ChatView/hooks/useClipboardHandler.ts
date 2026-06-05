@@ -1,4 +1,4 @@
-import { StringRequest } from "@shared/proto/dirac/common"
+import { StringRequest } from "@shared/proto/isaac/common"
 import { useEffect } from "react"
 import { FileServiceClient } from "@/shared/api/grpc-client"
 import { convertHtmlToMarkdown } from "../utils/markdownUtils"

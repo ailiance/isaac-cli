@@ -6,7 +6,7 @@ import {
 	ApiProvider as ProtoApiProvider,
 	OcaModelInfo as ProtoOcaModelInfo,
 	ThinkingConfig,
-} from "@shared/proto/dirac/models"
+} from "@shared/proto/isaac/models"
 import {
 	ApiConfiguration,
 	ApiProvider,

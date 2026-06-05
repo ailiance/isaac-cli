@@ -1,14 +1,14 @@
-import { EmptyRequest } from "@shared/proto/dirac/common"
-import { DiracMessage } from "@shared/proto/dirac/ui"
+import { EmptyRequest } from "@shared/proto/isaac/common"
+import { IsaacMessage } from "@shared/proto/isaac/ui"
 import { Logger } from "@/shared/services/Logger"
 import { getRequestRegistry, StreamingResponseHandler } from "../grpc-handler"
 import { Controller } from "../index"
 
 // Keep track of active partial message subscriptions (gRPC streams)
-const activePartialMessageSubscriptions = new Set<StreamingResponseHandler<DiracMessage>>()
+const activePartialMessageSubscriptions = new Set<StreamingResponseHandler<IsaacMessage>>()
 
 // Keep track of callback-based subscriptions (for CLI and other non-gRPC consumers)
-export type PartialMessageCallback = (message: DiracMessage) => void
+export type PartialMessageCallback = (message: IsaacMessage) => void
 const callbackSubscriptions = new Set<PartialMessageCallback>()
 
 /**
@@ -21,7 +21,7 @@ const callbackSubscriptions = new Set<PartialMessageCallback>()
 export async function subscribeToPartialMessage(
 	_controller: Controller,
 	_request: EmptyRequest,
-	responseStream: StreamingResponseHandler<DiracMessage>,
+	responseStream: StreamingResponseHandler<IsaacMessage>,
 	requestId?: string,
 ): Promise<void> {
 	// Add this subscription to the active subscriptions
@@ -52,9 +52,9 @@ export function registerPartialMessageCallback(callback: PartialMessageCallback)
 
 /**
  * Send a partial message event to all active subscribers
- * @param partialMessage The DiracMessage to send
+ * @param partialMessage The IsaacMessage to send
  */
-export async function sendPartialMessageEvent(partialMessage: DiracMessage): Promise<void> {
+export async function sendPartialMessageEvent(partialMessage: IsaacMessage): Promise<void> {
 	// Send to gRPC stream subscribers
 	const streamPromises = Array.from(activePartialMessageSubscriptions).map(async (responseStream) => {
 		try {

@@ -1,5 +1,5 @@
-import { BrowserAction, BrowserActionResult, browserActions, DiracSayBrowserAction } from "@shared/ExtensionMessage"
-import { DiracDefaultTool } from "@/shared/tools"
+import { BrowserAction, BrowserActionResult, browserActions, IsaacSayBrowserAction } from "@shared/ExtensionMessage"
+import { IsaacDefaultTool } from "@/shared/tools"
 import { telemetryService } from "@/services/telemetry"
 
 import { ToolUse } from "../../../assistant-message"
@@ -12,7 +12,7 @@ import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
 
 export class BrowserToolHandler implements IFullyManagedTool {
-	readonly name = DiracDefaultTool.BROWSER
+	readonly name = IsaacDefaultTool.BROWSER
 
 	getDescription(block: ToolUse): string {
 		return `[${block.name} for '${block.params.action}']`
@@ -55,7 +55,7 @@ export class BrowserToolHandler implements IFullyManagedTool {
 					action: action as BrowserAction,
 					coordinate: uiHelpers.removeClosingTag(block, "coordinate", coordinate),
 					text: uiHelpers.removeClosingTag(block, "text", text),
-				} satisfies DiracSayBrowserAction),
+				} satisfies IsaacSayBrowserAction),
 				undefined,
 				undefined,
 				block.partial,
@@ -99,7 +99,7 @@ export class BrowserToolHandler implements IFullyManagedTool {
 				} else {
 					// Show notification for approval if enabled
 					showNotificationForApproval(
-						`Dirac wants to use a browser and launch ${url}`,
+						`Isaac wants to use a browser and launch ${url}`,
 						config.autoApprovalSettings.enableNotifications,
 					)
 					await config.callbacks.removeLastPartialMessageIfExistsWithType("say", "browser_action_launch")
@@ -158,7 +158,7 @@ export class BrowserToolHandler implements IFullyManagedTool {
 						action: action as BrowserAction,
 						coordinate,
 						text,
-					} satisfies DiracSayBrowserAction),
+					} satisfies IsaacSayBrowserAction),
 					undefined,
 					undefined,
 					false,

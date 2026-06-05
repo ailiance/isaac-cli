@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, it } from "mocha"
 import "should"
-import { DiracFileStorage } from "@shared/storage/DiracFileStorage"
+import { IsaacFileStorage } from "@shared/storage/IsaacFileStorage"
 import { createStorageContext, type StorageContext } from "@shared/storage/storage-context"
 import fs from "fs"
 import os from "os"
@@ -416,9 +416,9 @@ describe("createStorageContext", () => {
 			workspacePath: "/fake/workspace",
 		})
 
-		ctx.globalState.should.be.instanceOf(DiracFileStorage)
-		ctx.secrets.should.be.instanceOf(DiracFileStorage)
-		ctx.workspaceState.should.be.instanceOf(DiracFileStorage)
+		ctx.globalState.should.be.instanceOf(IsaacFileStorage)
+		ctx.secrets.should.be.instanceOf(IsaacFileStorage)
+		ctx.workspaceState.should.be.instanceOf(IsaacFileStorage)
 	})
 
 	it("should create directories", () => {

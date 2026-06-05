@@ -16,13 +16,13 @@ export const getIconAndTitle = (type: string | undefined): [JSX.Element | null, 
 		case "mistake_limit_reached":
 			return [
 				<CircleXIcon className="text-error size-2" />,
-				<span className="text-error font-bold">Dirac is having trouble...</span>,
+				<span className="text-error font-bold">Isaac is having trouble...</span>,
 			]
 		case "command": {
 			const Icon = getIconForTool("executeCommand")
 			return [
 				<Icon className="text-foreground size-2" />,
-				<span className="font-bold text-foreground">Dirac wants to execute:</span>,
+				<span className="font-bold text-foreground">Isaac wants to execute:</span>,
 			]
 		}
 
@@ -40,7 +40,7 @@ export const getIconAndTitle = (type: string | undefined): [JSX.Element | null, 
 			return [
 				<HelpCircleIcon className="text-foreground size-2" />,
 
-				<span className="font-bold text-foreground">Dirac has a question:</span>,
+				<span className="font-bold text-foreground">Isaac has a question:</span>,
 			]
 		default:
 			return [null, null]

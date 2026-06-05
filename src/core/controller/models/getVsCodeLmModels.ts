@@ -1,5 +1,5 @@
-import { EmptyRequest } from "@shared/proto/dirac/common"
-import { VsCodeLmModelsArray } from "@shared/proto/dirac/models"
+import { EmptyRequest } from "@shared/proto/isaac/common"
+import { VsCodeLmModelsArray } from "@shared/proto/isaac/models"
 import * as vscode from "vscode"
 import { Logger } from "@/shared/services/Logger"
 import { convertVsCodeNativeModelsToProtoModels } from "../../../shared/proto-conversions/models/vscode-lm-models-conversion"

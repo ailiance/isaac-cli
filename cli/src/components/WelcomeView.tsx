@@ -32,7 +32,7 @@ interface WelcomeViewProps {
 	controller?: any
 }
 
-// ASCII art Dirac logo
+// ASCII art Isaac logo
 const DIRAC_LOGO = [
 	"        █████████████        ",
 	"      ███          ▀▀██      ",
@@ -243,7 +243,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onSubmit, onExit, cont
 
 	return (
 		<Box flexDirection="column" width="100%">
-			{/* Dirac logo - centered */}
+			{/* Isaac logo - centered */}
 			<Box flexDirection="column">
 				{DIRAC_LOGO.map((line, idx) => (
 					// biome-ignore lint/suspicious/noArrayIndexKey: static array that never changes
@@ -256,7 +256,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onSubmit, onExit, cont
 			{/* Main prompt - centered, bold */}
 			<Box alignItems="center" flexDirection="column" marginTop={1}>
 				<Text bold color="white">
-					{centerText(`ISAAC v${CLI_VERSION} — EU-sovereign coding agent (fork of Dirac/Cline)`)}
+					{centerText(`ISAAC v${CLI_VERSION} — EU-sovereign coding agent (fork of Isaac/Cline)`)}
 				</Text>
 
 				<Box marginTop={1}>

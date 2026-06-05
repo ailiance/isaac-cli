@@ -3,7 +3,7 @@
  * Handles different types of user interactions (text input, confirmations, choices)
  */
 
-import type { DiracAsk, DiracMessage } from "@shared/ExtensionMessage"
+import type { IsaacAsk, IsaacMessage } from "@shared/ExtensionMessage"
 import { Box, Text } from "ink"
 import React from "react"
 import { useLastCompletedAskMessage } from "../hooks/useStateSubscriber"
@@ -12,7 +12,7 @@ import { jsonParseSafe } from "../utils/parser"
 
 type PromptType = "confirmation" | "text" | "options" | "plan_mode_text" | "completion" | "exit_confirmation" | "none"
 
-function getPromptType(ask: DiracAsk, text: string): PromptType {
+function getPromptType(ask: IsaacAsk, text: string): PromptType {
 	switch (ask) {
 		case "followup": {
 			const parts = jsonParseSafe(text, {
@@ -59,7 +59,7 @@ export const AskPrompt: React.FC = () => {
 		return null
 	}
 
-	const ask = lastAskMessage.ask as DiracAsk
+	const ask = lastAskMessage.ask as IsaacAsk
 	const text = lastAskMessage.text || ""
 	const promptType = getPromptType(ask, text)
 	const icon = getCliMessagePrefixIcon(lastAskMessage)
@@ -196,7 +196,7 @@ export const AskPrompt: React.FC = () => {
 /**
  * Get emoji icon for message type
  */
-function getCliMessagePrefixIcon(message: DiracMessage): string {
+function getCliMessagePrefixIcon(message: IsaacMessage): string {
 	if (message.type === "ask") {
 		switch (message.ask) {
 			case "followup":

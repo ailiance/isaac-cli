@@ -1,15 +1,15 @@
 /**
- * Tests for selfHosted mode behavior across Dirac-based services.
- * When DiracEndpoint.isSelfHosted() returns true, all Dirac telemetry functionality should be disabled.
+ * Tests for selfHosted mode behavior across Isaac-based services.
+ * When IsaacEndpoint.isSelfHosted() returns true, all Isaac telemetry functionality should be disabled.
  */
 
 import * as assert from "assert"
 import * as sinon from "sinon"
-import { DiracEndpoint } from "@/config"
+import { IsaacEndpoint } from "@/config"
 import { ErrorProviderFactory } from "../error/ErrorProviderFactory"
 import { FeatureFlagsProviderFactory } from "../feature-flags/FeatureFlagsProviderFactory"
 
-describe("SelfHosted Mode - Dirac Telemetry Disabling", () => {
+describe("SelfHosted Mode - Isaac Telemetry Disabling", () => {
 	let isSelfHostedStub: sinon.SinonStub
 
 	afterEach(() => {
@@ -20,25 +20,25 @@ describe("SelfHosted Mode - Dirac Telemetry Disabling", () => {
 
 	describe("FeatureFlagsProviderFactory", () => {
 		it("should return no-op config when in selfHosted mode", () => {
-			isSelfHostedStub = sinon.stub(DiracEndpoint, "isSelfHosted").returns(true)
+			isSelfHostedStub = sinon.stub(IsaacEndpoint, "isSelfHosted").returns(true)
 
 			const config = FeatureFlagsProviderFactory.getDefaultConfig()
 
 			assert.strictEqual(config.type, "no-op", "Should return no-op type in selfHosted mode")
 		})
 
-		it("should return dirac config when NOT in selfHosted mode (if Dirac config is valid)", () => {
-			isSelfHostedStub = sinon.stub(DiracEndpoint, "isSelfHosted").returns(false)
+		it("should return dirac config when NOT in selfHosted mode (if Isaac config is valid)", () => {
+			isSelfHostedStub = sinon.stub(IsaacEndpoint, "isSelfHosted").returns(false)
 
 			const config = FeatureFlagsProviderFactory.getDefaultConfig()
 
-			// Will be "dirac" if Dirac config is valid, "no-op" otherwise
+			// Will be "dirac" if Isaac config is valid, "no-op" otherwise
 			// The important thing is it's NOT forced to "no-op" by selfHosted check
 			assert.ok(config.type === "dirac" || config.type === "no-op", "Should not be forced to no-op")
 		})
 
 		it("should create NoOp provider when in selfHosted mode", () => {
-			isSelfHostedStub = sinon.stub(DiracEndpoint, "isSelfHosted").returns(true)
+			isSelfHostedStub = sinon.stub(IsaacEndpoint, "isSelfHosted").returns(true)
 
 			const config = FeatureFlagsProviderFactory.getDefaultConfig()
 			const provider = FeatureFlagsProviderFactory.createProvider(config)
@@ -50,7 +50,7 @@ describe("SelfHosted Mode - Dirac Telemetry Disabling", () => {
 
 	describe("ErrorProviderFactory", () => {
 		it("should return no-op config when in selfHosted mode", () => {
-			isSelfHostedStub = sinon.stub(DiracEndpoint, "isSelfHosted").returns(true)
+			isSelfHostedStub = sinon.stub(IsaacEndpoint, "isSelfHosted").returns(true)
 
 			const config = ErrorProviderFactory.getDefaultConfig()
 
@@ -58,7 +58,7 @@ describe("SelfHosted Mode - Dirac Telemetry Disabling", () => {
 		})
 
 		it("should return dirac config when NOT in selfHosted mode", () => {
-			isSelfHostedStub = sinon.stub(DiracEndpoint, "isSelfHosted").returns(false)
+			isSelfHostedStub = sinon.stub(IsaacEndpoint, "isSelfHosted").returns(false)
 
 			const config = ErrorProviderFactory.getDefaultConfig()
 
@@ -66,7 +66,7 @@ describe("SelfHosted Mode - Dirac Telemetry Disabling", () => {
 		})
 
 		it("should create NoOp provider when in selfHosted mode", async () => {
-			isSelfHostedStub = sinon.stub(DiracEndpoint, "isSelfHosted").returns(true)
+			isSelfHostedStub = sinon.stub(IsaacEndpoint, "isSelfHosted").returns(true)
 
 			const config = ErrorProviderFactory.getDefaultConfig()
 			const provider = await ErrorProviderFactory.createProvider(config)
@@ -78,9 +78,9 @@ describe("SelfHosted Mode - Dirac Telemetry Disabling", () => {
 		})
 	})
 
-	describe("Integration - selfHosted should disable all Dirac services", () => {
-		it("should return no-op for all Dirac-based factories when selfHosted", () => {
-			isSelfHostedStub = sinon.stub(DiracEndpoint, "isSelfHosted").returns(true)
+	describe("Integration - selfHosted should disable all Isaac services", () => {
+		it("should return no-op for all Isaac-based factories when selfHosted", () => {
+			isSelfHostedStub = sinon.stub(IsaacEndpoint, "isSelfHosted").returns(true)
 
 			const featureFlagsConfig = FeatureFlagsProviderFactory.getDefaultConfig()
 			const errorConfig = ErrorProviderFactory.getDefaultConfig()

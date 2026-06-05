@@ -1,4 +1,4 @@
-import { DiracIgnoreController } from "@core/ignore/DiracIgnoreController"
+import { IsaacIgnoreController } from "@core/ignore/IsaacIgnoreController"
 import { AnchorStateManager } from "@utils/AnchorStateManager"
 import { formatLineWithHash } from "@utils/line-hashing"
 import * as childProcess from "child_process"
@@ -154,7 +154,7 @@ export async function regexSearchFiles(
 	directoryPath: string,
 	regex: string,
 	filePattern?: string,
-	diracIgnoreController?: DiracIgnoreController,
+	diracIgnoreController?: IsaacIgnoreController,
 	taskId?: string,
 	contextLines?: number,
 	excludeFilePatterns?: string[],

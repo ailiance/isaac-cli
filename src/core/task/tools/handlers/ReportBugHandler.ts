@@ -9,14 +9,14 @@ import * as os from "os"
 import { HostProvider } from "@/hosts/host-provider"
 import { ExtensionRegistryInfo } from "@/registry"
 import { Logger } from "@/shared/services/Logger"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IPartialBlockHandler, IToolHandler } from "../ToolExecutorCoordinator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 
 export class ReportBugHandler implements IToolHandler, IPartialBlockHandler {
-	readonly name = DiracDefaultTool.REPORT_BUG
+	readonly name = IsaacDefaultTool.REPORT_BUG
 
 	constructor() {}
 
@@ -80,8 +80,8 @@ export class ReportBugHandler implements IToolHandler, IPartialBlockHandler {
 		// Show notification if enabled
 		if (config.autoApprovalSettings.enableNotifications) {
 			showSystemNotification({
-				subtitle: "Dirac wants to create a github issue...",
-				message: `Dirac is suggesting to create a github issue with the title: ${title}`,
+				subtitle: "Isaac wants to create a github issue...",
+				message: `Isaac is suggesting to create a github issue with the title: ${title}`,
 			})
 		}
 

@@ -1,5 +1,5 @@
 import { sendShowWebviewEvent } from "@core/controller/ui/subscribeToShowWebview"
-import { DiracWebviewProvider } from "@core/webview"
+import { IsaacWebviewProvider } from "@core/webview"
 import * as vscode from "vscode"
 import { handleGrpcRequest, handleGrpcRequestCancel } from "@/core/controller/grpc-handler"
 import { HostProvider } from "@/hosts/host-provider"
@@ -13,7 +13,7 @@ https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default
 https://github.com/KumarVariable/vscode-extension-sidebar-html/blob/master/src/customSidebarViewProvider.ts
 */
 
-export class VscodeDiracWebviewProvider extends DiracWebviewProvider implements vscode.WebviewViewProvider {
+export class VscodeIsaacWebviewProvider extends IsaacWebviewProvider implements vscode.WebviewViewProvider {
 	// Used in package.json as the view's id. This value cannot be changed due to how vscode caches
 	// views based on their id, and updating the id would break existing instances of the extension.
 	public static readonly SIDEBAR_ID = ExtensionRegistryInfo.views.Sidebar
@@ -104,7 +104,7 @@ export class VscodeDiracWebviewProvider extends DiracWebviewProvider implements 
 		// if the extension is starting a new session, clear previous task state
 		this.controller.clearTask()
 
-		Logger.log("[VscodeDiracWebviewProvider] Webview view resolved")
+		Logger.log("[VscodeIsaacWebviewProvider] Webview view resolved")
 
 		// Title setting logic removed to allow VSCode to use the container title primarily.
 	}

@@ -1,16 +1,16 @@
 /**
- * List of email domains that are considered trusted testers for Dirac.
+ * List of email domains that are considered trusted testers for Isaac.
  */
 const DIRAC_TRUSTED_TESTER_DOMAINS = ["fibilabs.tech"]
 
 /**
- * Checks if the given email belongs to a Dirac bot user.
+ * Checks if the given email belongs to a Isaac bot user.
  * E.g. Emails ending with @dirac.run
  */
-export function isDiracBotUser(email: string): boolean {
+export function isIsaacBotUser(email: string): boolean {
 	return email.endsWith("@dirac.run")
 }
 
-export function isDiracInternalTester(email: string): boolean {
-	return isDiracBotUser(email) || DIRAC_TRUSTED_TESTER_DOMAINS.some((d) => email.endsWith(`@${d}`))
+export function isIsaacInternalTester(email: string): boolean {
+	return isIsaacBotUser(email) || DIRAC_TRUSTED_TESTER_DOMAINS.some((d) => email.endsWith(`@${d}`))
 }

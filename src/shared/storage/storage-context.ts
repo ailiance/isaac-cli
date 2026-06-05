@@ -1,8 +1,8 @@
 import fsSync from "node:fs"
 import os from "node:os"
 import path from "node:path"
-import { DiracFileStorage } from "./DiracFileStorage"
-import { DiracMemento } from "./DiracStorage"
+import { IsaacFileStorage } from "./IsaacFileStorage"
+import { IsaacMemento } from "./IsaacStorage"
 
 /**
  * The storage backend context object used by StateManager and other components.
@@ -14,22 +14,22 @@ import { DiracMemento } from "./DiracStorage"
  */
 export interface StorageContext {
 	/** Global state — settings, task history references, UI state, etc. */
-	readonly globalState: DiracMemento
+	readonly globalState: IsaacMemento
 
 	// TODO: Privatize this field after StorageContext becomes class with a reset method.
 	/**
 	 * The backing store for global state. Prefer `globalState` when possible.
 	 *
-	 * This split exists because CLI needs to intercept the DiracMemento interface to global state,
+	 * This split exists because CLI needs to intercept the IsaacMemento interface to global state,
 	 * but state resets need to write through to the backing store.
 	 */
-	readonly globalStateBackingStore: DiracFileStorage
+	readonly globalStateBackingStore: IsaacFileStorage
 
 	/** Secrets — API keys and other sensitive values. File uses restricted permissions (0o600). */
-	readonly secrets: DiracFileStorage<string>
+	readonly secrets: IsaacFileStorage<string>
 
 	/** Workspace-scoped state — per-project toggles, rules, etc. */
-	readonly workspaceState: DiracFileStorage
+	readonly workspaceState: IsaacFileStorage
 
 	/** The resolved path to the data directory (~/.dirac/data) */
 	readonly dataDir: string
@@ -40,7 +40,7 @@ export interface StorageContext {
 
 export interface StorageContextOptions {
 	/**
-	 * Override the Dirac home directory. Defaults to DIRAC_DIR env var or ~/.dirac.
+	 * Override the Isaac home directory. Defaults to DIRAC_DIR env var or ~/.dirac.
 	 */
 	diracDir?: string
 
@@ -111,15 +111,15 @@ export function createStorageContext(opts: StorageContextOptions = {}): StorageC
 	fsSync.mkdirSync(dataDir, { recursive: true })
 	fsSync.mkdirSync(workspaceDir, { recursive: true })
 
-	const globalState = new DiracFileStorage(path.join(dataDir, "globalState.json"), "GlobalState")
+	const globalState = new IsaacFileStorage(path.join(dataDir, "globalState.json"), "GlobalState")
 
 	return {
 		globalState,
 		globalStateBackingStore: globalState,
-		secrets: new DiracFileStorage<string>(path.join(dataDir, "secrets.json"), "Secrets", {
+		secrets: new IsaacFileStorage<string>(path.join(dataDir, "secrets.json"), "Secrets", {
 			fileMode: 0o600, // Owner read/write only — protects API keys
 		}),
-		workspaceState: new DiracFileStorage(path.join(workspaceDir, "workspaceState.json"), "WorkspaceState"),
+		workspaceState: new IsaacFileStorage(path.join(workspaceDir, "workspaceState.json"), "WorkspaceState"),
 		dataDir,
 		workspaceStoragePath: workspaceDir,
 	}

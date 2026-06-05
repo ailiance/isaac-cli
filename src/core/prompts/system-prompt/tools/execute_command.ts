@@ -1,8 +1,8 @@
-import { DiracDefaultTool } from "@/shared/tools"
-import type { DiracToolSpec } from "../spec"
+import { IsaacDefaultTool } from "@/shared/tools"
+import type { IsaacToolSpec } from "../spec"
 
-export const execute_command: DiracToolSpec = {
-	id: DiracDefaultTool.BASH,
+export const execute_command: IsaacToolSpec = {
+	id: IsaacDefaultTool.BASH,
 	name: "execute_command",
 	description:
 		"Executes CLI commands or scripts. " +

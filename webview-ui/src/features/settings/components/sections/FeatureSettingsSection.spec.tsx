@@ -14,7 +14,7 @@ vi.mock("@/features/settings/store/settingsStore", () => ({
 		subagentsEnabled: false,
 		diracWebToolsEnabled: { user: true, featureFlag: true },
 		worktreesEnabled: { user: true, featureFlag: true },
-		focusChainSettings: { enabled: false, remindDiracInterval: 6 },
+		focusChainSettings: { enabled: false, remindIsaacInterval: 6 },
 		remoteConfigSettings: {},
 		enableParallelToolCalling: false,
 		backgroundEditEnabled: false,

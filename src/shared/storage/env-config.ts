@@ -2,7 +2,7 @@ import { ApiProvider } from "../api"
 import { Secrets, Settings } from "./state-keys"
 
 /**
- * Mapping of environment variables to Dirac secret keys.
+ * Mapping of environment variables to Isaac secret keys.
  * This allows users to provide API keys via environment variables,
  * which is especially useful in non-persistent CLI environments.
  */
@@ -37,7 +37,7 @@ export const ENV_VAR_TO_SECRET_KEY: Record<string, keyof Secrets> = {
 }
 
 /**
- * Mapping of environment variables to Dirac settings keys.
+ * Mapping of environment variables to Isaac settings keys.
  * This allows users to provide configuration via environment variables.
  */
 export const ENV_VAR_TO_SETTINGS_KEY: Record<string, keyof Settings> = {

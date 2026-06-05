@@ -5,35 +5,35 @@ import Mutex from "p-mutex"
 import { findLastIndex } from "@/shared/array"
 import { combineApiRequests } from "@/shared/combineApiRequests"
 import { combineCommandSequences } from "@/shared/combineCommandSequences"
-import { DiracMessage } from "@/shared/ExtensionMessage"
+import { IsaacMessage } from "@/shared/ExtensionMessage"
 import { getApiMetrics } from "@/shared/getApiMetrics"
 import { HistoryItem } from "@/shared/HistoryItem"
-import { DiracStorageMessage } from "@/shared/messages/content"
+import { IsaacStorageMessage } from "@/shared/messages/content"
 import { Logger } from "@/shared/services/Logger"
 import { getCwd, getDesktopDir } from "@/utils/path"
-import { ensureTaskDirectoryExists, saveApiConversationHistory, saveDiracMessages } from "../storage/disk"
+import { ensureTaskDirectoryExists, saveApiConversationHistory, saveIsaacMessages } from "../storage/disk"
 import { TaskState } from "./TaskState"
 
 // Event types for diracMessages changes
-export type DiracMessageChangeType = "add" | "update" | "delete" | "set"
+export type IsaacMessageChangeType = "add" | "update" | "delete" | "set"
 
-export interface DiracMessageChange {
-	type: DiracMessageChangeType
+export interface IsaacMessageChange {
+	type: IsaacMessageChangeType
 	/** The full array after the change */
-	messages: DiracMessage[]
+	messages: IsaacMessage[]
 	/** The affected index (for add/update/delete) */
 	index?: number
 	/** The new/updated message (for add/update) */
-	message?: DiracMessage
+	message?: IsaacMessage
 	/** The old message before change (for update/delete) */
-	previousMessage?: DiracMessage
+	previousMessage?: IsaacMessage
 	/** The entire previous array (for set) */
-	previousMessages?: DiracMessage[]
+	previousMessages?: IsaacMessage[]
 }
 
 // Strongly-typed event emitter interface
 export interface MessageStateHandlerEvents {
-	diracMessagesChanged: [change: DiracMessageChange]
+	diracMessagesChanged: [change: IsaacMessageChange]
 }
 
 interface MessageStateHandlerParams {
@@ -48,8 +48,8 @@ interface MessageStateHandlerParams {
 
 export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents> {
 	private workspaceRootPath?: string
-	private apiConversationHistory: DiracStorageMessage[] = []
-	private diracMessages: DiracMessage[] = []
+	private apiConversationHistory: IsaacStorageMessage[] = []
+	private diracMessages: IsaacMessage[] = []
 	private taskIsFavorited: boolean
 	private checkpointTracker: CheckpointTracker | undefined
 	private updateTaskHistory: (historyItem: HistoryItem) => Promise<HistoryItem[]>
@@ -76,7 +76,7 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 	/**
 	 * Emit a diracMessagesChanged event with the change details
 	 */
-	private emitDiracMessagesChanged(change: DiracMessageChange): void {
+	private emitIsaacMessagesChanged(change: IsaacMessageChange): void {
 		this.emit("diracMessagesChanged", change)
 	}
 
@@ -93,22 +93,22 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 		return await this.stateMutex.withLock(fn)
 	}
 
-	getApiConversationHistory(): DiracStorageMessage[] {
+	getApiConversationHistory(): IsaacStorageMessage[] {
 		return this.apiConversationHistory
 	}
 
-	setApiConversationHistory(newHistory: DiracStorageMessage[]): void {
+	setApiConversationHistory(newHistory: IsaacStorageMessage[]): void {
 		this.apiConversationHistory = newHistory
 	}
 
-	getDiracMessages(): DiracMessage[] {
+	getIsaacMessages(): IsaacMessage[] {
 		return this.diracMessages
 	}
 
-	setDiracMessages(newMessages: DiracMessage[]) {
+	setIsaacMessages(newMessages: IsaacMessage[]) {
 		const previousMessages = this.diracMessages
 		this.diracMessages = newMessages
-		this.emitDiracMessagesChanged({
+		this.emitIsaacMessagesChanged({
 			type: "set",
 			messages: this.diracMessages,
 			previousMessages,
@@ -118,14 +118,14 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 	/**
 	 * Internal method to save messages and update history (without mutex protection)
 	 * This is used by methods that already hold the stateMutex lock
-	 * Should NOT be called directly - use saveDiracMessagesAndUpdateHistory() instead
+	 * Should NOT be called directly - use saveIsaacMessagesAndUpdateHistory() instead
 	 */
 	/**
 	 * Internal method to save messages (without mutex protection)
 	 */
-	private async saveDiracMessagesInternal(): Promise<void> {
+	private async saveIsaacMessagesInternal(): Promise<void> {
 		try {
-			await saveDiracMessages(this.taskId, this.diracMessages)
+			await saveIsaacMessages(this.taskId, this.diracMessages)
 		} catch (error) {
 			Logger.error("Failed to save dirac messages:", error)
 		}
@@ -196,14 +196,14 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 	 * Save dirac messages and update task history (public API with mutex protection)
 	 * This is the main entry point for saving message state from external callers
 	 */
-	async saveDiracMessagesAndUpdateHistory(): Promise<void> {
+	async saveIsaacMessagesAndUpdateHistory(): Promise<void> {
 		await this.withStateLock(async () => {
-			await this.saveDiracMessagesInternal()
+			await this.saveIsaacMessagesInternal()
 		})
 		await this.updateTaskHistoryInternal()
 	}
 
-	async addToApiConversationHistory(message: DiracStorageMessage) {
+	async addToApiConversationHistory(message: IsaacStorageMessage) {
 		// Protect with mutex to prevent concurrent modifications from corrupting data (RC-4)
 		return await this.withStateLock(async () => {
 			this.apiConversationHistory.push(message)
@@ -211,7 +211,7 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 		})
 	}
 
-	async overwriteApiConversationHistory(newHistory: DiracStorageMessage[]): Promise<void> {
+	async overwriteApiConversationHistory(newHistory: IsaacStorageMessage[]): Promise<void> {
 		// Protect with mutex to prevent concurrent modifications from corrupting data (RC-4)
 		return await this.withStateLock(async () => {
 			this.apiConversationHistory = newHistory
@@ -225,7 +225,7 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 	 * The conversationHistoryIndex must be set correctly based on the current state,
 	 * and the message must be added and saved without any interleaving operations
 	 */
-	async addToDiracMessages(message: DiracMessage) {
+	async addToIsaacMessages(message: IsaacMessage) {
 		await this.withStateLock(async () => {
 			// these values allow us to reconstruct the conversation history at the time this dirac message was created
 			// it's important that apiConversationHistory is initialized before we add dirac messages
@@ -233,13 +233,13 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 			message.conversationHistoryDeletedRange = this.taskState.conversationHistoryDeletedRange
 			const index = this.diracMessages.length
 			this.diracMessages.push(message)
-			this.emitDiracMessagesChanged({
+			this.emitIsaacMessagesChanged({
 				type: "add",
 				messages: this.diracMessages,
 				index,
 				message,
 			})
-			await this.saveDiracMessagesInternal()
+			await this.saveIsaacMessagesInternal()
 		})
 		await this.updateTaskHistoryInternal()
 	}
@@ -248,16 +248,16 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 	 * Replace the entire diracMessages array with new messages
 	 * Protected by mutex to prevent concurrent modifications (RC-4)
 	 */
-	async overwriteDiracMessages(newMessages: DiracMessage[]) {
+	async overwriteIsaacMessages(newMessages: IsaacMessage[]) {
 		await this.withStateLock(async () => {
 			const previousMessages = this.diracMessages
 			this.diracMessages = newMessages
-			this.emitDiracMessagesChanged({
+			this.emitIsaacMessagesChanged({
 				type: "set",
 				messages: this.diracMessages,
 				previousMessages,
 			})
-			await this.saveDiracMessagesInternal()
+			await this.saveIsaacMessagesInternal()
 		})
 		await this.updateTaskHistoryInternal()
 	}
@@ -266,7 +266,7 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 	 * Update a specific message in the diracMessages array
 	 * The entire operation (validate, update, save) is atomic to prevent races (RC-4)
 	 */
-	async updateDiracMessage(index: number, updates: Partial<DiracMessage>): Promise<void> {
+	async updateIsaacMessage(index: number, updates: Partial<IsaacMessage>): Promise<void> {
 		await this.withStateLock(async () => {
 			if (index < 0 || index >= this.diracMessages.length) {
 				throw new Error(`Invalid message index: ${index}`)
@@ -278,7 +278,7 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 			// Apply updates to the message
 			Object.assign(this.diracMessages[index], updates)
 
-			this.emitDiracMessagesChanged({
+			this.emitIsaacMessagesChanged({
 				type: "update",
 				messages: this.diracMessages,
 				index,
@@ -287,7 +287,7 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 			})
 
 			// Save changes
-			await this.saveDiracMessagesInternal()
+			await this.saveIsaacMessagesInternal()
 		})
 		// History update can happen outside the lock and doesn't need to be awaited
 		// if we want maximum performance, but for now we await it to be safe.
@@ -299,7 +299,7 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 	 * Delete a specific message from the diracMessages array
 	 * The entire operation (validate, delete, save) is atomic to prevent races (RC-4)
 	 */
-	async deleteDiracMessage(index: number): Promise<void> {
+	async deleteIsaacMessage(index: number): Promise<void> {
 		await this.withStateLock(async () => {
 			if (index < 0 || index >= this.diracMessages.length) {
 				throw new Error(`Invalid message index: ${index}`)
@@ -311,7 +311,7 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 			// Remove the message at the specified index
 			this.diracMessages.splice(index, 1)
 
-			this.emitDiracMessagesChanged({
+			this.emitIsaacMessagesChanged({
 				type: "delete",
 				messages: this.diracMessages,
 				index,
@@ -319,7 +319,7 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 			})
 
 			// Save changes
-			await this.saveDiracMessagesInternal()
+			await this.saveIsaacMessagesInternal()
 		})
 		await this.updateTaskHistoryInternal()
 	}

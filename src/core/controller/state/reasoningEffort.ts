@@ -1,4 +1,4 @@
-import { OpenaiReasoningEffort as ProtoOpenaiReasoningEffort } from "@shared/proto/dirac/state"
+import { OpenaiReasoningEffort as ProtoOpenaiReasoningEffort } from "@shared/proto/isaac/state"
 import {
 	isOpenaiReasoningEffort,
 	normalizeOpenaiReasoningEffort as normalizeOpenaiReasoningEffortString,

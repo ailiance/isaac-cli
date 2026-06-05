@@ -1,5 +1,5 @@
-import { EmptyRequest } from "@shared/proto/dirac/common"
-import { OpenRouterCompatibleModelInfo } from "@shared/proto/dirac/models"
+import { EmptyRequest } from "@shared/proto/isaac/common"
+import { OpenRouterCompatibleModelInfo } from "@shared/proto/isaac/models"
 import { toProtobufModels } from "../../../shared/proto-conversions/models/typeConversion"
 import { Controller } from ".."
 import { refreshGroqModels } from "./refreshGroqModels"

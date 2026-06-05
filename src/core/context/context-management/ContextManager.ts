@@ -1,6 +1,6 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import { ApiHandler } from "@core/api"
-import { DiracApiReqInfo, DiracMessage } from "@shared/ExtensionMessage"
+import { IsaacApiReqInfo, IsaacMessage } from "@shared/ExtensionMessage"
 import cloneDeep from "clone-deep"
 import { Logger } from "@/shared/services/Logger"
 import { getContextWindowInfo } from "./context-window-utils"
@@ -58,7 +58,7 @@ export class ContextManager {
 	 * Determine whether we should compact context window, based on token counts
 	 */
 	shouldCompactContextWindow(
-		diracMessages: DiracMessage[],
+		diracMessages: IsaacMessage[],
 		api: ApiHandler,
 		previousApiReqIndex: number,
 		thresholdPercentage?: number,
@@ -67,7 +67,7 @@ export class ContextManager {
 			const previousRequestText = diracMessages[previousApiReqIndex]?.text
 			if (previousRequestText) {
 				try {
-					const { tokensIn, tokensOut, cacheWrites, cacheReads }: DiracApiReqInfo = JSON.parse(previousRequestText)
+					const { tokensIn, tokensOut, cacheWrites, cacheReads }: IsaacApiReqInfo = JSON.parse(previousRequestText)
 					const totalTokens = (tokensIn || 0) + (tokensOut || 0) + (cacheWrites || 0) + (cacheReads || 0)
 
 					const { contextWindow, maxAllowedSize } = getContextWindowInfo(api)
@@ -89,7 +89,7 @@ export class ContextManager {
 	 * Returns the token counts and context window info that drove summarization
 	 */
 	getContextTelemetryData(
-		diracMessages: DiracMessage[],
+		diracMessages: IsaacMessage[],
 		api: ApiHandler,
 		triggerIndex?: number,
 	): {
@@ -114,7 +114,7 @@ export class ContextManager {
 			const targetRequestText = diracMessages[targetIndex]?.text
 			if (targetRequestText) {
 				try {
-					const { tokensIn, tokensOut, cacheWrites, cacheReads }: DiracApiReqInfo = JSON.parse(targetRequestText)
+					const { tokensIn, tokensOut, cacheWrites, cacheReads }: IsaacApiReqInfo = JSON.parse(targetRequestText)
 					const tokensUsed = (tokensIn || 0) + (tokensOut || 0) + (cacheWrites || 0) + (cacheReads || 0)
 
 					const { contextWindow } = getContextWindowInfo(api)
@@ -136,7 +136,7 @@ export class ContextManager {
 	 */
 	async getNewContextMessagesAndMetadata(
 		apiConversationHistory: Anthropic.Messages.MessageParam[],
-		diracMessages: DiracMessage[],
+		diracMessages: IsaacMessage[],
 		api: ApiHandler,
 		conversationHistoryDeletedRange: [number, number] | undefined,
 		previousApiReqIndex: number,
@@ -150,7 +150,7 @@ export class ContextManager {
 			if (previousApiReqIndex >= 0) {
 				const previousRequestText = diracMessages[previousApiReqIndex]?.text
 				if (previousRequestText) {
-					const { tokensIn, tokensOut, cacheWrites, cacheReads }: DiracApiReqInfo = JSON.parse(previousRequestText)
+					const { tokensIn, tokensOut, cacheWrites, cacheReads }: IsaacApiReqInfo = JSON.parse(previousRequestText)
 					const totalTokens = (tokensIn || 0) + (tokensOut || 0) + (cacheWrites || 0) + (cacheReads || 0)
 					const { maxAllowedSize } = getContextWindowInfo(api)
 

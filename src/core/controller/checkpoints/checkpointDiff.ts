@@ -1,4 +1,4 @@
-import { Empty, Int64Request } from "@shared/proto/dirac/common"
+import { Empty, Int64Request } from "@shared/proto/isaac/common"
 import { Controller } from ".."
 
 export async function checkpointDiff(controller: Controller, request: Int64Request): Promise<Empty> {

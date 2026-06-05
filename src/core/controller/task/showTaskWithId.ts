@@ -1,5 +1,5 @@
-import { StringRequest } from "@shared/proto/dirac/common"
-import { TaskResponse } from "@shared/proto/dirac/task"
+import { StringRequest } from "@shared/proto/isaac/common"
+import { TaskResponse } from "@shared/proto/isaac/task"
 import { Logger } from "@/shared/services/Logger"
 import { Controller } from ".."
 import { sendChatButtonClickedEvent } from "../ui/subscribeToChatButtonClicked"

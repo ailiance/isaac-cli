@@ -1,5 +1,5 @@
-import { Empty } from "@shared/proto/dirac/common"
-import { ResetStateRequest } from "@shared/proto/dirac/state"
+import { Empty } from "@shared/proto/isaac/common"
+import { ResetStateRequest } from "@shared/proto/isaac/state"
 import { resetGlobalState, resetWorkspaceState } from "@/core/storage/utils/state-helpers"
 import { HostProvider } from "@/hosts/host-provider"
 import { ShowMessageType } from "@/shared/proto/host/window"

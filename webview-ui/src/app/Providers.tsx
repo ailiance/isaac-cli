@@ -1,16 +1,16 @@
 import { HeroUIProvider } from "@heroui/react"
 import { TooltipProvider } from "@/shared/ui/tooltip"
 import { type ReactNode } from "react"
-import { DiracAuthProvider } from "@/context/DiracAuthContext"
+import { IsaacAuthProvider } from "@/context/IsaacAuthContext"
 import { PlatformProvider } from "@/context/PlatformContext"
 export function Providers({ children }: { children: ReactNode }) {
 	return (
 		<PlatformProvider>
-				<DiracAuthProvider>
+				<IsaacAuthProvider>
 					<HeroUIProvider>
 						<TooltipProvider>{children}</TooltipProvider>
 					</HeroUIProvider>
-				</DiracAuthProvider>
+				</IsaacAuthProvider>
 		</PlatformProvider>
 	)
 }

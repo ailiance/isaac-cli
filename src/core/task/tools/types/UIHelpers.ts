@@ -1,6 +1,6 @@
-import type { DiracAsk, DiracSay, MultiCommandState } from "@shared/ExtensionMessage"
-import type { DiracDefaultTool } from "@shared/tools"
-import type { DiracAskResponse } from "@shared/WebviewMessage"
+import type { IsaacAsk, IsaacSay, MultiCommandState } from "@shared/ExtensionMessage"
+import type { IsaacDefaultTool } from "@shared/tools"
+import type { IsaacAskResponse } from "@shared/WebviewMessage"
 import { telemetryService } from "@/services/telemetry"
 import type { ToolParamName, ToolUse } from "../../../assistant-message"
 import { showNotificationForApproval } from "../../utils"
@@ -12,15 +12,15 @@ import type { TaskConfig } from "./TaskConfig"
  */
 export interface StronglyTypedUIHelpers {
 	// Core UI methods
-	say: (type: DiracSay, text?: string, images?: string[], files?: string[], partial?: boolean, multiCommandState?: MultiCommandState) => Promise<number | undefined>
+	say: (type: IsaacSay, text?: string, images?: string[], files?: string[], partial?: boolean, multiCommandState?: MultiCommandState) => Promise<number | undefined>
 
 	ask: (
-		type: DiracAsk,
+		type: IsaacAsk,
 		text?: string,
 		partial?: boolean,
 		multiCommandState?: MultiCommandState,
 	) => Promise<{
-		response: DiracAskResponse
+		response: IsaacAskResponse
 		text?: string
 		images?: string[]
 		files?: string[]
@@ -28,15 +28,15 @@ export interface StronglyTypedUIHelpers {
 
 	// Utility methods
 	removeClosingTag: (block: ToolUse, tag: ToolParamName, text?: any) => string
-	removeLastPartialMessageIfExistsWithType: (type: "ask" | "say", askOrSay: DiracAsk | DiracSay, onlyPartial?: boolean) => Promise<void>
+	removeLastPartialMessageIfExistsWithType: (type: "ask" | "say", askOrSay: IsaacAsk | IsaacSay, onlyPartial?: boolean) => Promise<void>
 
 	// Approval methods
-	shouldAutoApproveTool: (toolName: DiracDefaultTool) => boolean | [boolean, boolean]
-	shouldAutoApproveToolWithPath: (toolName: DiracDefaultTool, path?: string) => Promise<boolean>
-	askApproval: (messageType: DiracAsk, message: string) => Promise<boolean>
+	shouldAutoApproveTool: (toolName: IsaacDefaultTool) => boolean | [boolean, boolean]
+	shouldAutoApproveToolWithPath: (toolName: IsaacDefaultTool, path?: string) => Promise<boolean>
+	askApproval: (messageType: IsaacAsk, message: string) => Promise<boolean>
 
 	// Telemetry and notifications
-	captureTelemetry: (toolName: DiracDefaultTool, autoApproved: boolean, approved: boolean, isNativeToolCall?: boolean) => void
+	captureTelemetry: (toolName: IsaacDefaultTool, autoApproved: boolean, approved: boolean, isNativeToolCall?: boolean) => void
 	showNotificationIfEnabled: (message: string) => void
 
 	// Config access - returns the proper typed config
@@ -51,14 +51,14 @@ export function createUIHelpers(config: TaskConfig): StronglyTypedUIHelpers {
 		say: config.callbacks.say,
 		ask: config.callbacks.ask,
 		removeClosingTag: (block: ToolUse, tag: ToolParamName, text?: any) => removeClosingTag(block, tag, text),
-		removeLastPartialMessageIfExistsWithType: (type: "ask" | "say", askOrSay: DiracAsk | DiracSay, onlyPartial?: boolean) => config.callbacks.removeLastPartialMessageIfExistsWithType(type, askOrSay, onlyPartial),
-		shouldAutoApproveTool: (toolName: DiracDefaultTool) => config.autoApprover.shouldAutoApproveTool(toolName),
+		removeLastPartialMessageIfExistsWithType: (type: "ask" | "say", askOrSay: IsaacAsk | IsaacSay, onlyPartial?: boolean) => config.callbacks.removeLastPartialMessageIfExistsWithType(type, askOrSay, onlyPartial),
+		shouldAutoApproveTool: (toolName: IsaacDefaultTool) => config.autoApprover.shouldAutoApproveTool(toolName),
 		shouldAutoApproveToolWithPath: config.callbacks.shouldAutoApproveToolWithPath,
-		askApproval: async (messageType: DiracAsk, message: string): Promise<boolean> => {
+		askApproval: async (messageType: IsaacAsk, message: string): Promise<boolean> => {
 			const { response } = await config.callbacks.ask(messageType, message, false)
 			return response === "yesButtonClicked"
 		},
-		captureTelemetry: (toolName: DiracDefaultTool, autoApproved: boolean, approved: boolean, isNativeToolCall?: boolean) => {
+		captureTelemetry: (toolName: IsaacDefaultTool, autoApproved: boolean, approved: boolean, isNativeToolCall?: boolean) => {
 			// Extract provider information for telemetry
 			const apiConfig = config.services.stateManager.getApiConfiguration()
 			const currentMode = config.services.stateManager.getGlobalSettingsKey("mode")

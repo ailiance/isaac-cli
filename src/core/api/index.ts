@@ -1,8 +1,8 @@
 import { ApiConfiguration, ModelInfo } from "@shared/api"
 import { Mode } from "@shared/storage/types"
-import { DiracStorageMessage } from "@/shared/messages/content"
+import { IsaacStorageMessage } from "@/shared/messages/content"
 import { Logger } from "@/shared/services/Logger"
-import { DiracTool } from "@/shared/tools"
+import { IsaacTool } from "@/shared/tools"
 import { OpenAiHandler } from "./providers/openai"
 import { resolveProvider } from "./providers/registry"
 import "./providers/bootstrap" // side-effect: registers providers
@@ -12,7 +12,7 @@ export type CommonApiHandlerOptions = {
 	onRetryAttempt?: ApiConfiguration["onRetryAttempt"]
 }
 export interface ApiHandler {
-	createMessage(systemPrompt: string, messages: DiracStorageMessage[], tools?: DiracTool[], useResponseApi?: boolean): ApiStream
+	createMessage(systemPrompt: string, messages: IsaacStorageMessage[], tools?: IsaacTool[], useResponseApi?: boolean): ApiStream
 	getModel(): ApiHandlerModel
 	getApiStreamUsage?(): Promise<ApiStreamUsageChunk | undefined>
 	abort?(): void

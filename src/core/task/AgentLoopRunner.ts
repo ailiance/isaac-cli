@@ -6,10 +6,10 @@ import { showSystemNotification } from "@integrations/notifications"
 import { ErrorService } from "@services/error"
 import { telemetryService } from "@services/telemetry"
 import { findLastIndex } from "@shared/array"
-import { DiracApiReqCancelReason } from "@shared/ExtensionMessage"
-import { DiracContent, DiracUserContent } from "@shared/messages/content"
-import { DiracMessageModelInfo } from "@shared/messages/metrics"
-import { convertDiracMessageToProto } from "@shared/proto-conversions/dirac-message"
+import { IsaacApiReqCancelReason } from "@shared/ExtensionMessage"
+import { IsaacContent, IsaacUserContent } from "@shared/messages/content"
+import { IsaacMessageModelInfo } from "@shared/messages/metrics"
+import { convertIsaacMessageToProto } from "@shared/proto-conversions/dirac-message"
 import { Logger } from "@shared/services/Logger"
 import { Session } from "@shared/services/Session"
 import { isLocalModel } from "@utils/model-utils"
@@ -23,7 +23,7 @@ import { updateApiReqMsg } from "./utils"
  * AgentLoopRunner encapsulates the ReAct agent loop extracted from Task.
  *
  * Sprint 2 PR3 — step 3A: initiateLoop extracted from Task.initiateTaskLoop.
- * Sprint 2 PR3 — step 3B: makeRequest extracted from Task.recursivelyMakeDiracRequests.
+ * Sprint 2 PR3 — step 3B: makeRequest extracted from Task.recursivelyMakeIsaacRequests.
  * PR6 — narrowed from Task to AgentLoopRunnerContext interface.
  */
 export class AgentLoopRunner {
@@ -37,7 +37,7 @@ export class AgentLoopRunner {
 	 * Drive the outer while-loop that calls makeRequest
 	 * until the task completes or is aborted.
 	 */
-	async initiateLoop(userContent: DiracContent[]): Promise<void> {
+	async initiateLoop(userContent: IsaacContent[]): Promise<void> {
 		let nextUserContent = userContent
 		let includeFileDetails = true
 		while (!this.taskState.abort) {
@@ -60,7 +60,7 @@ export class AgentLoopRunner {
 	 * Execute one ReAct iteration: stream an API request, process chunks,
 	 * handle tool calls, and recurse with tool results.
 	 */
-	async makeRequest(userContent: DiracContent[], includeFileDetails = false): Promise<boolean> {
+	async makeRequest(userContent: IsaacContent[], includeFileDetails = false): Promise<boolean> {
 		if (this.taskState.abort) {
 			throw new Error("Task instance aborted")
 		}
@@ -72,7 +72,7 @@ export class AgentLoopRunner {
 			} catch {}
 		}
 
-		const modelInfo: DiracMessageModelInfo = {
+		const modelInfo: IsaacMessageModelInfo = {
 			modelId: model.id,
 			providerId: providerId,
 			mode: mode,
@@ -85,11 +85,11 @@ export class AgentLoopRunner {
 		userContent = mistakeResult.userContent
 
 		const previousApiReqIndex = findLastIndex(
-			this.ctx.messageStateHandler.getDiracMessages(),
+			this.ctx.messageStateHandler.getIsaacMessages(),
 			(m) => m.say === "api_req_started",
 		)
 		const isFirstRequest =
-			this.ctx.messageStateHandler.getDiracMessages().filter((m) => m.say === "api_req_started").length === 0
+			this.ctx.messageStateHandler.getIsaacMessages().filter((m) => m.say === "api_req_started").length === 0
 		await this.ctx.initializeCheckpoints(isFirstRequest)
 
 		const useCompactPrompt = customPrompt === "compact" && isLocalModel(this.ctx.getCurrentProviderInfo())
@@ -135,7 +135,7 @@ export class AgentLoopRunner {
 			let usageChunkSideEffectsQueue = Promise.resolve()
 
 			const updateApiReqMsgFromMetrics = async (
-				cancelReason?: DiracApiReqCancelReason,
+				cancelReason?: IsaacApiReqCancelReason,
 				streamingFailedMessage?: string,
 			) => {
 				const modelInfo = this.ctx.api.getModel().info
@@ -191,27 +191,27 @@ export class AgentLoopRunner {
 					})
 			}
 
-			const finalizeApiReqMsg = async (cancelReason?: DiracApiReqCancelReason, streamingFailedMessage?: string) => {
+			const finalizeApiReqMsg = async (cancelReason?: IsaacApiReqCancelReason, streamingFailedMessage?: string) => {
 				didFinalizeApiReqMsg = true
 				await usageChunkSideEffectsQueue
 				await updateApiReqMsgFromMetrics(cancelReason, streamingFailedMessage)
 				const lastApiReqIndex = findLastIndex(
-					this.ctx.messageStateHandler.getDiracMessages(),
+					this.ctx.messageStateHandler.getIsaacMessages(),
 					(m) => m.say === "api_req_started",
 				)
 				if (lastApiReqIndex !== -1) {
-					await this.ctx.messageStateHandler.updateDiracMessage(lastApiReqIndex, { partial: false })
+					await this.ctx.messageStateHandler.updateIsaacMessage(lastApiReqIndex, { partial: false })
 				}
 			}
 
-			const abortStream = async (cancelReason: DiracApiReqCancelReason, streamingFailedMessage?: string) => {
+			const abortStream = async (cancelReason: IsaacApiReqCancelReason, streamingFailedMessage?: string) => {
 				Session.get().finalizeRequest()
 
 				if (this.ctx.diffViewProvider.isEditing) {
 					await this.ctx.diffViewProvider.revertChanges()
 				}
 
-				const diracMessages = this.ctx.messageStateHandler.getDiracMessages()
+				const diracMessages = this.ctx.messageStateHandler.getIsaacMessages()
 				diracMessages.forEach((msg) => {
 					if (msg.partial) {
 						msg.partial = false
@@ -219,7 +219,7 @@ export class AgentLoopRunner {
 					}
 				})
 				await finalizeApiReqMsg(cancelReason, streamingFailedMessage)
-				await this.ctx.messageStateHandler.saveDiracMessagesAndUpdateHistory()
+				await this.ctx.messageStateHandler.saveIsaacMessagesAndUpdateHistory()
 
 				await this.ctx.messageStateHandler.addToApiConversationHistory({
 					role: "assistant",
@@ -292,7 +292,7 @@ export class AgentLoopRunner {
 
 			const finalizePendingReasoningMessage = async (thinking: string): Promise<boolean> => {
 				const pendingReasoningIndex = findLastIndex(
-					this.ctx.messageStateHandler.getDiracMessages(),
+					this.ctx.messageStateHandler.getIsaacMessages(),
 					(message) => message.type === "say" && message.say === "reasoning" && message.partial === true,
 				)
 
@@ -300,13 +300,13 @@ export class AgentLoopRunner {
 					return false
 				}
 
-				await this.ctx.messageStateHandler.updateDiracMessage(pendingReasoningIndex, {
+				await this.ctx.messageStateHandler.updateIsaacMessage(pendingReasoningIndex, {
 					text: thinking,
 					partial: false,
 				})
-				const completedReasoning = this.ctx.messageStateHandler.getDiracMessages()[pendingReasoningIndex]
+				const completedReasoning = this.ctx.messageStateHandler.getIsaacMessages()[pendingReasoningIndex]
 				if (completedReasoning) {
-					await sendPartialMessageEvent(convertDiracMessageToProto(completedReasoning))
+					await sendPartialMessageEvent(convertIsaacMessageToProto(completedReasoning))
 					await this.ctx.postStateToWebview()
 				}
 				return true
@@ -462,7 +462,7 @@ export class AgentLoopRunner {
 			} catch (error) {
 				await streamCoordinator?.stop()
 				if (!this.taskState.abandoned) {
-					const diracError = ErrorService.get().toDiracError(error, this.ctx.api.getModel().id)
+					const diracError = ErrorService.get().toIsaacError(error, this.ctx.api.getModel().id)
 					const errorMessage = diracError.serialize()
 					// ailiance-agent fork: tracing — record the failed roundtrip
 					try {
@@ -534,11 +534,11 @@ export class AgentLoopRunner {
 			}
 
 			await finalizeApiReqMsg()
-			await this.ctx.messageStateHandler.saveDiracMessagesAndUpdateHistory()
+			await this.ctx.messageStateHandler.saveIsaacMessagesAndUpdateHistory()
 			await this.ctx.postStateToWebview()
 
 			if (this.taskState.abort) {
-				throw new Error("Dirac instance aborted")
+				throw new Error("Isaac instance aborted")
 			}
 
 			const assistantHasContent = await this.ctx.processAssistantResponse({
@@ -609,7 +609,7 @@ export class AgentLoopRunner {
 		}
 	}
 
-	async handleMistakeLimitReached(userContent: DiracContent[]): Promise<{ didEndLoop: boolean; userContent: DiracContent[] }> {
+	async handleMistakeLimitReached(userContent: IsaacContent[]): Promise<{ didEndLoop: boolean; userContent: IsaacContent[] }> {
 		if (this.taskState.consecutiveMistakeCount < this.ctx.stateManager.getGlobalSettingsKey("maxConsecutiveMistakes")) {
 			return { didEndLoop: false, userContent }
 		}
@@ -629,7 +629,7 @@ export class AgentLoopRunner {
 		if (autoApprovalSettings.enableNotifications) {
 			showSystemNotification({
 				subtitle: "Error",
-				message: "Dirac is having trouble. Would you like to continue the task?",
+				message: "Isaac is having trouble. Would you like to continue the task?",
 			})
 		}
 
@@ -641,7 +641,7 @@ export class AgentLoopRunner {
 		if (response === "messageResponse") {
 			await this.ctx.say("user_feedback", text, images, files)
 
-			const feedbackUserContent: DiracUserContent[] = []
+			const feedbackUserContent: IsaacUserContent[] = []
 			feedbackUserContent.push({
 				type: "text",
 				text: formatResponse.tooManyMistakes(text),

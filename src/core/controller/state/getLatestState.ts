@@ -1,5 +1,5 @@
-import { EmptyRequest } from "@shared/proto/dirac/common"
-import { State } from "@shared/proto/dirac/state"
+import { EmptyRequest } from "@shared/proto/isaac/common"
+import { State } from "@shared/proto/isaac/state"
 import { Controller } from "../index"
 
 /**

@@ -1,5 +1,5 @@
 import { Logger } from "@shared/services/Logger"
-import { DiracDefaultTool, setDynamicToolUseNames } from "@shared/tools"
+import { IsaacDefaultTool, setDynamicToolUseNames } from "@shared/tools"
 import { parseYamlFrontmatter } from "@utils/frontmatter"
 import chokidar, { type FSWatcher } from "chokidar"
 import fs from "fs/promises"
@@ -9,14 +9,14 @@ import { z } from "zod"
 import { pluginDiscoveryService } from "@/core/plugins/PluginDiscoveryService"
 import { buildSubagentToolName } from "./SubagentToolName"
 
-/** Default Directory for agent configurations: ~/Documents/Dirac/Agents */
+/** Default Directory for agent configurations: ~/Documents/Isaac/Agents */
 export const AGENTS_CONFIG_DIRECTORY_NAME = "Agents"
 const SUBAGENT_DYNAMIC_TOOL_NAMESPACE = "subagent"
 
 const AgentBaseConfigSchema = z.object({
 	name: z.string().trim().min(1),
 	description: z.string().trim().min(1),
-	tools: z.array(z.nativeEnum(DiracDefaultTool)).default([]),
+	tools: z.array(z.nativeEnum(IsaacDefaultTool)).default([]),
 	skills: z.array(z.string().trim().min(1)).optional(),
 	modelId: z.string().trim().min(1).optional(),
 	systemPrompt: z.string().trim().min(1),
@@ -32,23 +32,23 @@ const AgentConfigFrontmatterSchema = z.object({
 
 export type AgentBaseConfig = z.infer<typeof AgentBaseConfigSchema>
 
-function normalizeToolName(toolName: string): DiracDefaultTool {
+function normalizeToolName(toolName: string): IsaacDefaultTool {
 	const trimmed = toolName.trim()
 	if (!trimmed) {
 		throw new Error("Tool name cannot be empty.")
 	}
 
-	const asDefaultTool = trimmed as DiracDefaultTool
-	if (Object.values(DiracDefaultTool).includes(asDefaultTool)) {
+	const asDefaultTool = trimmed as IsaacDefaultTool
+	if (Object.values(IsaacDefaultTool).includes(asDefaultTool)) {
 		return asDefaultTool
 	}
 
 	throw new Error(
-		`Unknown tool '${trimmed}'. Expected a DiracDefaultTool value (for example: read_file, list_files, search_files).`,
+		`Unknown tool '${trimmed}'. Expected a IsaacDefaultTool value (for example: read_file, list_files, search_files).`,
 	)
 }
 
-function parseTools(tools: string | string[] | undefined): DiracDefaultTool[] {
+function parseTools(tools: string | string[] | undefined): IsaacDefaultTool[] {
 	if (!tools) {
 		return []
 	}
@@ -104,7 +104,7 @@ export function parseAgentConfigFromYaml(content: string): AgentBaseConfig {
 }
 
 export function getAgentsConfigPath(homeDir = os.homedir()): string {
-	return path.join(homeDir, "Documents", "Dirac", AGENTS_CONFIG_DIRECTORY_NAME)
+	return path.join(homeDir, "Documents", "Isaac", AGENTS_CONFIG_DIRECTORY_NAME)
 }
 
 function normalizeAgentName(name: string): string {

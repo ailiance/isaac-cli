@@ -1,6 +1,6 @@
 import { ApiConfiguration } from "@shared/api"
 import { Mode } from "@shared/ExtensionMessage"
-import { UpdateApiConfigurationRequest } from "@shared/proto/dirac/models"
+import { UpdateApiConfigurationRequest } from "@shared/proto/isaac/models"
 import { convertApiConfigurationToProto } from "@shared/proto-conversions/models/api-configuration-conversion"
 import { useSettingsStore } from "@/features/settings/store/settingsStore"
 import { ModelsServiceClient } from "@/shared/api/grpc-client"

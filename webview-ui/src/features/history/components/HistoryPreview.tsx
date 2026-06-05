@@ -1,6 +1,6 @@
-import { StringRequest } from "@shared/proto/dirac/common"
+import { StringRequest } from "@shared/proto/isaac/common"
 import { memo, useMemo } from "react"
-import DiracLogoVariable from "@/assets/DiracLogoVariable"
+import IsaacLogoVariable from "@/assets/IsaacLogoVariable"
 import { useSettingsStore } from "@/features/settings/store/settingsStore"
 import { TaskServiceClient } from "@/shared/api/grpc-client"
 import { getRandomQuote } from "@shared/quotes"
@@ -150,7 +150,7 @@ const HistoryPreview = ({ showHistoryView }: HistoryPreviewProps) => {
 						padding: "12px 0 20px 0",
 					}}>
 					<div className="flex flex-col items-center gap-2">
-						<DiracLogoVariable />
+						<IsaacLogoVariable />
 						<div
 							style={{
 								fontSize: "0.9em",

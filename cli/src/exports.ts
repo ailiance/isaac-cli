@@ -6,17 +6,17 @@
  *
  * @example
  * ```typescript
- * import { DiracAgent } from "isaac-cli"
+ * import { IsaacAgent } from "isaac-cli"
  *
- * const agent = new DiracAgent()
+ * const agent = new IsaacAgent()
  * await agent.initialize({ clientCapabilities: {} })
  * const session = await agent.newSession({ cwd: process.cwd() })
  * ```
  * @module isaac-cli
  */
 
-export { DiracAgent } from "./agent/DiracAgent.js"
-export { DiracSessionEmitter } from "./agent/DiracSessionEmitter.js"
+export { IsaacAgent } from "./agent/IsaacAgent.js"
+export { IsaacSessionEmitter } from "./agent/IsaacSessionEmitter.js"
 export type {
 	AcpAgentOptions,
 	AcpSessionState,
@@ -26,12 +26,12 @@ export type {
 	AudioContent,
 	CancelNotification,
 	ClientCapabilities,
-	DiracAcpSession,
-	DiracAgentCapabilities,
-	DiracAgentInfo,
-	DiracAgentOptions,
-	DiracPermissionOption,
-	DiracSessionEvents,
+	IsaacAcpSession,
+	IsaacAgentCapabilities,
+	IsaacAgentInfo,
+	IsaacAgentOptions,
+	IsaacPermissionOption,
+	IsaacSessionEvents,
 	ContentBlock,
 	ImageContent,
 	InitializeRequest,

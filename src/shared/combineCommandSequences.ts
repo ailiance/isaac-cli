@@ -1,7 +1,7 @@
-import { DiracMessage, COMMAND_OUTPUT_STRING } from "./ExtensionMessage"
+import { IsaacMessage, COMMAND_OUTPUT_STRING } from "./ExtensionMessage"
 
-export function combineCommandSequences(messages: DiracMessage[]): DiracMessage[] {
-	const combinedMessages: DiracMessage[] = []
+export function combineCommandSequences(messages: IsaacMessage[]): IsaacMessage[] {
+	const combinedMessages: IsaacMessage[] = []
 
 	for (let i = 0; i < messages.length; i++) {
 		const currentMsg = messages[i]

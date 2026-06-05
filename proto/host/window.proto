@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package host;
 
-option go_package = "github.com/dirac/grpc-go/host";
+option go_package = "github.com/isaac/grpc-go/host";
 option java_multiple_files = true;
-option java_package = "bot.dirac.host.proto";
+option java_package = "bot.isaac.host.proto";
 
 // Provides methods for working with IDE windows and editors.
 service WindowService {

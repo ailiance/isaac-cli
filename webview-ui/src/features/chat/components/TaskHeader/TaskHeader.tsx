@@ -1,4 +1,4 @@
-import { DiracApiReqInfo, DiracMessage, Mode } from "@shared/ExtensionMessage"
+import { IsaacApiReqInfo, IsaacMessage, Mode } from "@shared/ExtensionMessage"
 import { useChatStore } from "@/features/chat/store/chatStore"
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react"
 import React, { useCallback, useLayoutEffect, useMemo, useState } from "react"
@@ -17,9 +17,9 @@ import { highlightText } from "./Highlights"
 
 const IS_DEV = process.env.IS_DEV === '"true"'
 interface TaskHeaderProps {
-	task: DiracMessage
+	task: IsaacMessage
 	totalCost: number
-	lastApiReqInfo?: DiracApiReqInfo
+	lastApiReqInfo?: IsaacApiReqInfo
 	onClose: () => void
 	onSendMessage?: (command: string, files: string[], images: string[]) => void
 }

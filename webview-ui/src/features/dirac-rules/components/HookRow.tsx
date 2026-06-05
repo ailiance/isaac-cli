@@ -1,5 +1,5 @@
-import { StringRequest } from "@shared/proto/dirac/common"
-import { DeleteHookRequest, HooksToggles } from "@shared/proto/dirac/file"
+import { StringRequest } from "@shared/proto/isaac/common"
+import { DeleteHookRequest, HooksToggles } from "@shared/proto/isaac/file"
 import { PenIcon, Trash2Icon } from "lucide-react"
 import { FileServiceClient } from "@/shared/api/grpc-client"
 import { Button } from "@/shared/ui/button"

@@ -1,4 +1,4 @@
-import { DiracApiReqInfo, Mode } from "@shared/ExtensionMessage"
+import { IsaacApiReqInfo, Mode } from "@shared/ExtensionMessage"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import debounce from "debounce"
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
@@ -21,7 +21,7 @@ interface ContextWindowInfoProps {
 
 interface ContextWindowProgressProps {
 	onSendMessage?: (command: string, files: string[], images: string[]) => void
-	lastApiReqInfo?: DiracApiReqInfo
+	lastApiReqInfo?: IsaacApiReqInfo
 }
 
 const ConfirmationDialog = memo<{

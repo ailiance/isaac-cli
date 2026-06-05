@@ -1,9 +1,9 @@
-import { DiracDefaultTool } from "@/shared/tools"
-import type { DiracToolSpec } from "../spec"
+import { IsaacDefaultTool } from "@/shared/tools"
+import type { IsaacToolSpec } from "../spec"
 
-const id = DiracDefaultTool.PLAN_MODE
+const id = IsaacDefaultTool.PLAN_MODE
 
-export const plan_mode_respond: DiracToolSpec = {
+export const plan_mode_respond: IsaacToolSpec = {
 	id,
 	name: "plan_mode_respond",
 	description: "Proposes a step-by-step solution plan to the user. Use only in PLAN MODE after exploring the codebase. Avoid repeating the plan in text.",

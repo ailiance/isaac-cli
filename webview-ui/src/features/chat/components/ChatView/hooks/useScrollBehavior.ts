@@ -1,4 +1,4 @@
-import { DiracMessage } from "@shared/ExtensionMessage"
+import { IsaacMessage } from "@shared/ExtensionMessage"
 import debounce from "debounce"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useEvent } from "react-use"
@@ -10,9 +10,9 @@ import { ScrollBehavior } from "../types/chatTypes"
  * Handles auto-scrolling, manual scrolling, and scroll-to-message functionality
  */
 export function useScrollBehavior(
-	messages: DiracMessage[],
-	visibleMessages: DiracMessage[],
-	groupedMessages: (DiracMessage | DiracMessage[])[],
+	messages: IsaacMessage[],
+	visibleMessages: IsaacMessage[],
+	groupedMessages: (IsaacMessage | IsaacMessage[])[],
 	expandedRows: Record<number, boolean>,
 	setExpandedRows: React.Dispatch<React.SetStateAction<Record<number, boolean>>>,
 ): ScrollBehavior & {

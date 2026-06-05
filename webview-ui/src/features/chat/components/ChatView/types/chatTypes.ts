@@ -2,7 +2,7 @@
  * Shared types and interfaces for the chat view components
  */
 
-import { DiracAsk, DiracMessage } from "@shared/ExtensionMessage"
+import { IsaacAsk, IsaacMessage } from "@shared/ExtensionMessage"
 import { ListRange, VirtuosoHandle } from "react-virtuoso"
 import { ButtonActionType } from "../shared/buttonConfig"
 
@@ -46,10 +46,10 @@ export interface ChatState {
 	textAreaRef: React.RefObject<HTMLTextAreaElement>
 
 	// Derived values
-	lastMessage: DiracMessage | undefined
-	secondLastMessage: DiracMessage | undefined
-	diracAsk: DiracAsk | undefined
-	task: DiracMessage | undefined
+	lastMessage: IsaacMessage | undefined
+	secondLastMessage: IsaacMessage | undefined
+	diracAsk: IsaacAsk | undefined
+	task: IsaacMessage | undefined
 
 	// Handlers
 	handleFocusChange: (isFocused: boolean) => void
@@ -117,8 +117,8 @@ export interface InputState {
  * Task section props
  */
 export interface TaskSectionProps {
-	task: DiracMessage
-	messages: DiracMessage[]
+	task: IsaacMessage
+	messages: IsaacMessage[]
 	scrollBehavior: ScrollBehavior
 	buttonState: ButtonState
 	messageHandlers: MessageHandlers
@@ -136,8 +136,8 @@ export interface TaskSectionProps {
 		supportsImages: boolean
 	}
 	isStreaming: boolean
-	diracAsk?: DiracAsk
-	modifiedMessages: DiracMessage[]
+	diracAsk?: IsaacAsk
+	modifiedMessages: IsaacMessage[]
 }
 
 /**

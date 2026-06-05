@@ -1,7 +1,7 @@
 import {
-    DiracAskUseSubagents,
-    DiracMessage,
-    DiracSaySubagentStatus,
+    IsaacAskUseSubagents,
+    IsaacMessage,
+    IsaacSaySubagentStatus,
     SubagentExecutionStatus,
     SubagentStatusItem,
 } from "@shared/ExtensionMessage"
@@ -22,9 +22,9 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react"
 import MarkdownBlock from "@/shared/ui/MarkdownBlock"
 
 interface SubagentStatusRowProps {
-	message: DiracMessage
+	message: IsaacMessage
 	isLast: boolean
-	lastModifiedMessage?: DiracMessage
+	lastModifiedMessage?: IsaacMessage
 }
 
 type DisplayStatus = SubagentExecutionStatus | "cancelled"
@@ -75,14 +75,14 @@ const formatCost = (value: number | undefined): string => {
 	}).format(normalized)
 }
 
-function parseSubagentRowData(message: DiracMessage): SubagentRowData | null {
+function parseSubagentRowData(message: IsaacMessage): SubagentRowData | null {
 	if (!message.text) {
 		return null
 	}
 
 	try {
 		if (message.ask === "use_subagents" || message.say === "use_subagents") {
-			const parsed = JSON.parse(message.text) as DiracAskUseSubagents
+			const parsed = JSON.parse(message.text) as IsaacAskUseSubagents
 			if (!Array.isArray(parsed.prompts)) {
 				return null
 			}
@@ -110,7 +110,7 @@ function parseSubagentRowData(message: DiracMessage): SubagentRowData | null {
 			}
 		}
 
-		const parsed = JSON.parse(message.text) as DiracSaySubagentStatus
+		const parsed = JSON.parse(message.text) as IsaacSaySubagentStatus
 		if (!Array.isArray(parsed.items)) {
 			return null
 		}
@@ -237,7 +237,7 @@ export default function SubagentStatusRow({ message, isLast, lastModifiedMessage
 			resumedBeforeNextVisibleMessage)
 
 	const singular = data.items.length === 1
-	const title = singular ? "Dirac wants to use a subagent:" : "Dirac wants to use subagents:"
+	const title = singular ? "Isaac wants to use a subagent:" : "Isaac wants to use subagents:"
 	const isPromptConstructionRow = message.ask === "use_subagents" || message.say === "use_subagents"
 	const toggleItem = (index: number) => {
 		setExpandedItems((prev) => ({

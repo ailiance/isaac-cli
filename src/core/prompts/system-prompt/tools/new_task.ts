@@ -1,9 +1,9 @@
-import { DiracDefaultTool } from "@/shared/tools"
-import type { DiracToolSpec } from "../spec"
+import { IsaacDefaultTool } from "@/shared/tools"
+import type { IsaacToolSpec } from "../spec"
 
-const id = DiracDefaultTool.NEW_TASK
+const id = IsaacDefaultTool.NEW_TASK
 
-export const new_task: DiracToolSpec = {
+export const new_task: IsaacToolSpec = {
 	id,
 	name: "new_task",
 	description: "Creates a new task with preloaded context from the current conversation.",

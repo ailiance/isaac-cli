@@ -27,7 +27,7 @@ describe("RuleContextBuilder", () => {
 			const deps: RuleContextBuilderDeps = {
 				cwd: "/workspace",
 				messageStateHandler: {
-					getDiracMessages: () => [
+					getIsaacMessages: () => [
 						{
 							type: "ask",
 							ask: "tool",
@@ -49,7 +49,7 @@ describe("RuleContextBuilder", () => {
 			const deps: RuleContextBuilderDeps = {
 				cwd: "/workspace",
 				messageStateHandler: {
-					getDiracMessages: () => [
+					getIsaacMessages: () => [
 						{
 							type: "ask",
 							ask: "tool",
@@ -79,7 +79,7 @@ describe("RuleContextBuilder", () => {
 			const deps: RuleContextBuilderDeps = {
 				cwd: "/workspace",
 				messageStateHandler: {
-					getDiracMessages: () => [
+					getIsaacMessages: () => [
 						{
 							type: "ask",
 							ask: "tool",
@@ -106,7 +106,7 @@ describe("RuleContextBuilder", () => {
 			const deps: RuleContextBuilderDeps = {
 				cwd: "/workspace",
 				messageStateHandler: {
-					getDiracMessages: () => [
+					getIsaacMessages: () => [
 						{
 							type: "say",
 							say: "task",
@@ -142,7 +142,7 @@ describe("RuleContextBuilder", () => {
 			const deps: RuleContextBuilderDeps = {
 				cwd: "/workspace",
 				messageStateHandler: {
-					getDiracMessages: () => [
+					getIsaacMessages: () => [
 						{
 							type: "ask",
 							ask: "tool",
@@ -176,7 +176,7 @@ describe("RuleContextBuilder", () => {
 			const deps: RuleContextBuilderDeps = {
 				cwd: "/workspace",
 				messageStateHandler: {
-					getDiracMessages: () => messages,
+					getIsaacMessages: () => messages,
 				},
 			}
 

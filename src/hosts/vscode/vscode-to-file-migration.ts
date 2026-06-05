@@ -214,7 +214,7 @@ export async function exportVSCodeStorageToSharedFiles(
 }
 
 /**
- * Migrate global storage folders (tasks, checkpoints, etc.) to the shared Dirac directory.
+ * Migrate global storage folders (tasks, checkpoints, etc.) to the shared Isaac directory.
  */
 export async function migrateGlobalStorageFolders(
 	vscodeContext: vscode.ExtensionContext,

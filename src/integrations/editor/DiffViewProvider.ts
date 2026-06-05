@@ -8,7 +8,7 @@ import * as iconv from "iconv-lite"
 import { HostProvider } from "@/hosts/host-provider"
 import { getDiagnosticsProviders } from "@/integrations/diagnostics/getDiagnosticsProviders"
 
-import { FileDiagnostics } from "@/shared/proto/index.dirac"
+import { FileDiagnostics } from "@/shared/proto/index.isaac"
 import { Logger } from "@/shared/services/Logger"
 import { detectEncoding } from "../misc/extract-text"
 import { sanitizeNotebookForLLM } from "../misc/notebook-utils"
@@ -134,17 +134,17 @@ export abstract class DiffViewProvider {
 	 * Getting diagnostics before and after the file edit is a better approach than
 	 * automatically tracking problems in real-time. This method ensures we only
 	 * report new problems that are a direct result of this specific edit.
-	 * Since these are new problems resulting from Dirac's edit, we know they're
-	 * directly related to the work he's doing. This eliminates the risk of Dirac
+	 * Since these are new problems resulting from Isaac's edit, we know they're
+	 * directly related to the work he's doing. This eliminates the risk of Isaac
 	 * going off-task or getting distracted by unrelated issues, which was a problem
 	 * with the previous auto-debug approach. Some users' machines may be slow to
 	 * update diagnostics, so this approach provides a good balance between automation
-	 * and avoiding potential issues where Dirac might get stuck in loops due to
+	 * and avoiding potential issues where Isaac might get stuck in loops due to
 	 * outdated problem information. If no new problems show up by the time the user
 	 * accepts the changes, they can always debug later using the '@problems' mention.
-	 * This way, Dirac only becomes aware of new problems resulting from his edits
+	 * This way, Isaac only becomes aware of new problems resulting from his edits
 	 * and can address them accordingly. If problems don't change immediately after
-	 * applying a fix, Dirac won't be notified, which is generally fine since the
+	 * applying a fix, Isaac won't be notified, which is generally fine since the
 	 * initial fix is usually correct and it may just take time for linters to catch up.
 	 */
 	private async getNewDiagnosticProblems(postSaveContent?: string): Promise<string> {

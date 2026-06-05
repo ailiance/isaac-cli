@@ -1,6 +1,6 @@
 import type { HookOutputStreamMeta } from "@shared/ExtensionMessage"
-import { DiracMessage } from "@shared/ExtensionMessage"
-import type { HookOutput } from "@shared/proto/dirac/hooks"
+import { IsaacMessage } from "@shared/ExtensionMessage"
+import type { HookOutput } from "@shared/proto/isaac/hooks"
 import { Logger } from "@/shared/services/Logger"
 import { MessageStateHandler } from "../task/message-state"
 import { HookExecutionError } from "./HookError"
@@ -264,10 +264,10 @@ async function updateHookMessage(
 	hookMessageTs: number,
 	metadata: Record<string, any>,
 ): Promise<void> {
-	const diracMessages = messageStateHandler.getDiracMessages()
-	const hookMessageIndex = diracMessages.findIndex((m: DiracMessage) => m.ts === hookMessageTs)
+	const diracMessages = messageStateHandler.getIsaacMessages()
+	const hookMessageIndex = diracMessages.findIndex((m: IsaacMessage) => m.ts === hookMessageTs)
 	if (hookMessageIndex !== -1) {
-		await messageStateHandler.updateDiracMessage(hookMessageIndex, {
+		await messageStateHandler.updateIsaacMessage(hookMessageIndex, {
 			text: JSON.stringify(metadata),
 		})
 	}
@@ -284,7 +284,7 @@ async function updateHookMessage(
  * 4. Re-add the tool message at the end (after hook messages)
  */
 async function reorderHookAndToolMessages(messageStateHandler: MessageStateHandler): Promise<void> {
-	const diracMessages = messageStateHandler.getDiracMessages()
+	const diracMessages = messageStateHandler.getIsaacMessages()
 
 	// Define all message types that represent tool executions with PreToolUse hooks
 	const toolMessageTypes = ["tool", "command", "browser_action_launch"]
@@ -320,8 +320,8 @@ async function reorderHookAndToolMessages(messageStateHandler: MessageStateHandl
 	const toolMessage = { ...diracMessages[lastToolMessageIndex] }
 
 	// Delete the tool message at its current position
-	await messageStateHandler.deleteDiracMessage(lastToolMessageIndex)
+	await messageStateHandler.deleteIsaacMessage(lastToolMessageIndex)
 
 	// Re-add the tool message at the end (after hook messages)
-	await messageStateHandler.addToDiracMessages(toolMessage)
+	await messageStateHandler.addToIsaacMessages(toolMessage)
 }

@@ -1,7 +1,7 @@
 import path from "node:path"
 import { arePathsEqual } from "@utils/path"
-import type { DiracAssistantToolUseBlock, DiracStorageMessage, DiracUserToolResultContentBlock } from "@/shared/messages"
-import { DiracDefaultTool } from "@/shared/tools"
+import type { IsaacAssistantToolUseBlock, IsaacStorageMessage, IsaacUserToolResultContentBlock } from "@/shared/messages"
+import { IsaacDefaultTool } from "@/shared/tools"
 
 /**
  * Walks the API conversation history backwards looking for the most recent
@@ -17,9 +17,9 @@ import { DiracDefaultTool } from "@/shared/tools"
  * Sprint 3 task E for the rationale.
  */
 export function extractLastKnownHashFromHistory(
-	history: DiracStorageMessage[],
+	history: IsaacStorageMessage[],
 	targetPath: string,
-	toolName: string = DiracDefaultTool.FILE_READ,
+	toolName: string = IsaacDefaultTool.FILE_READ,
 ): string | undefined {
 	const normalizeForComparison = (value: string): string => {
 		const normalized = path.normalize(value)
@@ -47,7 +47,7 @@ export function extractLastKnownHashFromHistory(
 			if (block.type !== "tool_use") {
 				continue
 			}
-			const toolUseBlock = block as unknown as DiracAssistantToolUseBlock
+			const toolUseBlock = block as unknown as IsaacAssistantToolUseBlock
 			if (toolUseBlock.name !== toolName) {
 				continue
 			}
@@ -62,7 +62,7 @@ export function extractLastKnownHashFromHistory(
 				continue
 			}
 			const resultBlock = nextMessage.content.find(
-				(c) => c.type === "tool_result" && (c as unknown as DiracUserToolResultContentBlock).tool_use_id === toolUseId,
+				(c) => c.type === "tool_result" && (c as unknown as IsaacUserToolResultContentBlock).tool_use_id === toolUseId,
 			)
 			if (!resultBlock || resultBlock.type !== "tool_result") {
 				continue

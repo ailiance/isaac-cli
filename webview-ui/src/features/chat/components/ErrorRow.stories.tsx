@@ -1,4 +1,4 @@
-import { DiracMessage } from "@shared/ExtensionMessage"
+import { IsaacMessage } from "@shared/ExtensionMessage"
 import type { Meta, StoryObj } from "@storybook/react-vite"
 import { useMemo } from "react"
 import { expect, userEvent, within } from "storybook/test"
@@ -6,7 +6,7 @@ import { createStorybookDecorator } from "@/config/StorybookDecorator"
 import ErrorRow from "./ErrorRow"
 
 // Mock data factories
-const createMockMessage = (overrides: Partial<DiracMessage> = {}): DiracMessage => ({
+const createMockMessage = (overrides: Partial<IsaacMessage> = {}): IsaacMessage => ({
 	ts: Date.now(),
 	type: "say",
 	say: "error",
@@ -51,7 +51,7 @@ const meta: Meta<typeof ErrorRow> = {
 		docs: {
 			description: {
 				component:
-					"Displays different types of error messages in the chat interface, including API errors, credit limit errors, diff errors, and diracignore errors. Handles special error parsing for Dirac provider errors and provides appropriate user actions.",
+					"Displays different types of error messages in the chat interface, including API errors, credit limit errors, diff errors, and diracignore errors. Handles special error parsing for Isaac provider errors and provides appropriate user actions.",
 			},
 		},
 	},
@@ -120,8 +120,8 @@ export const ApiStreamingFailed: Story = {
 	},
 }
 
-// Dirac-specific errors
-export const DiracBalanceError: Story = {
+// Isaac-specific errors
+export const IsaacBalanceError: Story = {
 	args: {
 		message: createMockMessage(),
 		errorType: "error",
@@ -141,7 +141,7 @@ export const DiracBalanceError: Story = {
 	},
 }
 
-export const DiracRateLimitError: Story = {
+export const IsaacRateLimitError: Story = {
 	args: {
 		message: createMockMessage(),
 		errorType: "error",
@@ -206,7 +206,7 @@ export const InteractiveSignIn: Story = {
 		message: createMockMessage(),
 		errorType: "error",
 		apiRequestFailedMessage: JSON.stringify({
-			message: "Please sign in to access Dirac services.",
+			message: "Please sign in to access Isaac services.",
 			code: "ERR_BAD_REQUEST",
 			request_id: "req_signin_test",
 			providerId: "dirac",

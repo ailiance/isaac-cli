@@ -1,9 +1,9 @@
-import { DiracAsk, DiracSay } from "@shared/ExtensionMessage"
-import { DiracAskResponse } from "@shared/WebviewMessage"
+import { IsaacAsk, IsaacSay } from "@shared/ExtensionMessage"
+import { IsaacAskResponse } from "@shared/WebviewMessage"
 import { ApiHandler, ApiProviderInfo } from "../../../core/api"
 import { ContextManager } from "../../context/context-management/ContextManager"
 import { Controller } from "../../controller"
-import { DiracIgnoreController } from "../../ignore/DiracIgnoreController"
+import { IsaacIgnoreController } from "../../ignore/IsaacIgnoreController"
 import { StateManager } from "../../storage/StateManager"
 import { WorkspaceRootManager } from "../../workspace/WorkspaceRootManager"
 import { MessageStateHandler } from "../message-state"
@@ -17,7 +17,7 @@ export interface ApiRequestHandlerContext {
 	// services
 	api: ApiHandler
 	contextManager: ContextManager
-	diracIgnoreController: DiracIgnoreController
+	diracIgnoreController: IsaacIgnoreController
 	stateManager: StateManager
 	messageStateHandler: MessageStateHandler
 	workspaceManager?: WorkspaceRootManager
@@ -26,13 +26,13 @@ export interface ApiRequestHandlerContext {
 	cwd: string
 	terminalExecutionMode: "vscodeTerminal" | "backgroundExec"
 	// messaging
-	say: (type: DiracSay, text?: string, images?: string[], files?: string[], partial?: boolean) => Promise<number | undefined>
+	say: (type: IsaacSay, text?: string, images?: string[], files?: string[], partial?: boolean) => Promise<number | undefined>
 	ask: (
-		type: DiracAsk,
+		type: IsaacAsk,
 		text?: string,
 		partial?: boolean,
 	) => Promise<{
-		response: DiracAskResponse
+		response: IsaacAskResponse
 		text?: string
 		images?: string[]
 		files?: string[]

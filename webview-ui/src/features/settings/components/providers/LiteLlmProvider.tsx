@@ -1,6 +1,6 @@
 import { ModelInfo } from "@shared/api"
 import { Mode } from "@shared/ExtensionMessage"
-import { UpdateApiConfigurationRequestNew } from "@shared/proto/index.dirac"
+import { UpdateApiConfigurationRequestNew } from "@shared/proto/index.isaac"
 import { VSCodeButton, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { RefreshCwIcon } from "lucide-react"
 import { useState } from "react"

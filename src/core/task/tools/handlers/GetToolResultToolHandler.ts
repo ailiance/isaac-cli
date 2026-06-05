@@ -1,6 +1,6 @@
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import type { PendingToolEntry } from "../../PendingToolRegistry"
 import type { ToolResponse } from "../../index"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
@@ -46,7 +46,7 @@ const stringifyResult = (result: unknown): string => {
 }
 
 export class GetToolResultToolHandler implements IFullyManagedTool {
-	readonly name = DiracDefaultTool.GET_TOOL_RESULT
+	readonly name = IsaacDefaultTool.GET_TOOL_RESULT
 
 	getDescription(block: ToolUse): string {
 		const taskId = (block.params.task_id as string) || ""

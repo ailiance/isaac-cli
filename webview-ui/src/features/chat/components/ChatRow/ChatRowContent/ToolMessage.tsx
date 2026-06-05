@@ -1,10 +1,10 @@
-import { DiracMessage, DiracSayTool } from "@shared/ExtensionMessage"
+import { IsaacMessage, IsaacSayTool } from "@shared/ExtensionMessage"
 import { memo } from "react"
 import { ToolOutput } from "../ToolOutput"
 
 interface ToolMessageProps {
-	message: DiracMessage
-	tool: DiracSayTool
+	message: IsaacMessage
+	tool: IsaacSayTool
 	isExpanded: boolean
 	onToggleExpand: (ts: number) => void
 	backgroundEditEnabled: boolean | undefined

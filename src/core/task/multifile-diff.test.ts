@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, it } from "mocha"
 import sinon from "sinon"
 import { HostProvider } from "@/hosts/host-provider"
 import CheckpointTracker from "@/integrations/checkpoints/CheckpointTracker"
-import { DiracMessage } from "@/shared/ExtensionMessage"
+import { IsaacMessage } from "@/shared/ExtensionMessage"
 import { ShowMessageType } from "@/shared/proto/index.host"
 import { setVscodeHostProviderMock } from "@/test/host-provider-test-utils"
 
@@ -44,7 +44,7 @@ describe("multifile-diff", () => {
 	describe("showChangedFilesDiff", () => {
 		const mockMessageTs = 1234567890
 		const mockHash = "abc123def456"
-		const mockMessages: DiracMessage[] = [
+		const mockMessages: IsaacMessage[] = [
 			{
 				ts: mockMessageTs,
 				type: "say",
@@ -55,7 +55,7 @@ describe("multifile-diff", () => {
 		]
 
 		beforeEach(() => {
-			messageStateHandlerStub.getDiracMessages.returns(mockMessages)
+			messageStateHandlerStub.getIsaacMessages.returns(mockMessages)
 		})
 
 		it("should successfully show diff for changes since last task completion", async () => {
@@ -76,7 +76,7 @@ describe("multifile-diff", () => {
 			]
 
 			// Mock finding last completion message
-			const messagesWithCompletion: DiracMessage[] = [
+			const messagesWithCompletion: IsaacMessage[] = [
 				{
 					ts: 1234567000,
 					type: "say",
@@ -85,7 +85,7 @@ describe("multifile-diff", () => {
 				},
 				...mockMessages,
 			]
-			messageStateHandlerStub.getDiracMessages.returns(messagesWithCompletion)
+			messageStateHandlerStub.getIsaacMessages.returns(messagesWithCompletion)
 
 			checkpointTrackerStub.getDiffSet.resolves(mockChangedFiles)
 
@@ -157,7 +157,7 @@ describe("multifile-diff", () => {
 
 		it("should handle message not found error", async () => {
 			// Arrange
-			messageStateHandlerStub.getDiracMessages.returns([])
+			messageStateHandlerStub.getIsaacMessages.returns([])
 
 			// Act
 			await showChangedFilesDiff(messageStateHandlerStub as any, checkpointTrackerStub as any, mockMessageTs, false)
@@ -169,7 +169,7 @@ describe("multifile-diff", () => {
 
 		it("should handle missing checkpoint hash", async () => {
 			// Arrange
-			const messagesWithoutHash: DiracMessage[] = [
+			const messagesWithoutHash: IsaacMessage[] = [
 				{
 					ts: mockMessageTs,
 					type: "say",
@@ -178,7 +178,7 @@ describe("multifile-diff", () => {
 					// lastCheckpointHash is missing
 				},
 			]
-			messageStateHandlerStub.getDiracMessages.returns(messagesWithoutHash)
+			messageStateHandlerStub.getIsaacMessages.returns(messagesWithoutHash)
 
 			// Act
 			await showChangedFilesDiff(messageStateHandlerStub as any, checkpointTrackerStub as any, mockMessageTs, false)
@@ -225,7 +225,7 @@ describe("multifile-diff", () => {
 
 		it("should use first checkpoint when no last completion found", async () => {
 			// Arrange
-			const messagesWithFirstCheckpoint: DiracMessage[] = [
+			const messagesWithFirstCheckpoint: IsaacMessage[] = [
 				{
 					ts: 1234567000,
 					type: "say",
@@ -234,7 +234,7 @@ describe("multifile-diff", () => {
 				},
 				...mockMessages,
 			]
-			messageStateHandlerStub.getDiracMessages.returns(messagesWithFirstCheckpoint)
+			messageStateHandlerStub.getIsaacMessages.returns(messagesWithFirstCheckpoint)
 
 			checkpointTrackerStub.getDiffSet.resolves([
 				{
@@ -260,7 +260,7 @@ describe("multifile-diff", () => {
 		it("should show error when no previous checkpoint hash found for new changes", async () => {
 			// Arrange
 			// No completion_result or checkpoint_created messages
-			messageStateHandlerStub.getDiracMessages.returns(mockMessages)
+			messageStateHandlerStub.getIsaacMessages.returns(mockMessages)
 
 			// Act
 			await showChangedFilesDiff(

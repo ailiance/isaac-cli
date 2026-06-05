@@ -3,7 +3,7 @@ import { WorkspaceRootManager } from "../../../core/workspace/WorkspaceRootManag
 import { UrlContentFetcher } from "../../../services/browser/UrlContentFetcher"
 import { FileContextTracker } from "../../context/context-tracking/FileContextTracker"
 import { Controller } from "../../controller"
-import { DiracIgnoreController } from "../../ignore/DiracIgnoreController"
+import { IsaacIgnoreController } from "../../ignore/IsaacIgnoreController"
 import { CommandPermissionController } from "../../permissions/CommandPermissionController"
 import { StateManager } from "../../storage/StateManager"
 import { TaskState } from "../TaskState"
@@ -16,7 +16,7 @@ export interface ContextLoaderDependencies {
 	urlContentFetcher: UrlContentFetcher
 	fileContextTracker: FileContextTracker
 	workspaceManager?: WorkspaceRootManager
-	diracIgnoreController: DiracIgnoreController
+	diracIgnoreController: IsaacIgnoreController
 	commandPermissionController: CommandPermissionController
 	taskState: TaskState
 	extensionPath: string

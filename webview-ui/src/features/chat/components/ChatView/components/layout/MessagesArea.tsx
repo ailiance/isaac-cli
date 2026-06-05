@@ -1,4 +1,4 @@
-import type { DiracMessage } from "@shared/ExtensionMessage"
+import type { IsaacMessage } from "@shared/ExtensionMessage"
 import type React from "react"
 import { useMemo, useRef } from "react"
 import { Virtuoso } from "react-virtuoso"
@@ -8,9 +8,9 @@ import { getIsWaitingForResponse } from "../../utils/messageUtils"
 import { createMessageRenderer } from "../messages/MessageRenderer"
 
 interface MessagesAreaProps {
-	task: DiracMessage
-	groupedMessages: (DiracMessage | DiracMessage[])[]
-	modifiedMessages: DiracMessage[]
+	task: IsaacMessage
+	groupedMessages: (IsaacMessage | IsaacMessage[])[]
+	modifiedMessages: IsaacMessage[]
 	scrollBehavior: ScrollBehavior
 	chatState: ChatState
 	messageHandlers: MessageHandlers
@@ -79,7 +79,7 @@ export const MessagesArea: React.FC<MessagesAreaProps> = ({
 		return (isWaitingForResponse && !alreadyShowingApiReq) || handoffToReasoningPending
 	}, [isWaitingForResponse, lastRawMessage, lastVisibleMessage?.say])
 
-	const displayedGroupedMessages = useMemo<(DiracMessage | DiracMessage[])[]>(() => {
+	const displayedGroupedMessages = useMemo<(IsaacMessage | IsaacMessage[])[]>(() => {
 		let baseMessages = groupedMessages
 
 
@@ -87,7 +87,7 @@ export const MessagesArea: React.FC<MessagesAreaProps> = ({
 			return baseMessages
 		}
 
-		const waitingRow: DiracMessage = {
+		const waitingRow: IsaacMessage = {
 			ts: Number.MIN_SAFE_INTEGER,
 			type: "say",
 			say: "reasoning",

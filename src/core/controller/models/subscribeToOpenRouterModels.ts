@@ -1,5 +1,5 @@
-import { EmptyRequest } from "@shared/proto/dirac/common"
-import { OpenRouterCompatibleModelInfo } from "@shared/proto/dirac/models"
+import { EmptyRequest } from "@shared/proto/isaac/common"
+import { OpenRouterCompatibleModelInfo } from "@shared/proto/isaac/models"
 import { Logger } from "@/shared/services/Logger"
 import { getRequestRegistry, StreamingResponseHandler } from "../grpc-handler"
 import { Controller } from "../index"

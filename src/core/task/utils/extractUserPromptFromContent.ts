@@ -1,5 +1,5 @@
 import { SYSTEM_CONTENT_MARKERS, USER_CONTENT_TAGS } from "@shared/messages/constants"
-import type { DiracContent } from "@shared/messages/content"
+import type { IsaacContent } from "@shared/messages/content"
 
 /**
  * Extracts the actual user input from content blocks, stripping system-added wrappers
@@ -9,7 +9,7 @@ import type { DiracContent } from "@shared/messages/content"
  * @param userContent Array of content blocks that may contain user input
  * @returns Extracted user prompt text, or empty string if no user input found
  */
-export function extractUserPromptFromContent(userContent: DiracContent[]): string {
+export function extractUserPromptFromContent(userContent: IsaacContent[]): string {
 	const extractedTexts: string[] = []
 
 	for (const block of userContent) {

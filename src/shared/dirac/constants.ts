@@ -1,5 +1,5 @@
 /**
- * Constants and utilities for Dirac extension and CLI.
+ * Constants and utilities for Isaac extension and CLI.
  */
 
 export const getExtensionSourceDir = () => {

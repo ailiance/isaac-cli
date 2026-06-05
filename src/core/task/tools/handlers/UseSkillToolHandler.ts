@@ -6,14 +6,14 @@ import {
 } from "@core/context/instructions/user-instructions/skills"
 import type { SkillMetadata } from "@shared/skills"
 import { telemetryService } from "@/services/telemetry"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IPartialBlockHandler, IToolHandler } from "../ToolExecutorCoordinator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 
 export class UseSkillToolHandler implements IToolHandler, IPartialBlockHandler {
-	readonly name = DiracDefaultTool.USE_SKILL
+	readonly name = IsaacDefaultTool.USE_SKILL
 
 	constructor() {}
 

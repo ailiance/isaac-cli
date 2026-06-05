@@ -1,5 +1,5 @@
-import { StringRequest } from "@shared/proto/dirac/common"
-import { DeleteSkillRequest, RuleFileRequest } from "@shared/proto/index.dirac"
+import { StringRequest } from "@shared/proto/isaac/common"
+import { DeleteSkillRequest, RuleFileRequest } from "@shared/proto/index.isaac"
 import { REMOTE_URI_SCHEME } from "@shared/remote-config/constants"
 import { EyeIcon, InfoIcon, PenIcon, Trash2Icon } from "lucide-react"
 import { FileServiceClient } from "@/shared/api/grpc-client"

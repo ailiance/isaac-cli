@@ -1,8 +1,8 @@
-import { DiracMessage } from "./ExtensionMessage"
+import { IsaacMessage } from "./ExtensionMessage"
 
 /**
  * Hook metadata extracted from hook message text.
- * Mirrors the DiracSayHook interface but represents parsed data.
+ * Mirrors the IsaacSayHook interface but represents parsed data.
  */
 interface HookMetadata {
 	hookName: string
@@ -15,7 +15,7 @@ interface HookMetadata {
 type HookStatusSay = "hook" | "hook_status"
 type HookOutputStreamSay = "hook_output" | "hook_output_stream"
 
-function getSay(msg: DiracMessage): string | undefined {
+function getSay(msg: IsaacMessage): string | undefined {
 	// Back-compat: older recordings may be deserialized without strict typing.
 	return msg.say as string | undefined
 }
@@ -35,7 +35,7 @@ function isHookOutputStreamSay(say: string | undefined): say is HookOutputStream
 /**
  * Type guard to check if a message is a tool or command.
  */
-function isToolOrCommandMessage(msg: DiracMessage): boolean {
+function isToolOrCommandMessage(msg: IsaacMessage): boolean {
 	return msg.ask === "tool" || msg.say === "tool" || msg.ask === "command" || msg.say === "command"
 }
 
@@ -43,7 +43,7 @@ function isToolOrCommandMessage(msg: DiracMessage): boolean {
  * Safely parses hook metadata from a hook message.
  * Returns null if parsing fails or message is not a hook.
  */
-function parseHookMetadata(hookMessage: DiracMessage): HookMetadata | null {
+function parseHookMetadata(hookMessage: IsaacMessage): HookMetadata | null {
 	if (!isHookStatusSay(getSay(hookMessage)) || !hookMessage.text) {
 		return null
 	}
@@ -69,7 +69,7 @@ function parseHookMetadata(hookMessage: DiracMessage): HookMetadata | null {
  * This preserves streaming partial tool rows in the UI while still preventing
  * duplicate tool/command entries when both partial and final variants exist.
  */
-function dedupeToolOrCommandMessagesByTimestamp(messages: DiracMessage[]): DiracMessage[] {
+function dedupeToolOrCommandMessagesByTimestamp(messages: IsaacMessage[]): IsaacMessage[] {
 	const lastToolOrCommandIndexByTs = new Map<number, number>()
 
 	for (let i = 0; i < messages.length; i++) {
@@ -95,10 +95,10 @@ function dedupeToolOrCommandMessagesByTimestamp(messages: DiracMessage[]): Dirac
  * @returns Object containing the combined message and the next index to process
  */
 function combineHookWithOutputs(
-	hookMessage: DiracMessage,
+	hookMessage: IsaacMessage,
 	startIndex: number,
-	messages: DiracMessage[],
-): { combined: DiracMessage; nextIndex: number } {
+	messages: IsaacMessage[],
+): { combined: IsaacMessage; nextIndex: number } {
 	let combinedText = hookMessage.text || ""
 	let hasOutput = false
 	let i = startIndex + 1
@@ -135,9 +135,9 @@ function combineHookWithOutputs(
  * 1. Scan through and combine each hook with its outputs
  * 2. Build final array without hook_output messages, using combined hooks
  */
-function combineAllHooks(messages: DiracMessage[]): DiracMessage[] {
+function combineAllHooks(messages: IsaacMessage[]): IsaacMessage[] {
 	// Pass 1: Build map of combined hooks by timestamp
-	const combinedHooksByTs = new Map<number, DiracMessage>()
+	const combinedHooksByTs = new Map<number, IsaacMessage>()
 
 	for (let i = 0; i < messages.length; i++) {
 		if (isHookStatusSay(getSay(messages[i]))) {
@@ -148,7 +148,7 @@ function combineAllHooks(messages: DiracMessage[]): DiracMessage[] {
 	}
 
 	// Pass 2: Build result array
-	const result: DiracMessage[] = []
+	const result: IsaacMessage[] = []
 
 	for (const msg of messages) {
 		const say = getSay(msg)
@@ -180,7 +180,7 @@ function combineAllHooks(messages: DiracMessage[]): DiracMessage[] {
  * @param messages The original messages array (may include partial tools)
  * @returns The timestamp of the immediate next tool, or null if none found
  */
-function findImmediateNextToolTimestamp(hookIndex: number, messages: DiracMessage[]): number | null {
+function findImmediateNextToolTimestamp(hookIndex: number, messages: IsaacMessage[]): number | null {
 	for (let i = hookIndex + 1; i < messages.length; i++) {
 		const msg = messages[i]
 
@@ -216,8 +216,8 @@ function findImmediateNextToolTimestamp(hookIndex: number, messages: DiracMessag
  * @param originalMessages Original messages array (used to find tools)
  * @returns Map of tool timestamp -> array of PreToolUse hooks for that tool
  */
-function buildPreToolUseMap(processedMessages: DiracMessage[], originalMessages: DiracMessage[]): Map<number, DiracMessage[]> {
-	const map = new Map<number, DiracMessage[]>()
+function buildPreToolUseMap(processedMessages: IsaacMessage[], originalMessages: IsaacMessage[]): Map<number, IsaacMessage[]> {
+	const map = new Map<number, IsaacMessage[]>()
 
 	// Build timestamp-to-index map once to avoid O(n) findIndex calls
 	const timestampToIndex = new Map<number, number>()
@@ -277,8 +277,8 @@ function buildPreToolUseMap(processedMessages: DiracMessage[], originalMessages:
  * @param preToolUseMap Map of tool timestamp -> PreToolUse hooks
  * @returns Reordered messages array
  */
-function reorderWithPreToolUseHooks(messages: DiracMessage[], preToolUseMap: Map<number, DiracMessage[]>): DiracMessage[] {
-	const result: DiracMessage[] = []
+function reorderWithPreToolUseHooks(messages: IsaacMessage[], preToolUseMap: Map<number, IsaacMessage[]>): IsaacMessage[] {
+	const result: IsaacMessage[] = []
 	const addedHooks = new Set<number>()
 	const addedTools = new Set<number>()
 
@@ -352,10 +352,10 @@ function reorderWithPreToolUseHooks(messages: DiracMessage[], preToolUseMap: Map
  * 3. Build mapping of tools to their PreToolUse hooks
  * 4. Reorder so PreToolUse hooks appear before their tools
  *
- * @param messages Array of DiracMessage objects to process
+ * @param messages Array of IsaacMessage objects to process
  * @returns New array with hooks combined and PreToolUse hooks reordered
  */
-export function combineHookSequences(messages: DiracMessage[]): DiracMessage[] {
+export function combineHookSequences(messages: IsaacMessage[]): IsaacMessage[] {
 	// Phase 1: Deduplicate tool/command messages while preserving streaming partials
 	const filtered = dedupeToolOrCommandMessagesByTimestamp(messages)
 

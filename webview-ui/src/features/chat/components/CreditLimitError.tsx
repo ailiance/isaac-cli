@@ -1,7 +1,7 @@
-import { AskResponseRequest } from "@shared/proto/dirac/task"
+import { AskResponseRequest } from "@shared/proto/isaac/task"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import React, { useEffect, useMemo, useState } from "react"
-import { useDiracAuth } from "@/context/DiracAuthContext"
+import { useIsaacAuth } from "@/context/IsaacAuthContext"
 import { TaskServiceClient } from "@/shared/api/grpc-client"
 import VSCodeButtonLink from "@/shared/ui/VSCodeButtonLink"
 
@@ -25,7 +25,7 @@ const CreditLimitError: React.FC<CreditLimitErrorProps> = ({
 	totalPromotions,
 	totalSpent,
 }) => {
-	const { activeOrganization } = useDiracAuth()
+	const { activeOrganization } = useIsaacAuth()
 	const [fullBuyCreditsUrl, setFullBuyCreditsUrl] = useState<string>("")
 
 	const dashboardUrl = useMemo(() => {

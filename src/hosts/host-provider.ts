@@ -1,4 +1,4 @@
-import { DiracWebviewProvider } from "@/core/webview"
+import { IsaacWebviewProvider } from "@/core/webview"
 import { CommentReviewController } from "@/integrations/editor/CommentReviewController"
 import { DiffViewProvider } from "@/integrations/editor/DiffViewProvider"
 import { ITerminalManager } from "@/integrations/terminal/types"
@@ -20,7 +20,7 @@ export class HostProvider {
 	private static instance: HostProvider | null = null
 
 	diracType: "cli" | "extension"
-	createDiracWebviewProvider: DiracWebviewProviderCreator
+	createIsaacWebviewProvider: IsaacWebviewProviderCreator
 	createDiffViewProvider: DiffViewProviderCreator
 	createCommentReviewController: CommentReviewControllerCreator
 	createTerminalManager: TerminalManagerCreator
@@ -29,7 +29,7 @@ export class HostProvider {
 	// Logs to a user-visible output channel.
 	logToChannel: LogToChannel
 
-	// Returns a callback URL that will redirect to Dirac.
+	// Returns a callback URL that will redirect to Isaac.
 	// The path parameter specifies the route for the callback (e.g., "/auth", "/openrouter").
 	// The optional preferredPort parameter hints that the provider should try to bind
 	// this specific port first (used to preserve OAuth client registrations across sessions).
@@ -52,7 +52,7 @@ export class HostProvider {
 	// Private constructor to enforce singleton pattern
 	private constructor(
 		diracType: "cli" | "extension",
-		createDiracWebviewProvider: DiracWebviewProviderCreator,
+		createIsaacWebviewProvider: IsaacWebviewProviderCreator,
 		createDiffViewProvider: DiffViewProviderCreator,
 		createCommentReviewController: CommentReviewControllerCreator,
 		createTerminalManager: TerminalManagerCreator,
@@ -65,7 +65,7 @@ export class HostProvider {
 		getEnvironmentVariables: GetEnvironmentVariables,
 	) {
 		this.diracType = diracType
-		this.createDiracWebviewProvider = createDiracWebviewProvider
+		this.createIsaacWebviewProvider = createIsaacWebviewProvider
 		this.createDiffViewProvider = createDiffViewProvider
 		this.createCommentReviewController = createCommentReviewController
 		this.createTerminalManager = createTerminalManager
@@ -80,7 +80,7 @@ export class HostProvider {
 
 	public static initialize(
 		diracType: "cli" | "extension",
-		webviewProviderCreator: DiracWebviewProviderCreator,
+		webviewProviderCreator: IsaacWebviewProviderCreator,
 		diffViewProviderCreator: DiffViewProviderCreator,
 		commentReviewControllerCreator: CommentReviewControllerCreator,
 		terminalManagerCreator: TerminalManagerCreator,
@@ -152,9 +152,9 @@ export class HostProvider {
 }
 
 /**
- * A function that creates DiracWebviewProvider instances
+ * A function that creates IsaacWebviewProvider instances
  */
-export type DiracWebviewProviderCreator = () => DiracWebviewProvider
+export type IsaacWebviewProviderCreator = () => IsaacWebviewProvider
 
 /**
  * A function that creates DiffViewProvider instances

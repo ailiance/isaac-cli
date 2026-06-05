@@ -1,4 +1,4 @@
-import { RefreshedSkills, SkillInfo } from "@shared/proto/dirac/file"
+import { RefreshedSkills, SkillInfo } from "@shared/proto/isaac/file"
 import { parseYamlFrontmatter } from "@utils/frontmatter"
 import { Logger } from "@/shared/services/Logger"
 import fs from "fs/promises"

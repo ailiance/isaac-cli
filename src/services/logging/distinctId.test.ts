@@ -39,7 +39,7 @@ describe("distinctId", () => {
 
 			HostProvider.initialize(
 				"extension",
-				() => null as any, // createDiracWebviewProvider
+				() => null as any, // createIsaacWebviewProvider
 				() => null as any, // createDiffViewProvider
 				() => null as any, // createCommentReviewController
 				() => null as any, // createTerminalManager

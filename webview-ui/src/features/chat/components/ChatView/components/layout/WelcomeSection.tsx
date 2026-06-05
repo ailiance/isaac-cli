@@ -1,10 +1,10 @@
 import { BANNER_DATA, BannerAction, BannerActionType, BannerCardData } from "@shared/dirac/banner"
-import { EmptyRequest } from "@shared/proto/dirac/common"
-import type { Worktree } from "@shared/proto/dirac/worktree"
-import { TrackWorktreeViewOpenedRequest } from "@shared/proto/dirac/worktree"
+import { EmptyRequest } from "@shared/proto/isaac/common"
+import type { Worktree } from "@shared/proto/isaac/worktree"
+import { TrackWorktreeViewOpenedRequest } from "@shared/proto/isaac/worktree"
 import { GitBranch } from "lucide-react"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { useDiracAuth } from "@/context/DiracAuthContext"
+import { useIsaacAuth } from "@/context/IsaacAuthContext"
 import HistoryPreview from "@/features/history/components/HistoryPreview"
 import { useApiConfigurationHandlers } from "@/features/settings/components/utils/useApiConfigurationHandlers"
 import { useSettingsStore } from "@/features/settings/store/settingsStore"
@@ -56,7 +56,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
 			.catch(() => setIsGitRepo(false))
 	}, [])
 
-	const { diracUser } = useDiracAuth()
+	const { diracUser } = useIsaacAuth()
 	const {
 		openRouterModels,
 		navigateToSettings,
@@ -158,8 +158,8 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
 				return false
 			}
 
-			if (banner.isDiracUserOnly !== undefined) {
-				return banner.isDiracUserOnly === !!diracUser
+			if (banner.isIsaacUserOnly !== undefined) {
+				return banner.isIsaacUserOnly === !!diracUser
 			}
 
 			if (banner.platforms && !banner.platforms.includes(getCurrentPlatform())) {
@@ -215,7 +215,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
 					break
 
 				case BannerActionType.InstallCli:
-					StateServiceClient.installDiracCli({}).catch((error) =>
+					StateServiceClient.installIsaacCli({}).catch((error) =>
 						console.error("Failed to initiate CLI installation:", error),
 					)
 					break
@@ -300,7 +300,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
 									</TooltipTrigger>
 									<TooltipContent side="top">
 										Create a new git worktree and open it in a separate window. Great for running parallel
-										Dirac tasks.
+										Isaac tasks.
 									</TooltipContent>
 								</Tooltip>
 								*/}
@@ -322,7 +322,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
 										</button>
 									</TooltipTrigger>
 									<TooltipContent side="bottom">
-										View and manage git worktrees. Great for running parallel Dirac tasks.
+										View and manage git worktrees. Great for running parallel Isaac tasks.
 									</TooltipContent>
 								</Tooltip>
 							)}
@@ -331,7 +331,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
 				</div>
 					<div className="flex flex-col items-center gap-2 mt-4 px-5 mb-4">
 						<p className="text-xs text-[var(--vscode-descriptionForeground)] text-center">
-							Questions about Dirac? Query the code (v{version}) directly using <span className="text-[var(--vscode-textLink-foreground)] font-mono">/askDirac</span>
+							Questions about Isaac? Query the code (v{version}) directly using <span className="text-[var(--vscode-textLink-foreground)] font-mono">/askIsaac</span>
 						</p>
 					</div>
 

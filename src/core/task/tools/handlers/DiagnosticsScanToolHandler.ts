@@ -4,8 +4,8 @@ import { arePathsEqual } from "@/utils/path"
 import { ToolUse } from "@core/assistant-message"
 import { HostProvider } from "@/hosts/host-provider"
 import { resolveWorkspacePath } from "@core/workspace"
-import { Diagnostic, DiagnosticSeverity, FileDiagnostics } from "@/shared/proto/index.dirac"
-import { DiracDefaultTool } from "@/shared/tools"
+import { Diagnostic, DiagnosticSeverity, FileDiagnostics } from "@/shared/proto/index.isaac"
+import { IsaacDefaultTool } from "@/shared/tools"
 import { telemetryService } from "@/services/telemetry"
 
 import { ToolResponse } from "../../index"
@@ -16,7 +16,7 @@ import { TaskConfig } from "../types/TaskConfig"
 import { StronglyTypedUIHelpers } from "../types/UIHelpers"
 
 export class DiagnosticsScanToolHandler implements IFullyManagedTool {
-	readonly name = DiracDefaultTool.DIAGNOSTICS_SCAN
+	readonly name = IsaacDefaultTool.DIAGNOSTICS_SCAN
 
 	public baseDiagnosticsTimeoutMs = 2000
 	public diagnosticsDelayMs = 500

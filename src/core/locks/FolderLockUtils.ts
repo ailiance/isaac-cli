@@ -26,7 +26,7 @@ export const DEFAULT_RETRY_CONFIG: FolderLockRetryConfig = {
 /**
  * Get the lock manager instance.
  *
- * The standalone Dirac host (which previously provided a shared SqliteLockManager
+ * The standalone Isaac host (which previously provided a shared SqliteLockManager
  * via `setLockManager`) has been removed, so no global lock manager is registered.
  * Kept as a no-op hook so callers retain the same `undefined`-on-unavailable contract.
  */

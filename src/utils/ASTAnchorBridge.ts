@@ -1,6 +1,6 @@
 import fs from "fs/promises"
 import * as path from "path"
-import { DiracIgnoreController } from "../core/ignore/DiracIgnoreController"
+import { IsaacIgnoreController } from "../core/ignore/IsaacIgnoreController"
 import { SymbolContextResolver } from "../core/task/tools/utils/SymbolContextResolver"
 import { parseFile } from "../services/tree-sitter"
 import { loadRequiredLanguageParsers } from "../services/tree-sitter/languageParser"
@@ -25,7 +25,7 @@ export class ASTAnchorBridge {
 	 */
 	public static async getFileSkeleton(
 		absolutePath: string,
-		diracIgnoreController?: DiracIgnoreController,
+		diracIgnoreController?: IsaacIgnoreController,
 		taskId?: string,
 		options?: { showCallGraph?: boolean },
 	): Promise<string | null> {
@@ -77,7 +77,7 @@ export class ASTAnchorBridge {
 		absolutePath: string,
 		relPath: string,
 		functionNames: string[],
-		diracIgnoreController?: DiracIgnoreController,
+		diracIgnoreController?: IsaacIgnoreController,
 		taskId?: string,
 	): Promise<GetFunctionsResult | null> {
 		if (diracIgnoreController && !diracIgnoreController.validateAccess(absolutePath)) {
@@ -211,7 +211,7 @@ export class ASTAnchorBridge {
 		absolutePath: string,
 		symbol: string,
 		type?: string,
-		diracIgnoreController?: DiracIgnoreController,
+		diracIgnoreController?: IsaacIgnoreController,
 		taskId?: string,
 	): Promise<SymbolRange | null> {
 		if (diracIgnoreController && !diracIgnoreController.validateAccess(absolutePath)) {

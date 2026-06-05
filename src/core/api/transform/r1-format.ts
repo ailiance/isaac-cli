@@ -1,6 +1,6 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
-import { DiracAssistantThinkingBlock, DiracStorageMessage } from "@/shared/messages/content"
+import { IsaacAssistantThinkingBlock, IsaacStorageMessage } from "@/shared/messages/content"
 
 /**
  * DeepSeek Reasoner message format with reasoning_content support.
@@ -14,7 +14,7 @@ export type DeepSeekReasonerMessage =
 
 export function addReasoningContent(
 	openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[],
-	originalMessages: DiracStorageMessage[],
+	originalMessages: IsaacStorageMessage[],
 	options?: { onlyIfToolCall?: boolean },
 ): DeepSeekReasonerMessage[] {
 
@@ -27,7 +27,7 @@ export function addReasoningContent(
 			let hasToolCall = false
 			if (Array.isArray(msg.content)) {
 				thinking = msg.content
-					.filter((p): p is DiracAssistantThinkingBlock => p.type === "thinking")
+					.filter((p): p is IsaacAssistantThinkingBlock => p.type === "thinking")
 					.map((p) => p.thinking)
 					.join("\n")
 				hasToolCall = msg.content.some((p) => p.type === "tool_use")

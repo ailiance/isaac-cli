@@ -1,7 +1,7 @@
 import { TooltipContent, TooltipTrigger } from "@radix-ui/react-tooltip"
 import { azureOpenAiDefaultApiVersion, openAiModelInfoSaneDefaults } from "@shared/api"
 import { Mode } from "@shared/ExtensionMessage"
-import { OpenAiModelsRequest } from "@shared/proto/dirac/models"
+import { OpenAiModelsRequest } from "@shared/proto/isaac/models"
 import { VSCodeButton, VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
@@ -397,7 +397,7 @@ export const OpenAICompatibleProvider = ({ showModelOptions, isPopup, currentMod
 					color: "var(--vscode-descriptionForeground)",
 				}}>
 				<span style={{ color: "var(--vscode-errorForeground)" }}>
-					(<span style={{ fontWeight: 500 }}>Note:</span> Dirac uses complex prompts and works best with Claude models.
+					(<span style={{ fontWeight: 500 }}>Note:</span> Isaac uses complex prompts and works best with Claude models.
 					Less capable models may not work as expected.)
 				</span>
 			</p>

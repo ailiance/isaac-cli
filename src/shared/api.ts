@@ -1,4 +1,4 @@
-import { ApiFormat } from "./proto/dirac/models"
+import { ApiFormat } from "./proto/isaac/models"
 import type { ApiHandlerSettings } from "./storage/state-keys"
 
 /**

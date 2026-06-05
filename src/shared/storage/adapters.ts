@@ -1,6 +1,6 @@
 import { AwsClient } from "aws4fetch"
 import { Logger } from "../services/Logger"
-import type { BlobStoreSettings } from "./DiracBlobStorage"
+import type { BlobStoreSettings } from "./IsaacBlobStorage"
 
 export interface StorageAdapter {
 	read(path: string): Promise<string | undefined>

@@ -2,7 +2,7 @@ import { strict as assert } from "node:assert"
 import fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
-import { DiracDefaultTool } from "@shared/tools"
+import { IsaacDefaultTool } from "@shared/tools"
 import { ANCHOR_DELIMITER } from "@shared/utils/line-hashing"
 import { AnchorStateManager } from "@utils/AnchorStateManager"
 import * as pathUtils from "@utils/path"
@@ -113,7 +113,7 @@ function createConfig() {
 			},
 			fileContextTracker: {
 				trackFileContext: sinon.stub().resolves(),
-				markFileAsEditedByDirac: sinon.stub(),
+				markFileAsEditedByIsaac: sinon.stub(),
 			},
 			browserSession: {},
 			urlContentFetcher: {},
@@ -137,7 +137,7 @@ function makeMultiEditBlock(
 ) {
 	return {
 		type: "tool_use" as const,
-		name: DiracDefaultTool.EDIT_FILE,
+		name: IsaacDefaultTool.EDIT_FILE,
 		params: {
 			files: [
 				{

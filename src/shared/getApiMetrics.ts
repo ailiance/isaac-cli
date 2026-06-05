@@ -1,4 +1,4 @@
-import { DiracApiReqInfo, DiracMessage } from "./ExtensionMessage"
+import { IsaacApiReqInfo, IsaacMessage } from "./ExtensionMessage"
 
 interface ApiMetrics {
 	totalTokensIn: number
@@ -10,7 +10,7 @@ interface ApiMetrics {
 }
 
 /**
- * Calculates API metrics from an array of DiracMessages.
+ * Calculates API metrics from an array of IsaacMessages.
  *
  * This function processes usage-carrying say messages.
  * It includes:
@@ -19,7 +19,7 @@ interface ApiMetrics {
  * - 'subagent_usage' messages, which are aggregated usage snapshots emitted by subagent batches
  * It extracts and sums up the tokensIn, tokensOut, cacheWrites, cacheReads, and cost from these messages.
  *
- * @param messages - An array of DiracMessage objects to process.
+ * @param messages - An array of IsaacMessage objects to process.
  * @returns An ApiMetrics object containing totalTokensIn, totalTokensOut, totalCacheWrites, totalCacheReads, and totalCost.
  *
  * @example
@@ -29,7 +29,7 @@ interface ApiMetrics {
  * const { totalTokensIn, totalTokensOut, totalCost } = getApiMetrics(messages);
  * // Result: { totalTokensIn: 10, totalTokensOut: 20, totalCost: 0.005 }
  */
-export function getApiMetrics(messages: DiracMessage[]): ApiMetrics {
+export function getApiMetrics(messages: IsaacMessage[]): ApiMetrics {
 	const result: ApiMetrics = {
 		totalTokensIn: 0,
 		totalTokensOut: 0,
@@ -82,10 +82,10 @@ export function getApiMetrics(messages: DiracMessage[]): ApiMetrics {
  * This is used for context window progress display - it shows how much of the
  * context window is used in the current/most recent request, not cumulative totals.
  *
- * @param messages - An array of DiracMessage objects to process.
+ * @param messages - An array of IsaacMessage objects to process.
  * @returns The total tokens (tokensIn + tokensOut + cacheWrites + cacheReads) from the last api_req_started message, or 0 if none found.
  */
-export function getLastApiReqTotalTokens(messages: DiracMessage[]): number {
+export function getLastApiReqTotalTokens(messages: IsaacMessage[]): number {
 	for (let i = messages.length - 1; i >= 0; i--) {
 		const msg = messages[i]
 		if (msg.type === "say" && msg.say === "api_req_started" && msg.text) {
@@ -109,15 +109,15 @@ export function getLastApiReqTotalTokens(messages: DiracMessage[]): number {
  * This is used for context window progress display - it shows how much of the
  * context window is used in the current/most recent request, not cumulative totals.
  *
- * @param messages - An array of DiracMessage objects to process.
- * @returns A DiracApiReqInfo object from the last api_req_started message, or undefined if none found.
+ * @param messages - An array of IsaacMessage objects to process.
+ * @returns A IsaacApiReqInfo object from the last api_req_started message, or undefined if none found.
  */
-export function getLastApiReqInfo(messages: DiracMessage[]): DiracApiReqInfo | undefined {
+export function getLastApiReqInfo(messages: IsaacMessage[]): IsaacApiReqInfo | undefined {
 	for (let i = messages.length - 1; i >= 0; i--) {
 		const msg = messages[i]
 		if (msg.type === "say" && msg.say === "api_req_started" && msg.text) {
 			try {
-				const info: DiracApiReqInfo = JSON.parse(msg.text)
+				const info: IsaacApiReqInfo = JSON.parse(msg.text)
 				const total = (info.tokensIn || 0) + (info.tokensOut || 0) + (info.cacheWrites || 0) + (info.cacheReads || 0)
 				if (total > 0) {
 					return info

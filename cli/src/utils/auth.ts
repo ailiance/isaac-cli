@@ -45,7 +45,7 @@ export async function checkAnyProviderConfigured(): Promise<boolean> {
 	const stateManager = StateManager.get()
 	const config = stateManager.getApiConfiguration() as Record<string, unknown>
 
-	// Check Dirac account (stored as "dirac:diracAccountId" in secrets, loaded into config)
+	// Check Isaac account (stored as "dirac:diracAccountId" in secrets, loaded into config)
 	if (config["diracApiKey"] || config["dirac:diracAccountId"]) return true
 
 	// Check OpenAI Codex OAuth (stored in SECRETS_KEYS, loaded into config)

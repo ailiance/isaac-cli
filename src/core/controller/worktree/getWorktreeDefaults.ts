@@ -1,5 +1,5 @@
-import { EmptyRequest } from "@shared/proto/dirac/common"
-import { WorktreeDefaults } from "@shared/proto/dirac/worktree"
+import { EmptyRequest } from "@shared/proto/isaac/common"
+import { WorktreeDefaults } from "@shared/proto/isaac/worktree"
 import { getWorkspacePath } from "@utils/path"
 import path from "path"
 import { getDocumentsPath } from "@/core/storage/disk"
@@ -30,7 +30,7 @@ export async function getWorktreeDefaults(_controller: Controller, _request: Emp
 	// Generate suggested branch name
 	const suggestedBranch = `worktree/dirac-${suffix}`
 
-	// Generate suggested path in Documents/Dirac/Worktrees/<project-name>-<suffix>
+	// Generate suggested path in Documents/Isaac/Worktrees/<project-name>-<suffix>
 	const documentsPath = await getDocumentsPath()
 	const cwd = await getWorkspacePath()
 
@@ -40,7 +40,7 @@ export async function getWorktreeDefaults(_controller: Controller, _request: Emp
 		projectName = path.basename(cwd)
 	}
 
-	const suggestedPath = path.join(documentsPath, "Dirac", "Worktrees", `${projectName}-${suffix}`)
+	const suggestedPath = path.join(documentsPath, "Isaac", "Worktrees", `${projectName}-${suffix}`)
 
 	return WorktreeDefaults.create({
 		suggestedBranch,

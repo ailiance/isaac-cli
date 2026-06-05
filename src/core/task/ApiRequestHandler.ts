@@ -2,9 +2,9 @@ import { setTimeout as setTimeoutPromise } from "node:timers/promises"
 import { ApiStream } from "@core/api/transform/stream"
 import { checkContextWindowExceededError } from "@core/context/context-management/context-error-handling"
 import {
-	getGlobalDiracRules,
-	getLocalDiracRules,
-	refreshDiracRulesToggles,
+	getGlobalIsaacRules,
+	getLocalIsaacRules,
+	refreshIsaacRulesToggles,
 } from "@core/context/instructions/user-instructions/dirac-rules"
 import {
 	getLocalAgentsRules,
@@ -19,14 +19,14 @@ import { getSystemPrompt } from "@core/prompts/system-prompt"
 import { ensureRulesDirectoryExists, ensureTaskDirectoryExists } from "@core/storage/disk"
 import { isMultiRootEnabled } from "@core/workspace/multi-root-utils"
 import { HostProvider } from "@hosts/host-provider"
-import { DiracError, DiracErrorType, ErrorService } from "@services/error"
+import { IsaacError, IsaacErrorType, ErrorService } from "@services/error"
 import { featureFlagsService } from "@services/feature-flags"
 import { findLastIndex } from "@shared/array"
-import { DiracClient } from "@shared/dirac"
-import { DiracApiReqInfo } from "@shared/ExtensionMessage"
+import { IsaacClient } from "@shared/dirac"
+import { IsaacApiReqInfo } from "@shared/ExtensionMessage"
 import { DEFAULT_LANGUAGE_SETTINGS, getLanguageKey, LanguageDisplay } from "@shared/Languages"
 import { Logger } from "@shared/services/Logger"
-import { DiracAskResponse } from "@shared/WebviewMessage"
+import { IsaacAskResponse } from "@shared/WebviewMessage"
 import fs from "fs/promises"
 import * as path from "path"
 import { getAvailableCores } from "@/utils/os"
@@ -60,7 +60,7 @@ export class ApiRequestHandler {
 		const providerInfo = this.ctx.getCurrentProviderInfo()
 		const host = await HostProvider.env.getHostVersion({})
 		const ide = host?.platform || "Unknown"
-		const isCliEnvironment = host.diracType === DiracClient.Cli
+		const isCliEnvironment = host.diracType === IsaacClient.Cli
 		const browserSettings = this.ctx.stateManager.getGlobalSettingsKey("browserSettings")
 		const disableBrowserTool = browserSettings.disableToolUse ?? false
 		// dirac browser tool uses image recognition for navigation (requires model image support).
@@ -74,7 +74,7 @@ export class ApiRequestHandler {
 				? `# Preferred Language\n\nSpeak in ${preferredLanguage}.`
 				: ""
 
-		const { globalToggles, localToggles } = await refreshDiracRulesToggles(this.ctx.controller, this.ctx.cwd)
+		const { globalToggles, localToggles } = await refreshIsaacRulesToggles(this.ctx.controller, this.ctx.cwd)
 		const { windsurfLocalToggles, cursorLocalToggles, agentsLocalToggles } = await refreshExternalRulesToggles(
 			this.ctx.controller,
 			this.ctx.cwd,
@@ -86,12 +86,12 @@ export class ApiRequestHandler {
 			workspaceManager: this.ctx.workspaceManager,
 		})
 
-		const globalDiracRulesFilePath = await ensureRulesDirectoryExists()
-		const globalRules = await getGlobalDiracRules(globalDiracRulesFilePath, globalToggles, { evaluationContext })
-		const globalDiracRulesFileInstructions = globalRules.instructions
+		const globalIsaacRulesFilePath = await ensureRulesDirectoryExists()
+		const globalRules = await getGlobalIsaacRules(globalIsaacRulesFilePath, globalToggles, { evaluationContext })
+		const globalIsaacRulesFileInstructions = globalRules.instructions
 
-		const localRules = await getLocalDiracRules(this.ctx.cwd, localToggles, { evaluationContext })
-		const localDiracRulesFileInstructions = localRules.instructions
+		const localRules = await getLocalIsaacRules(this.ctx.cwd, localToggles, { evaluationContext })
+		const localIsaacRulesFileInstructions = localRules.instructions
 		const [localCursorRulesFileInstructions, localCursorRulesDirInstructions] = await getLocalCursorRules(
 			this.ctx.cwd,
 			cursorLocalToggles,
@@ -182,8 +182,8 @@ export class ApiRequestHandler {
 			editorTabs,
 			supportsBrowserUse,
 			skills: availableSkills,
-			globalDiracRulesFileInstructions,
-			localDiracRulesFileInstructions,
+			globalIsaacRulesFileInstructions,
+			localIsaacRulesFileInstructions,
 			localCursorRulesFileInstructions,
 			localCursorRulesDirInstructions,
 			localWindsurfRulesFileInstructions,
@@ -221,7 +221,7 @@ export class ApiRequestHandler {
 
 		const contextManagementMetadata = await this.ctx.contextManager.getNewContextMessagesAndMetadata(
 			this.ctx.messageStateHandler.getApiConversationHistory(),
-			this.ctx.messageStateHandler.getDiracMessages(),
+			this.ctx.messageStateHandler.getIsaacMessages(),
 			this.ctx.api,
 			this.taskState.conversationHistoryDeletedRange,
 			previousApiReqIndex,
@@ -239,7 +239,7 @@ export class ApiRequestHandler {
 
 		if (contextManagementMetadata.updatedConversationHistoryDeletedRange) {
 			this.taskState.conversationHistoryDeletedRange = contextManagementMetadata.conversationHistoryDeletedRange
-			await this.ctx.messageStateHandler.saveDiracMessagesAndUpdateHistory()
+			await this.ctx.messageStateHandler.saveIsaacMessagesAndUpdateHistory()
 			// saves task history item which we use to keep track of conversation history deleted range
 		}
 
@@ -283,7 +283,7 @@ ${notice}`
 		} catch (error) {
 			const isContextWindowExceededError = checkContextWindowExceededError(error)
 			const { model, providerId } = this.ctx.getCurrentProviderInfo()
-			const diracError = ErrorService.get().toDiracError(error, model.id, providerId)
+			const diracError = ErrorService.get().toIsaacError(error, model.id, providerId)
 
 			// Capture provider failure telemetry using diracError
 			ErrorService.get().logMessage(diracError.message)
@@ -312,34 +312,34 @@ ${notice}`
 
 				// Update the 'api_req_started' message to reflect final failure before asking user to manually retry
 				const lastApiReqStartedIndex = findLastIndex(
-					this.ctx.messageStateHandler.getDiracMessages(),
+					this.ctx.messageStateHandler.getIsaacMessages(),
 					(m) => m.say === "api_req_started",
 				)
 				if (lastApiReqStartedIndex !== -1) {
-					const diracMessages = this.ctx.messageStateHandler.getDiracMessages()
-					const currentApiReqInfo: DiracApiReqInfo = JSON.parse(diracMessages[lastApiReqStartedIndex].text || "{}")
+					const diracMessages = this.ctx.messageStateHandler.getIsaacMessages()
+					const currentApiReqInfo: IsaacApiReqInfo = JSON.parse(diracMessages[lastApiReqStartedIndex].text || "{}")
 					delete currentApiReqInfo.retryStatus
 
-					await this.ctx.messageStateHandler.updateDiracMessage(lastApiReqStartedIndex, {
+					await this.ctx.messageStateHandler.updateIsaacMessage(lastApiReqStartedIndex, {
 						text: JSON.stringify({
 							...currentApiReqInfo, // Spread the modified info (with retryStatus removed)
 							// cancelReason: "retries_exhausted", // Indicate that automatic retries failed
 							streamingFailedMessage,
-						} satisfies DiracApiReqInfo),
+						} satisfies IsaacApiReqInfo),
 					})
 					// this.ctx.ask will trigger postStateToWebview, so this change should be picked up.
 				}
 
-				const isAuthError = diracError.isErrorType(DiracErrorType.Auth)
+				const isAuthError = diracError.isErrorType(IsaacErrorType.Auth)
 
-				// Check if this is a Dirac provider insufficient credits error - don't auto-retry these
-				const isDiracProviderInsufficientCredits = (() => {
+				// Check if this is a Isaac provider insufficient credits error - don't auto-retry these
+				const isIsaacProviderInsufficientCredits = (() => {
 					if (providerId !== "dirac") {
 						return false
 					}
 					try {
-						const parsedError = DiracError.transform(error, model.id, providerId)
-						return parsedError.isErrorType(DiracErrorType.Balance)
+						const parsedError = IsaacError.transform(error, model.id, providerId)
+						return parsedError.isErrorType(IsaacErrorType.Balance)
 					} catch {
 						return false
 					}
@@ -362,11 +362,11 @@ ${notice}`
 					return status === 400 || status === 404 || status === 422 || status === 501
 				})()
 
-				let response: DiracAskResponse
+				let response: IsaacAskResponse
 				// Skip auto-retry for: insufficient credits, auth errors, or
 				// permanent client errors.
 				if (
-					!isDiracProviderInsufficientCredits &&
+					!isIsaacProviderInsufficientCredits &&
 					!isAuthError &&
 					!isPermanentClientError &&
 					this.taskState.autoRetryAttempts < 3
@@ -391,7 +391,7 @@ ${notice}`
 						cancelReason: "streaming_failed",
 						streamingFailedMessage,
 					})
-					await this.ctx.messageStateHandler.saveDiracMessagesAndUpdateHistory()
+					await this.ctx.messageStateHandler.saveIsaacMessagesAndUpdateHistory()
 					await this.ctx.postStateToWebview()
 
 					response = "yesButtonClicked"
@@ -408,14 +408,14 @@ ${notice}`
 					// Clear streamingFailedMessage now that error_retry contains it
 					// This prevents showing the error in both ErrorRow and error_retry
 					const autoRetryApiReqIndex = findLastIndex(
-						this.ctx.messageStateHandler.getDiracMessages(),
+						this.ctx.messageStateHandler.getIsaacMessages(),
 						(m) => m.say === "api_req_started",
 					)
 					if (autoRetryApiReqIndex !== -1) {
-						const diracMessages = this.ctx.messageStateHandler.getDiracMessages()
-						const currentApiReqInfo: DiracApiReqInfo = JSON.parse(diracMessages[autoRetryApiReqIndex].text || "{}")
+						const diracMessages = this.ctx.messageStateHandler.getIsaacMessages()
+						const currentApiReqInfo: IsaacApiReqInfo = JSON.parse(diracMessages[autoRetryApiReqIndex].text || "{}")
 						delete currentApiReqInfo.streamingFailedMessage
-						await this.ctx.messageStateHandler.updateDiracMessage(autoRetryApiReqIndex, {
+						await this.ctx.messageStateHandler.updateIsaacMessage(autoRetryApiReqIndex, {
 							text: JSON.stringify(currentApiReqInfo),
 						})
 					}
@@ -423,7 +423,7 @@ ${notice}`
 					await setTimeoutPromise(delay)
 				} else {
 					// Show error_retry with failed flag to indicate all retries exhausted (but not for insufficient credits)
-					if (!isDiracProviderInsufficientCredits && !isAuthError) {
+					if (!isIsaacProviderInsufficientCredits && !isAuthError) {
 						// For permanent client errors, mark attempt=1 to signal
 						// "fail-fast, no retries attempted" so the UI does not
 						// claim 3 retries were tried.
@@ -454,14 +454,14 @@ ${notice}`
 
 				// Clear streamingFailedMessage when user manually retries
 				const manualRetryApiReqIndex = findLastIndex(
-					this.ctx.messageStateHandler.getDiracMessages(),
+					this.ctx.messageStateHandler.getIsaacMessages(),
 					(m) => m.say === "api_req_started",
 				)
 				if (manualRetryApiReqIndex !== -1) {
-					const diracMessages = this.ctx.messageStateHandler.getDiracMessages()
-					const currentApiReqInfo: DiracApiReqInfo = JSON.parse(diracMessages[manualRetryApiReqIndex].text || "{}")
+					const diracMessages = this.ctx.messageStateHandler.getIsaacMessages()
+					const currentApiReqInfo: IsaacApiReqInfo = JSON.parse(diracMessages[manualRetryApiReqIndex].text || "{}")
 					delete currentApiReqInfo.streamingFailedMessage
-					await this.ctx.messageStateHandler.updateDiracMessage(manualRetryApiReqIndex, {
+					await this.ctx.messageStateHandler.updateIsaacMessage(manualRetryApiReqIndex, {
 						text: JSON.stringify(currentApiReqInfo),
 					})
 				}

@@ -12,7 +12,7 @@
  * - Provides summary for environment details
  */
 
-import { DiracTempManager } from "@services/temp"
+import { IsaacTempManager } from "@services/temp"
 import * as fs from "fs"
 import { BACKGROUND_COMMAND_TIMEOUT_MS, DEFAULT_TERMINAL_OUTPUT_LINE_LIMIT } from "../constants"
 import type { BackgroundCommand, ITerminalManager, TerminalInfo, TerminalProcessResultPromise } from "../types"
@@ -167,7 +167,7 @@ export class StandaloneTerminalManager implements ITerminalManager {
 		// Create new terminal
 		const newTerminalInfo = this.registry.createTerminal({
 			cwd: cwd,
-			name: `Dirac Terminal ${this.registry.size + 1}`,
+			name: `Isaac Terminal ${this.registry.size + 1}`,
 			env: env,
 		})
 		this.terminalIds.add(newTerminalInfo.id)
@@ -412,8 +412,8 @@ export class StandaloneTerminalManager implements ITerminalManager {
 		existingOutput: string[] = [],
 	): BackgroundCommand {
 		const id = `background-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-		// Use DiracTempManager for proper temp file management and cleanup
-		const logFilePath = DiracTempManager.createTempFilePath("background")
+		// Use IsaacTempManager for proper temp file management and cleanup
+		const logFilePath = IsaacTempManager.createTempFilePath("background")
 
 		const backgroundCommand: BackgroundCommand = {
 			id,

@@ -1,4 +1,4 @@
-import type { StackPluginInfo } from "@shared/proto/dirac/stack"
+import type { StackPluginInfo } from "@shared/proto/isaac/stack"
 import { useStackStore } from "../store/stackStore"
 
 export function PluginsList() {

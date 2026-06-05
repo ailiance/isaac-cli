@@ -1,8 +1,8 @@
 import { ApiStream } from "@core/api/transform/stream"
 import { ToolUse } from "@core/assistant-message"
-import { DiracAsk, DiracSay, MultiCommandState } from "@shared/ExtensionMessage"
-import { DiracMessageModelInfo } from "@shared/messages/metrics"
-import { DiracAskResponse } from "@shared/WebviewMessage"
+import { IsaacAsk, IsaacSay, MultiCommandState } from "@shared/ExtensionMessage"
+import { IsaacMessageModelInfo } from "@shared/messages/metrics"
+import { IsaacAskResponse } from "@shared/WebviewMessage"
 import { ApiHandler, ApiProviderInfo } from "../../../core/api"
 import { ICheckpointManager } from "../../../integrations/checkpoints/types"
 import { DiffViewProvider } from "../../../integrations/editor/DiffViewProvider"
@@ -22,14 +22,14 @@ export interface AgentLoopRunnerContext {
 	// state
 	taskState: TaskState
 	// messaging
-	say: (type: DiracSay, text?: string, images?: string[], files?: string[], partial?: boolean) => Promise<number | undefined>
+	say: (type: IsaacSay, text?: string, images?: string[], files?: string[], partial?: boolean) => Promise<number | undefined>
 	ask: (
-		type: DiracAsk,
+		type: IsaacAsk,
 		text?: string,
 		partial?: boolean,
 		multiCommandState?: MultiCommandState,
 	) => Promise<{
-		response: DiracAskResponse
+		response: IsaacAskResponse
 		text?: string
 		images?: string[]
 		files?: string[]
@@ -72,11 +72,11 @@ export interface AgentLoopRunnerContext {
 			cacheReadTokens: number
 			totalCost?: number
 		}
-		modelInfo: DiracMessageModelInfo
+		modelInfo: IsaacMessageModelInfo
 		toolUseHandler: ReturnType<StreamResponseHandler["getHandlers"]>["toolUseHandler"]
 	}) => Promise<boolean>
 	handleEmptyAssistantResponse: (params: {
-		modelInfo: DiracMessageModelInfo
+		modelInfo: IsaacMessageModelInfo
 		taskMetrics: {
 			inputTokens: number
 			outputTokens: number

@@ -1,4 +1,4 @@
-import { TelemetrySettingEnum, TelemetrySettingRequest } from "@shared/proto/dirac/state"
+import { TelemetrySettingEnum, TelemetrySettingRequest } from "@shared/proto/isaac/state"
 import { useCallback } from "react"
 import { useSettingsStore } from "@/features/settings/store/settingsStore"
 import { StateServiceClient } from "@/shared/api/grpc-client"
@@ -21,10 +21,10 @@ export const TelemetryBanner: React.FC = () => {
 
 	return (
 		<div className="bg-banner-background text-banner-foreground px-3 py-2 flex flex-col gap-1 shrink-0 mb-1 relative text-sm m-4">
-			<h3 className="m-0">Help Improve Dirac</h3>
+			<h3 className="m-0">Help Improve Isaac</h3>
 			<i>(and access experimental features)</i>
 			<p className="m-0">
-				Dirac collects error and usage data to help us fix bugs and improve the extension. No code, prompts, or personal
+				Isaac collects error and usage data to help us fix bugs and improve the extension. No code, prompts, or personal
 				information is ever sent.
 			</p>
 			<p className="m-0">

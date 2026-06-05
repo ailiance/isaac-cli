@@ -72,7 +72,7 @@ export async function getCopilotToken(githubToken: string): Promise<string> {
 	const response = await fetch(GITHUB_TOKEN_EXCHANGE_URL, {
 		headers: {
 			Authorization: `token ${githubToken}`,
-			"User-Agent": "Dirac-CLI/1.0.0",
+			"User-Agent": "Isaac-CLI/1.0.0",
 		},
 	})
 

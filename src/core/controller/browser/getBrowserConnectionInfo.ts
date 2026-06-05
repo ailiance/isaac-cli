@@ -1,5 +1,5 @@
-import { BrowserConnectionInfo } from "@shared/proto/dirac/browser"
-import { EmptyRequest } from "@shared/proto/dirac/common"
+import { BrowserConnectionInfo } from "@shared/proto/isaac/browser"
+import { EmptyRequest } from "@shared/proto/isaac/common"
 import { Logger } from "@/shared/services/Logger"
 import { Controller } from "../index"
 

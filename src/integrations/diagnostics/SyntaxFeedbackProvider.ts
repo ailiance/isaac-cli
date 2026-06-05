@@ -1,7 +1,7 @@
 import * as path from "path"
 import Parser from "web-tree-sitter"
 import { loadRequiredLanguageParsers } from "@/services/tree-sitter/languageParser"
-import { Diagnostic, DiagnosticSeverity, FileDiagnostics } from "@/shared/proto/index.dirac"
+import { Diagnostic, DiagnosticSeverity, FileDiagnostics } from "@/shared/proto/index.isaac"
 import { Logger } from "@/shared/services/Logger"
 import { DiagnosticsFeedbackResult, IDiagnosticsProvider } from "./IDiagnosticsProvider"
 import { diagnosticsToProblemsString } from "./index"

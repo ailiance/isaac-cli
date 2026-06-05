@@ -127,8 +127,8 @@ Anthropic is aware of this issue and is considering a fix: https://github.com/an
 
 			if (err.message.includes("ENAMETOOLONG")) {
 				throw new Error(
-					`Executing Claude Code failed due to a long system prompt. Windows has a limit of 8191 characters, which makes the integration with Dirac not work properly.
-Please check our docs on how to integrate Claude Code with Dirac on Windows: https://dirac.run/docs/provider-config/claude-code#windows-setup.
+					`Executing Claude Code failed due to a long system prompt. Windows has a limit of 8191 characters, which makes the integration with Isaac not work properly.
+Please check our docs on how to integrate Claude Code with Isaac on Windows: https://dirac.run/docs/provider-config/claude-code#windows-setup.
 Anthropic is aware of this issue and is considering a fix: https://github.com/anthropics/claude-code/issues/3411.
 `,
 					{ cause: err },
@@ -198,7 +198,7 @@ function runProcess(
 		"stream-json",
 		"--disallowedTools",
 		claudeCodeTools,
-		// Dirac will handle recursive calls
+		// Isaac will handle recursive calls
 		"--max-turns",
 		"1",
 		"--model",

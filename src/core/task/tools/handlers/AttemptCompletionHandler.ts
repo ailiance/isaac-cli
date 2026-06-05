@@ -1,6 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk"
 import type { ToolUse } from "@core/assistant-message"
-import { DiracSaySubagentStatus, DiracSubagentUsageInfo, SubagentStatusItem } from "@shared/ExtensionMessage"
+import { IsaacSaySubagentStatus, IsaacSubagentUsageInfo, SubagentStatusItem } from "@shared/ExtensionMessage"
 import { getHookModelContext } from "@core/hooks/hook-model-context"
 import { getHooksEnabledSafe } from "@core/hooks/hooks-utils"
 import { formatResponse } from "@core/prompts/responses"
@@ -11,7 +11,7 @@ import { findLastIndex } from "@shared/array"
 import { COMPLETION_RESULT_CHANGES_FLAG } from "@shared/ExtensionMessage"
 import { SubagentRunner } from "../subagent/SubagentRunner"
 import { Logger } from "@shared/services/Logger"
-import { DiracDefaultTool } from "@shared/tools"
+import { IsaacDefaultTool } from "@shared/tools"
 import type { ToolResponse } from "../../index"
 import { showNotificationForApproval } from "../../utils"
 import { buildUserFeedbackContent } from "../../utils/buildUserFeedbackContent"
@@ -25,7 +25,7 @@ const TASK_PREVIEW_MAX_CHARS = 8000
 
 function getInitialTaskPreview(config: TaskConfig): string | undefined {
 	const firstTaskMessage = config.messageState
-		.getDiracMessages()
+		.getIsaacMessages()
 		.find((message) => message.say === "task")
 		?.text?.trim()
 	if (!firstTaskMessage) {
@@ -47,7 +47,7 @@ function getVerificationInstructions(): string {
 }
 
 export class AttemptCompletionHandler implements IToolHandler, IPartialBlockHandler {
-	readonly name = DiracDefaultTool.ATTEMPT
+	readonly name = IsaacDefaultTool.ATTEMPT
 
 	getDescription(block: ToolUse): string {
 		return `[${block.name}]`
@@ -120,7 +120,7 @@ export class AttemptCompletionHandler implements IToolHandler, IPartialBlockHand
 		}
 
 		// End command_output ask if necessary
-		if (config.messageState.getDiracMessages().at(-1)?.ask === "command_output") {
+		if (config.messageState.getIsaacMessages().at(-1)?.ask === "command_output") {
 			await config.callbacks.say("command_output", "")
 		}
 
@@ -188,8 +188,8 @@ If everything checks out, call attempt_completion again with your final result.`
 			latestToolCall: undefined,
 		}
 
-		const emitStatus = async (status: DiracSaySubagentStatus["status"], partial: boolean) => {
-			const payload: DiracSaySubagentStatus = {
+		const emitStatus = async (status: IsaacSaySubagentStatus["status"], partial: boolean) => {
+			const payload: IsaacSaySubagentStatus = {
 				status,
 				total: 1,
 				completed: entry.status === "completed" || entry.status === "failed" ? 1 : 0,
@@ -209,7 +209,7 @@ If everything checks out, call attempt_completion again with your final result.`
 		}
 
 		let statusUpdateQueue: Promise<void> = Promise.resolve()
-		const queueStatusUpdate = (status: DiracSaySubagentStatus["status"], partial: boolean): Promise<void> => {
+		const queueStatusUpdate = (status: IsaacSaySubagentStatus["status"], partial: boolean): Promise<void> => {
 			statusUpdateQueue = statusUpdateQueue.catch(() => undefined).then(() => emitStatus(status, partial))
 			return statusUpdateQueue
 		}
@@ -271,7 +271,7 @@ Otherwise, respond with "VERIFICATION: FAILED" followed by all the details on wh
 			clearInterval(abortPollInterval)
 			await queueStatusUpdate(runResult.status === "failed" ? "failed" : "completed", false)
 
-			const subagentUsagePayload: DiracSubagentUsageInfo = {
+			const subagentUsagePayload: IsaacSubagentUsageInfo = {
 				source: "subagents",
 				tokensIn: runResult.stats.inputTokens,
 				tokensOut: runResult.stats.outputTokens,
@@ -309,7 +309,7 @@ Please verify the task manually or try again.`
 		result: string,
 		command: string,
 	): Promise<{ userRejected: boolean; commandResult: any }> {
-		const lastMessage = config.messageState.getDiracMessages().at(-1)
+		const lastMessage = config.messageState.getIsaacMessages().at(-1)
 
 		if (lastMessage && lastMessage.ask !== "command") {
 			// haven't sent a command message yet so first send completion_result then command
@@ -335,7 +335,7 @@ Please verify the task manually or try again.`
 		}
 
 		// Check if command should be auto-approved
-		const autoApproveResult = config.autoApprover?.shouldAutoApproveTool(DiracDefaultTool.BASH)
+		const autoApproveResult = config.autoApprover?.shouldAutoApproveTool(IsaacDefaultTool.BASH)
 		const autoApproveSafe = Array.isArray(autoApproveResult) ? autoApproveResult[0] : autoApproveResult
 
 		if (autoApproveSafe) {
@@ -345,7 +345,7 @@ Please verify the task manually or try again.`
 		} else {
 			// Manual approval flow - need to ask for approval
 			showNotificationForApproval(
-				`Dirac wants to execute a command: ${command}`,
+				`Isaac wants to execute a command: ${command}`,
 				config.autoApprovalSettings.enableNotifications,
 			)
 
@@ -474,7 +474,7 @@ Please verify the task manually or try again.`
 
 	private async addNewChangesFlagToLastCompletionResultMessage(config: TaskConfig) {
 		const hasNewChanges = await config.callbacks.doesLatestTaskCompletionHaveNewChanges()
-		const diracMessages = config.messageState.getDiracMessages()
+		const diracMessages = config.messageState.getIsaacMessages()
 		const lastCompletionResultMessageIndex = findLastIndex(diracMessages, (m: any) => m.say === "completion_result")
 		const lastCompletionResultMessage =
 			lastCompletionResultMessageIndex !== -1 ? diracMessages[lastCompletionResultMessageIndex] : undefined
@@ -485,7 +485,7 @@ Please verify the task manually or try again.`
 			hasNewChanges &&
 			!lastCompletionResultMessage.text?.endsWith(COMPLETION_RESULT_CHANGES_FLAG)
 		) {
-			await config.messageState.updateDiracMessage(lastCompletionResultMessageIndex, {
+			await config.messageState.updateIsaacMessage(lastCompletionResultMessageIndex, {
 				text: lastCompletionResultMessage.text + COMPLETION_RESULT_CHANGES_FLAG,
 			})
 		}

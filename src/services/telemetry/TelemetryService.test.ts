@@ -9,7 +9,7 @@
 
 import * as assert from "assert"
 import * as sinon from "sinon"
-import { DiracEndpoint } from "@/config"
+import { IsaacEndpoint } from "@/config"
 import { HostProvider } from "@/hosts/host-provider"
 import * as otelConfigModule from "@/shared/services/config/otel-config"
 import * as diracConfigModule from "@/shared/services/config/dirac-telemetry-config"
@@ -174,9 +174,9 @@ describe("Telemetry system is abstracted and can easily switch between providers
 			await noOpProvider2.dispose()
 		})
 	})
-	describe("Dirac Provider", () => {
-		it("should create Dirac provider and track events", async () => {
-			console.log("=== Testing Dirac Provider ===")
+	describe("Isaac Provider", () => {
+		it("should create Isaac provider and track events", async () => {
+			console.log("=== Testing Isaac Provider ===")
 			const providers = await TelemetryProviderFactory.createProviders()
 			const diracProvider = providers.find((p) => !(p instanceof NoOpTelemetryProvider)) || providers[0]
 
@@ -196,8 +196,8 @@ describe("Telemetry system is abstracted and can easily switch between providers
 			const isEnabled = diracProvider.isEnabled()
 			const settings = diracProvider.getSettings()
 
-			console.log("Dirac Provider enabled:", isEnabled)
-			console.log("Dirac Provider settings:", settings)
+			console.log("Isaac Provider enabled:", isEnabled)
+			console.log("Isaac Provider settings:", settings)
 
 			await diracProvider.dispose()
 		})
@@ -275,60 +275,60 @@ describe("Telemetry system is abstracted and can easily switch between providers
 
 	describe("Factory Configuration", () => {
 		it("should return default configurations", () => {
-			// Mock Dirac config validation to return true for this test
-			const isDiracConfigValidStub = sinon.stub(diracConfigModule, "isDiracTelemetryConfigValid").returns(true)
-			const isSelfHostedStub = sinon.stub(DiracEndpoint, "isSelfHosted").returns(false)
+			// Mock Isaac config validation to return true for this test
+			const isIsaacConfigValidStub = sinon.stub(diracConfigModule, "isIsaacTelemetryConfigValid").returns(true)
+			const isSelfHostedStub = sinon.stub(IsaacEndpoint, "isSelfHosted").returns(false)
 
 			const defaultConfigs = TelemetryProviderFactory.getDefaultConfigs()
 
-			// Should include at least Dirac
+			// Should include at least Isaac
 			assert.ok(defaultConfigs.length > 0, "Should return at least one configuration")
 			assert.ok(
 				defaultConfigs.some((c) => c.type === "dirac"),
-				"Should include Dirac configuration",
+				"Should include Isaac configuration",
 			)
 
 			// Restore the stubs
-			isDiracConfigValidStub.restore()
+			isIsaacConfigValidStub.restore()
 			isSelfHostedStub.restore()
 		})
 
-		it("should NOT include Dirac config when in selfHosted mode", () => {
-			// Stub DiracEndpoint.isSelfHosted() to return true (selfHosted mode)
-			const isSelfHostedStub = sinon.stub(DiracEndpoint, "isSelfHosted").returns(true)
-			// Even if Dirac config is valid, it should be skipped
-			const isDiracConfigValidStub = sinon.stub(diracConfigModule, "isDiracTelemetryConfigValid").returns(true)
+		it("should NOT include Isaac config when in selfHosted mode", () => {
+			// Stub IsaacEndpoint.isSelfHosted() to return true (selfHosted mode)
+			const isSelfHostedStub = sinon.stub(IsaacEndpoint, "isSelfHosted").returns(true)
+			// Even if Isaac config is valid, it should be skipped
+			const isIsaacConfigValidStub = sinon.stub(diracConfigModule, "isIsaacTelemetryConfigValid").returns(true)
 
 			const configs = TelemetryProviderFactory.getDefaultConfigs()
 
-			// Should NOT include Dirac when in selfHosted mode
+			// Should NOT include Isaac when in selfHosted mode
 			const hasPosthog = configs.some((c) => c.type === "dirac")
-			assert.strictEqual(hasPosthog, false, "Should NOT include Dirac configuration in selfHosted mode")
+			assert.strictEqual(hasPosthog, false, "Should NOT include Isaac configuration in selfHosted mode")
 
 			// Restore the stubs
 			isSelfHostedStub.restore()
-			isDiracConfigValidStub.restore()
+			isIsaacConfigValidStub.restore()
 		})
 
-		it("should include Dirac config when NOT in selfHosted mode and config is valid", () => {
-			// Stub DiracEndpoint.isSelfHosted() to return false (normal mode)
-			const isSelfHostedStub = sinon.stub(DiracEndpoint, "isSelfHosted").returns(false)
-			const isDiracConfigValidStub = sinon.stub(diracConfigModule, "isDiracTelemetryConfigValid").returns(true)
+		it("should include Isaac config when NOT in selfHosted mode and config is valid", () => {
+			// Stub IsaacEndpoint.isSelfHosted() to return false (normal mode)
+			const isSelfHostedStub = sinon.stub(IsaacEndpoint, "isSelfHosted").returns(false)
+			const isIsaacConfigValidStub = sinon.stub(diracConfigModule, "isIsaacTelemetryConfigValid").returns(true)
 
 			const configs = TelemetryProviderFactory.getDefaultConfigs()
 
-			// Should include Dirac when NOT in selfHosted mode and config is valid
+			// Should include Isaac when NOT in selfHosted mode and config is valid
 			const hasPosthog = configs.some((c) => c.type === "dirac")
-			assert.strictEqual(hasPosthog, true, "Should include Dirac configuration when not in selfHosted mode")
+			assert.strictEqual(hasPosthog, true, "Should include Isaac configuration when not in selfHosted mode")
 
 			// Restore the stubs
 			isSelfHostedStub.restore()
-			isDiracConfigValidStub.restore()
+			isIsaacConfigValidStub.restore()
 		})
 
 		it("should NOT include build-time OTEL config when in selfHosted mode", () => {
-			// Stub DiracEndpoint.isSelfHosted() to return true (selfHosted mode)
-			const isSelfHostedStub = sinon.stub(DiracEndpoint, "isSelfHosted").returns(true)
+			// Stub IsaacEndpoint.isSelfHosted() to return true (selfHosted mode)
+			const isSelfHostedStub = sinon.stub(IsaacEndpoint, "isSelfHosted").returns(true)
 			// Even if build-time OTEL config is valid, it should be skipped
 			const getValidOtelConfigStub = sinon.stub(otelConfigModule, "getValidOpenTelemetryConfig").returns({
 				enabled: true,
@@ -336,8 +336,8 @@ describe("Telemetry system is abstracted and can easily switch between providers
 			})
 			// Disable runtime OTEL to isolate test
 			const getRuntimeOtelConfigStub = sinon.stub(otelConfigModule, "getValidRuntimeOpenTelemetryConfig").returns(null)
-			// Disable Dirac to isolate test
-			const isDiracConfigValidStub = sinon.stub(diracConfigModule, "isDiracTelemetryConfigValid").returns(false)
+			// Disable Isaac to isolate test
+			const isIsaacConfigValidStub = sinon.stub(diracConfigModule, "isIsaacTelemetryConfigValid").returns(false)
 
 			const configs = TelemetryProviderFactory.getDefaultConfigs()
 
@@ -349,20 +349,20 @@ describe("Telemetry system is abstracted and can easily switch between providers
 			isSelfHostedStub.restore()
 			getValidOtelConfigStub.restore()
 			getRuntimeOtelConfigStub.restore()
-			isDiracConfigValidStub.restore()
+			isIsaacConfigValidStub.restore()
 		})
 
 		it("should include build-time OTEL config when NOT in selfHosted mode", () => {
-			// Stub DiracEndpoint.isSelfHosted() to return false (normal mode)
-			const isSelfHostedStub = sinon.stub(DiracEndpoint, "isSelfHosted").returns(false)
+			// Stub IsaacEndpoint.isSelfHosted() to return false (normal mode)
+			const isSelfHostedStub = sinon.stub(IsaacEndpoint, "isSelfHosted").returns(false)
 			const getValidOtelConfigStub = sinon.stub(otelConfigModule, "getValidOpenTelemetryConfig").returns({
 				enabled: true,
 				metricsExporter: "otlp",
 			})
 			// Disable runtime OTEL to isolate test
 			const getRuntimeOtelConfigStub = sinon.stub(otelConfigModule, "getValidRuntimeOpenTelemetryConfig").returns(null)
-			// Disable Dirac to isolate test
-			const isDiracConfigValidStub = sinon.stub(diracConfigModule, "isDiracTelemetryConfigValid").returns(false)
+			// Disable Isaac to isolate test
+			const isIsaacConfigValidStub = sinon.stub(diracConfigModule, "isIsaacTelemetryConfigValid").returns(false)
 
 			const configs = TelemetryProviderFactory.getDefaultConfigs()
 
@@ -374,12 +374,12 @@ describe("Telemetry system is abstracted and can easily switch between providers
 			isSelfHostedStub.restore()
 			getValidOtelConfigStub.restore()
 			getRuntimeOtelConfigStub.restore()
-			isDiracConfigValidStub.restore()
+			isIsaacConfigValidStub.restore()
 		})
 
 		it("should STILL include runtime env OTEL config even in selfHosted mode", () => {
-			// Stub DiracEndpoint.isSelfHosted() to return true (selfHosted mode)
-			const isSelfHostedStub = sinon.stub(DiracEndpoint, "isSelfHosted").returns(true)
+			// Stub IsaacEndpoint.isSelfHosted() to return true (selfHosted mode)
+			const isSelfHostedStub = sinon.stub(IsaacEndpoint, "isSelfHosted").returns(true)
 			// Disable build-time OTEL
 			const getValidOtelConfigStub = sinon.stub(otelConfigModule, "getValidOpenTelemetryConfig").returns(null)
 			// Enable runtime OTEL (user explicitly configured it)
@@ -388,8 +388,8 @@ describe("Telemetry system is abstracted and can easily switch between providers
 				metricsExporter: "otlp",
 				otlpEndpoint: "http://user-collector:4317",
 			})
-			// Disable Dirac to isolate test
-			const isDiracConfigValidStub = sinon.stub(diracConfigModule, "isDiracTelemetryConfigValid").returns(false)
+			// Disable Isaac to isolate test
+			const isIsaacConfigValidStub = sinon.stub(diracConfigModule, "isIsaacTelemetryConfigValid").returns(false)
 
 			const configs = TelemetryProviderFactory.getDefaultConfigs()
 
@@ -409,7 +409,7 @@ describe("Telemetry system is abstracted and can easily switch between providers
 			isSelfHostedStub.restore()
 			getValidOtelConfigStub.restore()
 			getRuntimeOtelConfigStub.restore()
-			isDiracConfigValidStub.restore()
+			isIsaacConfigValidStub.restore()
 		})
 
 		it("should handle provider switching seamlessly", async () => {
@@ -432,7 +432,7 @@ describe("Telemetry system is abstracted and can easily switch between providers
 			console.log("Captured event with No-Op provider")
 
 			// Verify different behaviors
-			// Dirac provider may be enabled depending on configuration
+			// Isaac provider may be enabled depending on configuration
 			// NoOp provider should always be disabled
 			assert.strictEqual(noOpProvider.isEnabled(), false, "NoOp provider should always be disabled")
 

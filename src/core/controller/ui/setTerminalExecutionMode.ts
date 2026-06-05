@@ -1,4 +1,4 @@
-import { BooleanRequest, KeyValuePair } from "@shared/proto/dirac/common"
+import { BooleanRequest, KeyValuePair } from "@shared/proto/isaac/common"
 import { Controller } from ".."
 
 /**

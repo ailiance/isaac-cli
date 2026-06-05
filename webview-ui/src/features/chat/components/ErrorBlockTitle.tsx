@@ -1,5 +1,5 @@
 import React from "react"
-import { DiracError, DiracErrorType } from "@/shared/api/grpc-client"
+import { IsaacError, IsaacErrorType } from "@/shared/api/grpc-client"
 import { ProgressIndicator } from "./ChatRow"
 
 interface ErrorBlockTitleProps {
@@ -57,8 +57,8 @@ export const ErrorBlockTitle = ({
 			details.classNames.push("text-(--vscode-foreground)")
 		} else if (apiRequestFailedMessage) {
 			// Handle failed request
-			const diracError = DiracError.parse(apiRequestFailedMessage)
-			const titleText = diracError?.isErrorType(DiracErrorType.Balance) ? "Credit Limit Reached" : "API Request Failed"
+			const diracError = IsaacError.parse(apiRequestFailedMessage)
+			const titleText = diracError?.isErrorType(IsaacErrorType.Balance) ? "Credit Limit Reached" : "API Request Failed"
 			details.title = titleText
 			details.classNames.push("font-bold text-(--vscode-errorForeground)")
 		} else if (retryStatus) {

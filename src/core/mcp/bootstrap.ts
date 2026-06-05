@@ -1,15 +1,15 @@
-import { DiracToolSet } from "@core/prompts/system-prompt"
-import type { DiracToolSpec } from "@core/prompts/system-prompt/spec"
+import { IsaacToolSet } from "@core/prompts/system-prompt"
+import type { IsaacToolSpec } from "@core/prompts/system-prompt/spec"
 import { StateManager } from "@core/storage/StateManager"
 import type { ToolExecutor } from "@core/task/ToolExecutor"
 import { Logger } from "@/shared/services/Logger"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import { mcpClientManager } from "./McpClientManager"
 import { McpToolHandler } from "./McpToolHandler"
 import type { McpToolMetadata } from "./types"
 
 /**
- * Converts a JSON Schema property type string to a DiracToolSpec parameter type.
+ * Converts a JSON Schema property type string to a IsaacToolSpec parameter type.
  * Falls back to "string" for unknown types.
  */
 function mapJsonSchemaType(type: unknown): "string" | "boolean" | "integer" | "array" | "object" {
@@ -29,10 +29,10 @@ function mapJsonSchemaType(type: unknown): "string" | "boolean" | "integer" | "a
 }
 
 /**
- * Converts a flat JSON Schema (top-level properties only) to DiracToolSpec parameters.
+ * Converts a flat JSON Schema (top-level properties only) to IsaacToolSpec parameters.
  * Nested objects are preserved via the `properties` field but not recursed.
  */
-export function convertJsonSchemaToParams(inputSchema: object): NonNullable<DiracToolSpec["parameters"]> {
+export function convertJsonSchemaToParams(inputSchema: object): NonNullable<IsaacToolSpec["parameters"]> {
 	const schema = inputSchema as {
 		properties?: Record<string, { type?: unknown; description?: string; items?: unknown; properties?: unknown }>
 		required?: string[]
@@ -46,7 +46,7 @@ export function convertJsonSchemaToParams(inputSchema: object): NonNullable<Dira
 
 	return Object.entries(schema.properties).map(([name, prop]) => {
 		const paramType = mapJsonSchemaType(prop.type)
-		const param: NonNullable<DiracToolSpec["parameters"]>[number] = {
+		const param: NonNullable<IsaacToolSpec["parameters"]>[number] = {
 			name,
 			required: requiredSet.has(name),
 			instruction: prop.description ?? name,
@@ -63,15 +63,15 @@ export function convertJsonSchemaToParams(inputSchema: object): NonNullable<Dira
 }
 
 /**
- * Converts an McpToolMetadata to a DiracToolSpec for LLM function-calling exposure.
+ * Converts an McpToolMetadata to a IsaacToolSpec for LLM function-calling exposure.
  * Uses qualifiedName as both id and name so the LLM calls the tool by its full qualified name.
  */
-export function mcpToolToSpec(tool: McpToolMetadata): DiracToolSpec {
+export function mcpToolToSpec(tool: McpToolMetadata): IsaacToolSpec {
 	const qualifiedName = tool.qualifiedName
 	return {
 		// Cast is intentional: MCP tools use dynamic qualified names, not enum values.
 		// The same pattern is used in McpToolHandler.
-		id: qualifiedName as DiracDefaultTool,
+		id: qualifiedName as IsaacDefaultTool,
 		name: qualifiedName,
 		description: tool.description ?? `MCP tool from plugin ${tool.pluginName}`,
 		parameters: convertJsonSchemaToParams(tool.inputSchema),
@@ -81,14 +81,14 @@ export function mcpToolToSpec(tool: McpToolMetadata): DiracToolSpec {
 
 /**
  * Initialize MCP integration: load plugin configs, discover tools, register handlers
- * in the ToolExecutor coordinator, and expose tool specs to the LLM via DiracToolSet.
+ * in the ToolExecutor coordinator, and expose tool specs to the LLM via IsaacToolSet.
  *
  * Lazy-spawns MCP servers (only when listAllTools is called). Failures are logged
  * but never crash the boot — ailiance-agent must work without plugins.
  *
  * @param toolExecutor - The ToolExecutor instance to register MCP tool handlers on.
- * @param registerSpec - Optional override for tool spec registration (default: DiracToolSet.register).
- *                       Useful in tests to prevent polluting the shared DiracToolSet singleton.
+ * @param registerSpec - Optional override for tool spec registration (default: IsaacToolSet.register).
+ *                       Useful in tests to prevent polluting the shared IsaacToolSet singleton.
  */
 /**
  * Read MCP filter settings from StateManager if available.
@@ -131,7 +131,7 @@ function readMcpSettings(): {
 
 export async function initializeMcpForTask(
 	toolExecutor: ToolExecutor,
-	registerSpec: (spec: ReturnType<typeof mcpToolToSpec>) => void = (spec) => DiracToolSet.register(spec),
+	registerSpec: (spec: ReturnType<typeof mcpToolToSpec>) => void = (spec) => IsaacToolSet.register(spec),
 ): Promise<McpToolMetadata[]> {
 	try {
 		const { enabledServers, toolDenylist, toolAllowlist, noMcp } = readMcpSettings()

@@ -4,14 +4,14 @@ import { telemetryService } from "@/services/telemetry"
 
 import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { showSystemNotification } from "@integrations/notifications"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IPartialBlockHandler, IToolHandler } from "../ToolExecutorCoordinator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 
 export class NewTaskHandler implements IToolHandler, IPartialBlockHandler {
-	readonly name = DiracDefaultTool.NEW_TASK
+	readonly name = IsaacDefaultTool.NEW_TASK
 	constructor() {}
 
 	getDescription(block: ToolUse): string {
@@ -44,8 +44,8 @@ export class NewTaskHandler implements IToolHandler, IPartialBlockHandler {
 		// Show notification if enabled
 		if (config.autoApprovalSettings.enableNotifications) {
 			showSystemNotification({
-				subtitle: "Dirac wants to start a new task...",
-				message: `Dirac is suggesting to start a new task with: ${context}`,
+				subtitle: "Isaac wants to start a new task...",
+				message: `Isaac is suggesting to start a new task with: ${context}`,
 			})
 		}
 

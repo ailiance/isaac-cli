@@ -1,17 +1,17 @@
 // ailiance-agent fork: telemetry DISABLED.
-// Upstream Dirac sends PostHog events to dirac.run / us.posthog.com.
+// Upstream Isaac sends PostHog events to dirac.run / us.posthog.com.
 // The ailiance-agent fork is EU-sovereign by design and MUST NOT phone home.
 // To re-enable for testing only, restore the upstream apiKey and host
 // values from `git show upstream/master:src/shared/services/config/dirac-telemetry-config.ts`.
 import { BUILD_CONSTANTS } from "../../constants"
 
-export interface DiracTelemetryClientConfig {
+export interface IsaacTelemetryClientConfig {
 	/**
-	 * The main API key for Dirac telemetry service.
+	 * The main API key for Isaac telemetry service.
 	 */
 	apiKey?: string | undefined
 	/**
-	 * The API key for Dirac used only for error tracking service.
+	 * The API key for Isaac used only for error tracking service.
 	 */
 	errorTrackingApiKey?: string | undefined
 	enableErrorAutocapture?: boolean
@@ -20,10 +20,10 @@ export interface DiracTelemetryClientConfig {
 }
 
 /**
- * Helper type for a valid Dirac client configuration.
+ * Helper type for a valid Isaac client configuration.
  * Must contains api keys for both telemetry and error tracking.
  */
-export interface DiracTelemetryClientValidConfig extends DiracTelemetryClientConfig {
+export interface IsaacTelemetryClientValidConfig extends IsaacTelemetryClientConfig {
 	apiKey: string
 	errorTrackingApiKey: string
 }
@@ -36,12 +36,12 @@ export interface DiracTelemetryClientValidConfig extends DiracTelemetryClientCon
 const _useDevEnv = process.env.IS_DEV === "true" || process.env.DIRAC_ENVIRONMENT === "local"
 
 /**
- * Dirac telemetry configuration.
+ * Isaac telemetry configuration.
  * ailiance-agent fork: all phone-home values are intentionally null/undefined so
- * `isDiracTelemetryConfigValid` always returns false and consumers (telemetry,
+ * `isIsaacTelemetryConfigValid` always returns false and consumers (telemetry,
  * error tracking, feature flags) skip remote writes / fetches.
  */
-export const diracTelemetryConfig: DiracTelemetryClientConfig = {
+export const diracTelemetryConfig: IsaacTelemetryClientConfig = {
 	apiKey: BUILD_CONSTANTS.TELEMETRY_SERVICE_API_KEY || undefined,
 	errorTrackingApiKey: BUILD_CONSTANTS.ERROR_SERVICE_API_KEY || undefined,
 	host: "",
@@ -51,7 +51,7 @@ export const diracTelemetryConfig: DiracTelemetryClientConfig = {
 
 const isTestEnv = process.env.E2E_TEST === "true" || process.env.IS_TEST === "true"
 
-export function isDiracTelemetryConfigValid(config: DiracTelemetryClientConfig): config is DiracTelemetryClientValidConfig {
+export function isIsaacTelemetryConfigValid(config: IsaacTelemetryClientConfig): config is IsaacTelemetryClientValidConfig {
 	// Allow invalid config in test environment to enable mocking and stubbing
 	if (isTestEnv) {
 		return false

@@ -1,6 +1,6 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import { AssistantMessageContent } from "@core/assistant-message"
-import { DiracAskResponse } from "@shared/WebviewMessage"
+import { IsaacAskResponse } from "@shared/WebviewMessage"
 import type { HookExecution } from "./types/HookExecution"
 import { PendingToolRegistry } from "./PendingToolRegistry"
 import { SkillMetadata } from "@/shared/skills"
@@ -34,7 +34,7 @@ export class TaskState {
 	presentAssistantMessageHasPendingUpdates = false
 
 	// Ask/Response handling
-	askResponse?: DiracAskResponse
+	askResponse?: IsaacAskResponse
 	askResponseUserEdits?: Record<string, string>
 	askResponseText?: string
 	askResponseImages?: string[]

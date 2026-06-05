@@ -1,7 +1,7 @@
-import { refreshDiracRulesToggles } from "@core/context/instructions/user-instructions/dirac-rules"
+import { refreshIsaacRulesToggles } from "@core/context/instructions/user-instructions/dirac-rules"
 import { createRuleFile as createRuleFileImpl } from "@core/context/instructions/user-instructions/rule-helpers"
 import { getWorkspaceBasename } from "@core/workspace"
-import { RuleFile, RuleFileRequest } from "@shared/proto/dirac/file"
+import { RuleFile, RuleFileRequest } from "@shared/proto/isaac/file"
 import { refreshWorkflowToggles } from "@/core/context/instructions/user-instructions/workflows"
 import { HostProvider } from "@/hosts/host-provider"
 import { ShowMessageType } from "@/shared/proto/host/window"
@@ -54,7 +54,7 @@ export async function createRuleFile(controller: Controller, request: RuleFileRe
 		if (request.type === "workflow") {
 			await refreshWorkflowToggles(controller, cwd)
 		} else {
-			await refreshDiracRulesToggles(controller, cwd)
+			await refreshIsaacRulesToggles(controller, cwd)
 		}
 		await controller.postStateToWebview()
 

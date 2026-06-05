@@ -9,8 +9,8 @@ import { sendChatButtonClickedEvent } from "./core/controller/ui/subscribeToChat
 import { sendHistoryButtonClickedEvent } from "./core/controller/ui/subscribeToHistoryButtonClicked"
 import { sendSettingsButtonClickedEvent } from "./core/controller/ui/subscribeToSettingsButtonClicked"
 import { sendWorktreesButtonClickedEvent } from "./core/controller/ui/subscribeToWorktreesButtonClicked"
-import { DiracWebviewProvider } from "./core/webview"
-import { createDiracAPI } from "./exports"
+import { IsaacWebviewProvider } from "./core/webview"
+import { createIsaacAPI } from "./exports"
 import { initializeTestMode } from "./services/test/TestMode"
 import "./utils/path" // necessary to have access to String.prototype.toPosix
 import path from "node:path"
@@ -20,10 +20,10 @@ import { vscodeHostBridgeClient } from "@/hosts/vscode/hostbridge/client/host-gr
 import { createStorageContext } from "@/shared/storage/storage-context"
 import { readTextFromClipboard, writeTextToClipboard } from "@/utils/env"
 import { initialize, tearDown } from "./common"
-import { addToDirac } from "./core/controller/commands/addToDirac"
-import { explainWithDirac } from "./core/controller/commands/explainWithDirac"
-import { fixWithDirac } from "./core/controller/commands/fixWithDirac"
-import { improveWithDirac } from "./core/controller/commands/improveWithDirac"
+import { addToIsaac } from "./core/controller/commands/addToIsaac"
+import { explainWithIsaac } from "./core/controller/commands/explainWithIsaac"
+import { fixWithIsaac } from "./core/controller/commands/fixWithIsaac"
+import { improveWithIsaac } from "./core/controller/commands/improveWithIsaac"
 import { sendAddToInputEvent } from "./core/controller/ui/subscribeToAddToInput"
 import { sendShowWebviewEvent } from "./core/controller/ui/subscribeToShowWebview"
 import { HookDiscoveryCache } from "./core/hooks/HookDiscoveryCache"
@@ -37,14 +37,14 @@ import {
 import { workspaceResolver } from "./core/workspace"
 import { findMatchingNotebookCell, getContextForCommand, showWebview } from "./hosts/vscode/commandUtils"
 import { abortCommitGeneration, generateCommitMsg } from "./hosts/vscode/commit-message-generator"
-import { registerDiracOutputChannel } from "./hosts/vscode/hostbridge/env/debugLog"
+import { registerIsaacOutputChannel } from "./hosts/vscode/hostbridge/env/debugLog"
 import {
 	disposeVscodeCommentReviewController,
 	getVscodeCommentReviewController,
 } from "./hosts/vscode/review/VscodeCommentReviewController"
 import { VscodeTerminalManager } from "./hosts/vscode/terminal/VscodeTerminalManager"
 import { VscodeDiffViewProvider } from "./hosts/vscode/VscodeDiffViewProvider"
-import { VscodeDiracWebviewProvider } from "./hosts/vscode/VscodeWebviewProvider"
+import { VscodeIsaacWebviewProvider } from "./hosts/vscode/VscodeWebviewProvider"
 import { exportVSCodeStorageToSharedFiles } from "./hosts/vscode/vscode-to-file-migration"
 import { ExtensionRegistryInfo } from "./registry"
 import { SymbolIndexService } from "./services/symbol-index/SymbolIndexService"
@@ -78,7 +78,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// 4. Register services and perform common initialization
 	// IMPORTANT: Must be done after host provider is setup and migrations are complete
-	const webview = (await initialize(storageContext)) as VscodeDiracWebviewProvider
+	const webview = (await initialize(storageContext)) as VscodeIsaacWebviewProvider
 
 	// 5. Register services and commands specific to VS Code
 	// Initialize test mode and add disposables to context
@@ -114,7 +114,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	)
 
 	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(VscodeDiracWebviewProvider.SIDEBAR_ID, webview, {
+		vscode.window.registerWebviewViewProvider(VscodeIsaacWebviewProvider.SIDEBAR_ID, webview, {
 			webviewOptions: { retainContextWhenHidden: true },
 		}),
 	)
@@ -124,7 +124,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(commands.PlusButton, async () => {
-			const sidebarInstance = DiracWebviewProvider.getInstance()
+			const sidebarInstance = IsaacWebviewProvider.getInstance()
 			await sidebarInstance.controller.clearTask()
 			await sidebarInstance.controller.postStateToWebview()
 			await sendChatButtonClickedEvent()
@@ -156,7 +156,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Register commands for Accept/Reject from CodeLens
 	context.subscriptions.push(
 		vscode.commands.registerCommand("dirac.acceptEdit", async () => {
-			const sidebarInstance = DiracWebviewProvider.getInstance()
+			const sidebarInstance = IsaacWebviewProvider.getInstance()
 			if (sidebarInstance.controller?.task) {
 				await sidebarInstance.controller.task.handleWebviewAskResponse("yesButtonClicked")
 			}
@@ -165,7 +165,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand("dirac.saveWithMyChanges", async () => {
-			const sidebarInstance = DiracWebviewProvider.getInstance()
+			const sidebarInstance = IsaacWebviewProvider.getInstance()
 			if (sidebarInstance.controller?.task) {
 				await sidebarInstance.controller.task.handleWebviewAskResponse("yesButtonClicked")
 			}
@@ -173,7 +173,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	)
 	context.subscriptions.push(
 		vscode.commands.registerCommand("dirac.rejectEdit", async () => {
-			const sidebarInstance = DiracWebviewProvider.getInstance()
+			const sidebarInstance = IsaacWebviewProvider.getInstance()
 			if (sidebarInstance.controller?.task) {
 				await sidebarInstance.controller.task.handleWebviewAskResponse("noButtonClicked")
 			}
@@ -185,14 +185,14 @@ export async function activate(context: vscode.ExtensionContext) {
 		const isTaskUri = getUriPath(url) === TASK_URI_PATH
 
 		if (isTaskUri) {
-			await openDiracSidebarForTaskUri()
+			await openIsaacSidebarForTaskUri()
 		}
 
 		let success = await SharedUriHandler.handleUri(url)
 
 		// Task deeplinks can race with first-time sidebar initialization.
 		if (!success && isTaskUri) {
-			await openDiracSidebarForTaskUri()
+			await openIsaacSidebarForTaskUri()
 			success = await SharedUriHandler.handleUri(url)
 		}
 
@@ -210,10 +210,10 @@ export async function activate(context: vscode.ExtensionContext) {
 			.then((module) => {
 				const devTaskCommands = module.registerTaskCommands(webview.controller)
 				context.subscriptions.push(...devTaskCommands)
-				Logger.log("[Dirac Dev] Dev mode activated & dev commands registered")
+				Logger.log("[Isaac Dev] Dev mode activated & dev commands registered")
 			})
 			.catch((error) => {
-				Logger.log("[Dirac Dev] Failed to register dev commands: " + error)
+				Logger.log("[Isaac Dev] Failed to register dev commands: " + error)
 			})
 	}
 
@@ -306,40 +306,40 @@ export async function activate(context: vscode.ExtensionContext) {
 						)
 					}
 
-					// Add to Dirac (Always available)
-					const addAction = new vscode.CodeAction("Add to Dirac", vscode.CodeActionKind.QuickFix)
+					// Add to Isaac (Always available)
+					const addAction = new vscode.CodeAction("Add to Isaac", vscode.CodeActionKind.QuickFix)
 					addAction.command = {
 						command: commands.AddToChat,
-						title: "Add to Dirac",
+						title: "Add to Isaac",
 						arguments: [expandedRange, context.diagnostics],
 					}
 					actions.push(addAction)
 
-					// Explain with Dirac (Always available)
-					const explainAction = new vscode.CodeAction("Explain with Dirac", vscode.CodeActionKind.RefactorExtract) // Using a refactor kind
+					// Explain with Isaac (Always available)
+					const explainAction = new vscode.CodeAction("Explain with Isaac", vscode.CodeActionKind.RefactorExtract) // Using a refactor kind
 					explainAction.command = {
 						command: commands.ExplainCode,
-						title: "Explain with Dirac",
+						title: "Explain with Isaac",
 						arguments: [expandedRange],
 					}
 					actions.push(explainAction)
 
-					// Improve with Dirac (Always available)
-					const improveAction = new vscode.CodeAction("Improve with Dirac", vscode.CodeActionKind.RefactorRewrite) // Using a refactor kind
+					// Improve with Isaac (Always available)
+					const improveAction = new vscode.CodeAction("Improve with Isaac", vscode.CodeActionKind.RefactorRewrite) // Using a refactor kind
 					improveAction.command = {
 						command: commands.ImproveCode,
-						title: "Improve with Dirac",
+						title: "Improve with Isaac",
 						arguments: [expandedRange],
 					}
 					actions.push(improveAction)
 
-					// Fix with Dirac (Only if diagnostics exist)
+					// Fix with Isaac (Only if diagnostics exist)
 					if (context.diagnostics.length > 0) {
-						const fixAction = new vscode.CodeAction("Fix with Dirac", vscode.CodeActionKind.QuickFix)
+						const fixAction = new vscode.CodeAction("Fix with Isaac", vscode.CodeActionKind.QuickFix)
 						fixAction.isPreferred = true
 						fixAction.command = {
-							command: commands.FixWithDirac,
-							title: "Fix with Dirac",
+							command: commands.FixWithIsaac,
+							title: "Fix with Isaac",
 							arguments: [expandedRange, context.diagnostics],
 						}
 						actions.push(fixAction)
@@ -364,16 +364,16 @@ export async function activate(context: vscode.ExtensionContext) {
 			if (!context) {
 				return
 			}
-			await addToDirac(context.controller, context.commandContext)
+			await addToIsaac(context.controller, context.commandContext)
 		}),
 	)
 	context.subscriptions.push(
-		vscode.commands.registerCommand(commands.FixWithDirac, async (range: vscode.Range, diagnostics: vscode.Diagnostic[]) => {
+		vscode.commands.registerCommand(commands.FixWithIsaac, async (range: vscode.Range, diagnostics: vscode.Diagnostic[]) => {
 			const context = await getContextForCommand(range, diagnostics)
 			if (!context) {
 				return
 			}
-			await fixWithDirac(context.controller, context.commandContext)
+			await fixWithIsaac(context.controller, context.commandContext)
 		}),
 	)
 	context.subscriptions.push(
@@ -382,7 +382,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			if (!context) {
 				return
 			}
-			await explainWithDirac(context.controller, context.commandContext)
+			await explainWithIsaac(context.controller, context.commandContext)
 		}),
 	)
 	context.subscriptions.push(
@@ -391,13 +391,13 @@ export async function activate(context: vscode.ExtensionContext) {
 			if (!context) {
 				return
 			}
-			await improveWithDirac(context.controller, context.commandContext)
+			await improveWithIsaac(context.controller, context.commandContext)
 		}),
 	)
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(commands.FocusChatInput, async (preserveEditorFocus = false) => {
-			const webview = DiracWebviewProvider.getInstance() as VscodeDiracWebviewProvider
+			const webview = IsaacWebviewProvider.getInstance() as VscodeIsaacWebviewProvider
 
 			// Show the webview
 			const webviewView = webview.getWebview()
@@ -471,7 +471,7 @@ Current Notebook Cell Context (JSON, sanitized of image data):
 ${ctx.cellJson || "{}"}
 \`\`\``
 
-				await addToDirac(ctx.controller, ctx.commandContext, notebookContext)
+				await addToIsaac(ctx.controller, ctx.commandContext, notebookContext)
 			},
 		),
 	)
@@ -487,7 +487,7 @@ ${ctx.cellJson || "{}"}
 					? `\n\nCurrent Notebook Cell Context (JSON, sanitized of image data):\n\`\`\`json\n${ctx.cellJson}\n\`\`\``
 					: undefined
 
-				await explainWithDirac(ctx.controller, ctx.commandContext, notebookContext)
+				await explainWithIsaac(ctx.controller, ctx.commandContext, notebookContext)
 			},
 		),
 	)
@@ -513,7 +513,7 @@ Current Notebook Cell Context (JSON, sanitized of image data):
 ${ctx.cellJson || "{}"}
 \`\`\``
 
-				await improveWithDirac(ctx.controller, ctx.commandContext, notebookContext)
+				await improveWithIsaac(ctx.controller, ctx.commandContext, notebookContext)
 			},
 		),
 	)
@@ -599,9 +599,9 @@ ${ctx.cellJson || "{}"}
 
 	context.subscriptions.push(fileWatcher)
 
-	Logger.log(`[Dirac] extension activated in ${performance.now() - activationStartTime} ms`)
+	Logger.log(`[Isaac] extension activated in ${performance.now() - activationStartTime} ms`)
 
-	return createDiracAPI(webview.controller)
+	return createIsaacAPI(webview.controller)
 }
 
 async function showJupyterPromptInput(title: string, placeholder: string): Promise<string | undefined> {
@@ -651,10 +651,10 @@ async function showJupyterPromptInput(title: string, placeholder: string): Promi
 }
 
 function setupHostProvider(context: ExtensionContext, globalStorageFsPath: string) {
-	const outputChannel = registerDiracOutputChannel(context)
-	outputChannel.appendLine("[Dirac] Setting up VS Code host...")
+	const outputChannel = registerIsaacOutputChannel(context)
+	outputChannel.appendLine("[Isaac] Setting up VS Code host...")
 
-	const createWebview = () => new VscodeDiracWebviewProvider(context)
+	const createWebview = () => new VscodeIsaacWebviewProvider(context)
 	const createDiffView = () => new VscodeDiffViewProvider()
 	const createCommentReview = () => getVscodeCommentReviewController()
 	const createTerminalManager = () => new VscodeTerminalManager()
@@ -712,7 +712,7 @@ function getUriPath(url: string): string | undefined {
 	}
 }
 
-async function openDiracSidebarForTaskUri(): Promise<void> {
+async function openIsaacSidebarForTaskUri(): Promise<void> {
 	const sidebarWaitTimeoutMs = 3000
 	const sidebarWaitIntervalMs = 50
 
@@ -720,13 +720,13 @@ async function openDiracSidebarForTaskUri(): Promise<void> {
 
 	const startedAt = Date.now()
 	while (Date.now() - startedAt < sidebarWaitTimeoutMs) {
-		if (DiracWebviewProvider.getVisibleInstance()) {
+		if (IsaacWebviewProvider.getVisibleInstance()) {
 			return
 		}
 		await new Promise((resolve) => setTimeout(resolve, sidebarWaitIntervalMs))
 	}
 
-	Logger.warn("Task URI handling timed out waiting for Dirac sidebar visibility")
+	Logger.warn("Task URI handling timed out waiting for Isaac sidebar visibility")
 }
 
 async function getBinaryLocation(name: string): Promise<string> {
@@ -798,7 +798,7 @@ async function cleanupLegacyVSCodeStorage(context: ExtensionContext): Promise<vo
 
 		Logger.info("[VS Code Storage Migrations] Starting")
 
-		// Migrate custom instructions to global Dirac rules (one-time cleanup)
+		// Migrate custom instructions to global Isaac rules (one-time cleanup)
 		await migrateCustomInstructionsToGlobalRules(context)
 
 		// Migrate welcomeViewCompleted setting based on existing API keys (one-time cleanup)

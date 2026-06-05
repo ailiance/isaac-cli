@@ -7,9 +7,9 @@ import sinon from "sinon"
 
 import * as pluginModule from "@/core/plugins/PluginDiscoveryService"
 import { StateManager } from "@/core/storage/StateManager"
-import { getGlobalDiracRules } from "../dirac-rules"
+import { getGlobalIsaacRules } from "../dirac-rules"
 
-describe("getGlobalDiracRules — plugin CLAUDE.md injection", () => {
+describe("getGlobalIsaacRules — plugin CLAUDE.md injection", () => {
 	let tmpDir: string
 	let sandbox: sinon.SinonSandbox
 	let discoveryStub: sinon.SinonStub
@@ -47,7 +47,7 @@ describe("getGlobalDiracRules — plugin CLAUDE.md injection", () => {
 		const rulesDir = path.join(tmpDir, ".diracrules")
 		await fs.mkdir(rulesDir, { recursive: true })
 
-		const result = await getGlobalDiracRules(rulesDir, {})
+		const result = await getGlobalIsaacRules(rulesDir, {})
 
 		expect(result.instructions).to.be.a("string")
 		expect(result.instructions).to.include("my-awesome-plugin")
@@ -62,7 +62,7 @@ describe("getGlobalDiracRules — plugin CLAUDE.md injection", () => {
 		await fs.mkdir(rulesDir, { recursive: true })
 
 		// Should not throw — no instructions from missing plugin
-		const result = await getGlobalDiracRules(rulesDir, {})
+		const result = await getGlobalIsaacRules(rulesDir, {})
 
 		// No file-based rules + empty plugin = no instructions
 		expect(result.instructions).to.be.undefined
@@ -81,7 +81,7 @@ describe("getGlobalDiracRules — plugin CLAUDE.md injection", () => {
 		await fs.mkdir(rulesDir, { recursive: true })
 		await fs.writeFile(path.join(rulesDir, "global-rule.md"), "Global project rule.")
 
-		const result = await getGlobalDiracRules(rulesDir, {
+		const result = await getGlobalIsaacRules(rulesDir, {
 			[path.join(rulesDir, "global-rule.md")]: true,
 		})
 

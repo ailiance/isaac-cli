@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto"
 import { Anthropic } from "@anthropic-ai/sdk"
 import { EnvironmentMetadataEntry, TaskMetadata } from "@core/context/context-tracking/ContextTrackerTypes"
 import { execa } from "@packages/execa"
-import { DiracMessage } from "@shared/ExtensionMessage"
+import { IsaacMessage } from "@shared/ExtensionMessage"
 import { HistoryItem } from "@shared/HistoryItem"
 import { RemoteConfig } from "@shared/remote-config/schema"
 import { GlobalState, Settings } from "@shared/storage/state-keys"
@@ -108,15 +108,15 @@ export async function getDocumentsPath(): Promise<string> {
 }
 
 /**
- * Returns the cross-platform path to the Dirac home directory (~/.dirac).
+ * Returns the cross-platform path to the Isaac home directory (~/.dirac).
  * This works on macOS, Linux, and Windows:
  * - macOS: /Users/username/.dirac
  * - Linux: /home/username/.dirac
  * - Windows: C:\Users\username\.dirac
  *
- * This is intended to eventually replace ~/Documents/Dirac as the global config location.
+ * This is intended to eventually replace ~/Documents/Isaac as the global config location.
  */
-export function getDiracHomePath(): string {
+export function getIsaacHomePath(): string {
 	return path.join(os.homedir(), ".dirac")
 }
 
@@ -126,33 +126,33 @@ export async function ensureTaskDirectoryExists(taskId: string): Promise<string>
 
 export async function ensureRulesDirectoryExists(): Promise<string> {
 	const userDocumentsPath = await getDocumentsPath()
-	const diracRulesDir = path.join(userDocumentsPath, "Dirac", "Rules")
+	const diracRulesDir = path.join(userDocumentsPath, "Isaac", "Rules")
 	try {
 		await fs.mkdir(diracRulesDir, { recursive: true })
 	} catch (_error) {
-		return path.join(os.homedir(), "Documents", "Dirac", "Rules") // in case creating a directory in documents fails for whatever reason (e.g. permissions) - this is fine because we will fail gracefully with a path that does not exist
+		return path.join(os.homedir(), "Documents", "Isaac", "Rules") // in case creating a directory in documents fails for whatever reason (e.g. permissions) - this is fine because we will fail gracefully with a path that does not exist
 	}
 	return diracRulesDir
 }
 
 export async function ensureWorkflowsDirectoryExists(): Promise<string> {
 	const userDocumentsPath = await getDocumentsPath()
-	const diracWorkflowsDir = path.join(userDocumentsPath, "Dirac", "Workflows")
+	const diracWorkflowsDir = path.join(userDocumentsPath, "Isaac", "Workflows")
 	try {
 		await fs.mkdir(diracWorkflowsDir, { recursive: true })
 	} catch (_error) {
-		return path.join(os.homedir(), "Documents", "Dirac", "Workflows") // in case creating a directory in documents fails for whatever reason (e.g. permissions) - this is fine because we will fail gracefully with a path that does not exist
+		return path.join(os.homedir(), "Documents", "Isaac", "Workflows") // in case creating a directory in documents fails for whatever reason (e.g. permissions) - this is fine because we will fail gracefully with a path that does not exist
 	}
 	return diracWorkflowsDir
 }
 
 export async function ensureHooksDirectoryExists(): Promise<string> {
 	const userDocumentsPath = await getDocumentsPath()
-	const diracHooksDir = path.join(userDocumentsPath, "Dirac", "Hooks")
+	const diracHooksDir = path.join(userDocumentsPath, "Isaac", "Hooks")
 	try {
 		await fs.mkdir(diracHooksDir, { recursive: true })
 	} catch (_error) {
-		return path.join(os.homedir(), "Documents", "Dirac", "Hooks") // in case creating a directory in documents fails for whatever reason (e.g. permissions) - this is fine because we will fail gracefully with a path that does not exist
+		return path.join(os.homedir(), "Documents", "Isaac", "Hooks") // in case creating a directory in documents fails for whatever reason (e.g. permissions) - this is fine because we will fail gracefully with a path that does not exist
 	}
 	return diracHooksDir
 }
@@ -160,8 +160,8 @@ export async function ensureHooksDirectoryExists(): Promise<string> {
 /**
  * Returns the global skills directory path (~/.dirac/skills) without creating it.
  */
-function getDiracSkillsDirectoryPath(): string {
-	return path.join(getDiracHomePath(), "skills")
+function getIsaacSkillsDirectoryPath(): string {
+	return path.join(getIsaacHomePath(), "skills")
 }
 
 function getAgentSkillsDirectoryPath(): string {
@@ -216,7 +216,7 @@ export function getSkillsDirectoriesForScan(cwd: string): SkillsScanDirectory[] 
 		{ path: path.join(cwd, GlobalFileNames.claudeSkillsDir), source: "project" },
 		{ path: path.join(cwd, GlobalFileNames.aiSkillsDir), source: "project" },
 		{ path: path.join(cwd, GlobalFileNames.agentsSkillsDir), source: "project" },
-		{ path: getDiracSkillsDirectoryPath(), source: "global" },
+		{ path: getIsaacSkillsDirectoryPath(), source: "global" },
 		{ path: getAgentSkillsDirectoryPath(), source: "global" },
 		{ path: getClaudeSkillsDirectoryPath(), source: "global" },
 		{ path: getAiSkillsDirectoryPath(), source: "global" },
@@ -257,7 +257,7 @@ export async function saveApiConversationHistory(taskId: string, apiConversation
 	}
 }
 
-export async function getSavedDiracMessages(taskId: string): Promise<DiracMessage[]> {
+export async function getSavedIsaacMessages(taskId: string): Promise<IsaacMessage[]> {
 	const filePath = path.join(await ensureTaskDirectoryExists(taskId), GlobalFileNames.uiMessages)
 	if (await fileExistsAtPath(filePath)) {
 		return JSON.parse(await fs.readFile(filePath, "utf8"))
@@ -272,7 +272,7 @@ export async function getSavedDiracMessages(taskId: string): Promise<DiracMessag
 	return []
 }
 
-export async function saveDiracMessages(taskId: string, uiMessages: DiracMessage[]) {
+export async function saveIsaacMessages(taskId: string, uiMessages: IsaacMessage[]) {
 	try {
 		const taskDir = await ensureTaskDirectoryExists(taskId)
 		const filePath = path.join(taskDir, GlobalFileNames.uiMessages)

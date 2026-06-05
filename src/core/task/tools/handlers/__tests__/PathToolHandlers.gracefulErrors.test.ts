@@ -2,7 +2,7 @@ import { strict as assert } from "node:assert"
 import fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
-import { DiracDefaultTool } from "@shared/tools"
+import { IsaacDefaultTool } from "@shared/tools"
 import { AnchorStateManager } from "@utils/AnchorStateManager"
 import * as pathUtils from "@utils/path"
 import { afterEach, beforeEach, describe, it } from "mocha"
@@ -144,7 +144,7 @@ describe("ListFilesToolHandler.execute – error recovery", () => {
 		if (recursive !== undefined) params.recursive = recursive
 		return {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.LIST_FILES,
+			name: IsaacDefaultTool.LIST_FILES,
 			params,
 			partial: false,
 		}
@@ -282,8 +282,8 @@ describe("ListFilesToolHandler.execute – error recovery", () => {
 			filterPaths: (paths: string[]) => paths.filter((p) => !p.includes("blocked")),
 		}
 		config.services.diracIgnoreController = diracIgnoreController as any
-		// We also need to mock the validator's checkDiracIgnorePath if it uses it
-		sandbox.stub(validator, "checkDiracIgnorePath").callsFake((p: string) => {
+		// We also need to mock the validator's checkIsaacIgnorePath if it uses it
+		sandbox.stub(validator, "checkIsaacIgnorePath").callsFake((p: string) => {
 			if (!p.includes("blocked")) {
 				return { ok: true }
 			} else {
@@ -339,7 +339,7 @@ describe("SearchFilesToolHandler.execute – error recovery", () => {
 		if (filePattern !== undefined) params.file_pattern = filePattern
 		return {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.SEARCH,
+			name: IsaacDefaultTool.SEARCH,
 			params,
 			partial: false,
 		}
@@ -524,7 +524,7 @@ describe("SearchFilesToolHandler.execute – error recovery", () => {
 		// Pass array to 'path' instead of 'paths'
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.SEARCH,
+			name: IsaacDefaultTool.SEARCH,
 			params: {
 				path: ["src/transformers/pipelines"],
 				regex: "class.*Pipeline",

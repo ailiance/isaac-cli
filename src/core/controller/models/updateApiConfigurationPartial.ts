@@ -1,6 +1,6 @@
 import { buildApiHandler } from "@core/api"
-import { Empty } from "@shared/proto/dirac/common"
-import { UpdateApiConfigurationPartialRequest } from "@shared/proto/dirac/models"
+import { Empty } from "@shared/proto/isaac/common"
+import { UpdateApiConfigurationPartialRequest } from "@shared/proto/isaac/models"
 import { convertProtoToApiConfiguration } from "@shared/proto-conversions/models/api-configuration-conversion"
 import { Logger } from "@/shared/services/Logger"
 import type { Controller } from "../index"

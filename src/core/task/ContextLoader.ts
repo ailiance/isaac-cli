@@ -12,12 +12,12 @@ import { GlobalFileNames } from "@core/storage/disk"
 import { resolveWorkspacePath } from "@core/workspace"
 import { isMultiRootEnabled } from "@core/workspace/multi-root-utils"
 import { USER_CONTENT_TAGS } from "@shared/messages/constants"
-import { DiracContent, DiracTextContentBlock } from "@shared/messages/content"
+import { IsaacContent, IsaacTextContentBlock } from "@shared/messages/content"
 import { ASTAnchorBridge } from "@utils/ASTAnchorBridge"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { SymbolIndexService, SymbolLocation } from "../../services/symbol-index/SymbolIndexService"
-import { ensureLocalDiracDirExists } from "../context/instructions/user-instructions/rule-helpers"
+import { ensureLocalIsaacDirExists } from "../context/instructions/user-instructions/rule-helpers"
 import { refreshWorkflowToggles } from "../context/instructions/user-instructions/workflows"
 
 import { ContextLoaderDependencies } from "./types/context-loader"
@@ -337,7 +337,7 @@ export class ContextLoader {
         providerInfo: any,
         includePathContext: boolean,
         availableSkills: SkillMetadata[]
-    ): Promise<{ enrichedText: string; needsDiracrulesFileCheck: boolean; isDirectResponse?: boolean; directResponseText?: string }> {
+    ): Promise<{ enrichedText: string; needsIsaacrulesFileCheck: boolean; isDirectResponse?: boolean; directResponseText?: string }> {
         const parsedText = await parseMentions(
             text,
             cwd,
@@ -346,7 +346,7 @@ export class ContextLoader {
             this.workspaceManager,
         )
 
-        const { processedText, needsDiracrulesFileCheck, isDirectResponse, directResponseText } = await parseSlashCommands(
+        const { processedText, needsIsaacrulesFileCheck, isDirectResponse, directResponseText } = await parseSlashCommands(
             parsedText,
             localWorkflowToggles,
             globalWorkflowToggles,
@@ -360,7 +360,7 @@ export class ContextLoader {
 
         // Skip automatic path and symbol detection for subsequent turns
         if (!includePathContext) {
-            return { enrichedText: processedText, needsDiracrulesFileCheck, isDirectResponse, directResponseText }
+            return { enrichedText: processedText, needsIsaacrulesFileCheck, isDirectResponse, directResponseText }
         }
 
         const { filePaths, directoryPaths, symbols } = await this.extractContext(text, cwd)
@@ -375,19 +375,19 @@ export class ContextLoader {
         if (additionalContext.length > 0) {
             return {
                 enrichedText: `${processedText}\n\n${additionalContext.join("\n\n")}`,
-                needsDiracrulesFileCheck,
+                needsIsaacrulesFileCheck,
             }
         }
 
-        return { enrichedText: processedText, needsDiracrulesFileCheck, isDirectResponse, directResponseText }
+        return { enrichedText: processedText, needsIsaacrulesFileCheck, isDirectResponse, directResponseText }
     }
 
     async loadContext(
-        userContent: DiracContent[],
+        userContent: IsaacContent[],
         includeFileDetails = false,
         useCompactPrompt = false,
-    ): Promise<[DiracContent[], string, boolean, SkillMetadata[], boolean, string?]> {
-        let needsDiracrulesFileCheck = false
+    ): Promise<[IsaacContent[], string, boolean, SkillMetadata[], boolean, string?]> {
+        let needsIsaacrulesFileCheck = false
 
         // Pre-fetch necessary data to avoid redundant calls within loops
         const ulid = this.dependencies.ulid
@@ -415,7 +415,7 @@ export class ContextLoader {
         let isDirectResponse = false
         let directResponseText: string | undefined
         const parseTextBlock = async (text: string): Promise<string> => {
-            const { enrichedText, needsDiracrulesFileCheck: needsCheck, isDirectResponse: direct, directResponseText: directText } = await this.enrichContext(
+            const { enrichedText, needsIsaacrulesFileCheck: needsCheck, isDirectResponse: direct, directResponseText: directText } = await this.enrichContext(
                 text,
                 cwd,
                 localWorkflowToggles,
@@ -427,7 +427,7 @@ export class ContextLoader {
             )
 
             if (needsCheck) {
-                needsDiracrulesFileCheck = true
+                needsIsaacrulesFileCheck = true
             }
 
             if (direct) {
@@ -438,7 +438,7 @@ export class ContextLoader {
             return enrichedText
         }
 
-        const processTextContent = async (block: DiracTextContentBlock): Promise<DiracTextContentBlock> => {
+        const processTextContent = async (block: IsaacTextContentBlock): Promise<IsaacTextContentBlock> => {
             if (block.type !== "text" || !hasUserContentTag(block.text)) {
                 return block
             }
@@ -447,7 +447,7 @@ export class ContextLoader {
             return { ...block, text: processedText }
         }
 
-        const processContentBlock = async (block: DiracContent): Promise<DiracContent> => {
+        const processContentBlock = async (block: IsaacContent): Promise<IsaacContent> => {
             if (block.type === "text") {
                 return processTextContent(block)
             }
@@ -503,8 +503,8 @@ export class ContextLoader {
         ])
 
         // Check diracrulesData if needed
-        const diracrulesError = needsDiracrulesFileCheck
-            ? await ensureLocalDiracDirExists(this.dependencies.cwd, GlobalFileNames.diracRules)
+        const diracrulesError = needsIsaacrulesFileCheck
+            ? await ensureLocalIsaacDirExists(this.dependencies.cwd, GlobalFileNames.diracRules)
             : false
 
         return [processedUserContent, environmentDetails, diracrulesError, availableSkills, isDirectResponse, directResponseText]

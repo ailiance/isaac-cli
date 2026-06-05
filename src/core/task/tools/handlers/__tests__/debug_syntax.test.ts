@@ -2,7 +2,7 @@ import { strict as assert } from "node:assert"
 import fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
-import { DiracDefaultTool } from "@shared/tools"
+import { IsaacDefaultTool } from "@shared/tools"
 import { AnchorStateManager } from "@utils/AnchorStateManager"
 import { ANCHOR_DELIMITER } from "@utils/line-hashing"
 import { afterEach, beforeEach, describe, it } from "mocha"
@@ -64,7 +64,7 @@ function createConfig() {
 		services: {
 			fileContextTracker: {
 				trackFileContext: sinon.stub().resolves(),
-				markFileAsEditedByDirac: sinon.stub(),
+				markFileAsEditedByIsaac: sinon.stub(),
 			},
 			diffViewProvider,
 			diracIgnoreController: { validateAccess: () => true },
@@ -124,7 +124,7 @@ describe("EditFileToolHandler – debug syntax", () => {
 
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.EDIT_FILE,
+			name: IsaacDefaultTool.EDIT_FILE,
 			params: {
 				files: [
 					{
@@ -179,7 +179,7 @@ describe("EditFileToolHandler – debug syntax", () => {
 
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.EDIT_FILE,
+			name: IsaacDefaultTool.EDIT_FILE,
 			params: {
 				files: [
 					{

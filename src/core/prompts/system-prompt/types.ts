@@ -5,7 +5,7 @@
 import { ApiProviderInfo } from "@/core/api"
 import type { BrowserSettings } from "@/shared/BrowserSettings"
 import type { SkillMetadata } from "@/shared/skills"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import { ShellType } from "@/utils/shell-detection"
 import { SystemPromptSection } from "./templates/placeholders"
 
@@ -22,8 +22,8 @@ export interface SystemPromptContext {
 	}
 	readonly supportsBrowserUse?: boolean
 	readonly skills?: SkillMetadata[]
-	readonly globalDiracRulesFileInstructions?: string
-	readonly localDiracRulesFileInstructions?: string
+	readonly globalIsaacRulesFileInstructions?: string
+	readonly localIsaacRulesFileInstructions?: string
 	readonly localCursorRulesFileInstructions?: string
 	readonly localCursorRulesDirInstructions?: string
 	readonly localWindsurfRulesFileInstructions?: string
@@ -70,6 +70,6 @@ export function isValidSystemPromptSection(section: string): section is SystemPr
 	return Object.values(SystemPromptSection).includes(section as SystemPromptSection)
 }
 
-export function isValidDiracDefaultTool(tool: string): tool is DiracDefaultTool {
-	return Object.values(DiracDefaultTool).includes(tool as DiracDefaultTool)
+export function isValidIsaacDefaultTool(tool: string): tool is IsaacDefaultTool {
+	return Object.values(IsaacDefaultTool).includes(tool as IsaacDefaultTool)
 }

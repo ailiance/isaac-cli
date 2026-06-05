@@ -1,4 +1,4 @@
-import type { Boolean, EmptyRequest } from "@shared/proto/dirac/common"
+import type { Boolean, EmptyRequest } from "@shared/proto/isaac/common"
 import { useEffect } from "react"
 import { useAppStore } from "@/app/store/appStore"
 import ChatView from "@/features/chat/components/ChatView/ChatView"

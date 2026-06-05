@@ -3,13 +3,13 @@ import { HookFactory } from "@core/hooks/hook-factory"
 import { getHookModelContext } from "@core/hooks/hook-model-context"
 import { getHooksEnabledSafe } from "@core/hooks/hooks-utils"
 import { formatResponse } from "@core/prompts/responses"
-import { ensureTaskDirectoryExists, getSavedApiConversationHistory, getSavedDiracMessages } from "@core/storage/disk"
+import { ensureTaskDirectoryExists, getSavedApiConversationHistory, getSavedIsaacMessages } from "@core/storage/disk"
 import { HostProvider } from "@hosts/host-provider"
 import { ensureCheckpointInitialized } from "@integrations/checkpoints/initializer"
 import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { findLastIndex } from "@shared/array"
-import { DiracApiReqInfo, DiracAsk } from "@shared/ExtensionMessage"
-import { DiracContent, DiracImageContentBlock, DiracUserContent } from "@shared/messages/content"
+import { IsaacApiReqInfo, IsaacAsk } from "@shared/ExtensionMessage"
+import { IsaacContent, IsaacImageContentBlock, IsaacUserContent } from "@shared/messages/content"
 import { ShowMessageType } from "@shared/proto/index.host"
 import { Logger } from "@shared/services/Logger"
 import { AnchorStateManager } from "@utils/AnchorStateManager"
@@ -36,7 +36,7 @@ export class LifecycleManager {
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : "Unknown error"
 			Logger.error("Failed to initialize checkpoint manager:", errorMessage)
-			this.dependencies.taskState.checkpointManagerErrorMessage = errorMessage // will be displayed right away since we saveDiracMessages next which posts state to webview
+			this.dependencies.taskState.checkpointManagerErrorMessage = errorMessage // will be displayed right away since we saveIsaacMessages next which posts state to webview
 			HostProvider.window.showMessage({
 				type: ShowMessageType.ERROR,
 				message: `Checkpoint initialization timed out: ${errorMessage}`,
@@ -48,7 +48,7 @@ export class LifecycleManager {
 		if (!this.dependencies.taskState.checkpointManagerErrorMessage) {
 			await this.dependencies.say("checkpoint_created") // Now this is conditional
 			const lastCheckpointMessageIndex = findLastIndex(
-				this.dependencies.messageStateHandler.getDiracMessages(),
+				this.dependencies.messageStateHandler.getIsaacMessages(),
 				(m) => m.say === "checkpoint_created",
 			)
 			if (lastCheckpointMessageIndex !== -1) {
@@ -64,7 +64,7 @@ export class LifecycleManager {
 				commitPromise
 					?.then(async (commitHash) => {
 						if (commitHash) {
-							await this.dependencies.messageStateHandler.updateDiracMessage(lastCheckpointMessageIndex, {
+							await this.dependencies.messageStateHandler.updateIsaacMessage(lastCheckpointMessageIndex, {
 								lastCheckpointHash: commitHash,
 							})
 						}
@@ -84,9 +84,9 @@ export class LifecycleManager {
 			await this.dependencies.diracIgnoreController.initialize()
 			await this.dependencies.commandPermissionController.initialize(this.dependencies.cwd)
 		} catch (error) {
-			Logger.error("Failed to initialize DiracIgnoreController:", error)
+			Logger.error("Failed to initialize IsaacIgnoreController:", error)
 		}
-		this.dependencies.messageStateHandler.setDiracMessages([])
+		this.dependencies.messageStateHandler.setIsaacMessages([])
 		this.dependencies.messageStateHandler.setApiConversationHistory([])
 
 		await this.dependencies.postStateToWebview()
@@ -107,9 +107,9 @@ export class LifecycleManager {
 			}
 		}
 
-		const imageBlocks: DiracImageContentBlock[] = formatResponse.imageBlocks(images)
+		const imageBlocks: IsaacImageContentBlock[] = formatResponse.imageBlocks(images)
 
-		const userContent: DiracUserContent[] = [
+		const userContent: IsaacUserContent[] = [
 			{
 				type: "text",
 				text: `<task>\n${task}\n</task>`,
@@ -212,44 +212,44 @@ export class LifecycleManager {
 			await this.dependencies.diracIgnoreController.initialize()
 			await this.dependencies.commandPermissionController.initialize(this.dependencies.cwd)
 		} catch (error) {
-			Logger.error("Failed to initialize DiracIgnoreController:", error)
+			Logger.error("Failed to initialize IsaacIgnoreController:", error)
 		}
 
-		const savedDiracMessages = await getSavedDiracMessages(this.dependencies.taskId)
+		const savedIsaacMessages = await getSavedIsaacMessages(this.dependencies.taskId)
 
 		const lastRelevantMessageIndex = findLastIndex(
-			savedDiracMessages,
+			savedIsaacMessages,
 			(m) => !(m.ask === "resume_task" || m.ask === "resume_completed_task"),
 		)
 		if (lastRelevantMessageIndex !== -1) {
-			savedDiracMessages.splice(lastRelevantMessageIndex + 1)
+			savedIsaacMessages.splice(lastRelevantMessageIndex + 1)
 		}
 
-		const lastApiReqStartedIndex = findLastIndex(savedDiracMessages, (m) => m.type === "say" && m.say === "api_req_started")
+		const lastApiReqStartedIndex = findLastIndex(savedIsaacMessages, (m) => m.type === "say" && m.say === "api_req_started")
 		if (lastApiReqStartedIndex !== -1) {
-			const lastApiReqStarted = savedDiracMessages[lastApiReqStartedIndex]
-			const { cost, cancelReason }: DiracApiReqInfo = JSON.parse(lastApiReqStarted.text || "{}")
+			const lastApiReqStarted = savedIsaacMessages[lastApiReqStartedIndex]
+			const { cost, cancelReason }: IsaacApiReqInfo = JSON.parse(lastApiReqStarted.text || "{}")
 			if (cost === undefined && cancelReason === undefined) {
-				savedDiracMessages.splice(lastApiReqStartedIndex, 1)
+				savedIsaacMessages.splice(lastApiReqStartedIndex, 1)
 			}
 		}
 
-		await this.dependencies.messageStateHandler.overwriteDiracMessages(savedDiracMessages)
-		this.dependencies.messageStateHandler.setDiracMessages(await getSavedDiracMessages(this.dependencies.taskId))
+		await this.dependencies.messageStateHandler.overwriteIsaacMessages(savedIsaacMessages)
+		this.dependencies.messageStateHandler.setIsaacMessages(await getSavedIsaacMessages(this.dependencies.taskId))
 
 		const savedApiConversationHistory = await getSavedApiConversationHistory(this.dependencies.taskId)
 		this.dependencies.messageStateHandler.setApiConversationHistory(savedApiConversationHistory as any)
 
 		const taskDir = await ensureTaskDirectoryExists(this.dependencies.taskId)
 
-		const lastDiracMessage = this.dependencies.messageStateHandler
-			.getDiracMessages()
+		const lastIsaacMessage = this.dependencies.messageStateHandler
+			.getIsaacMessages()
 			.slice()
 			.reverse()
 			.find((m) => !(m.ask === "resume_task" || m.ask === "resume_completed_task"))
 
-		let askType: DiracAsk
-		if (lastDiracMessage?.ask === "completion_result") {
+		let askType: IsaacAsk
+		if (lastIsaacMessage?.ask === "completion_result") {
 			askType = "resume_completed_task"
 		} else {
 			askType = "resume_task"
@@ -260,11 +260,11 @@ export class LifecycleManager {
 
 		const { response, text, images, files } = await this.dependencies.ask(askType)
 
-		const newUserContent: DiracContent[] = []
+		const newUserContent: IsaacContent[] = []
 
 		const hooksEnabled = getHooksEnabledSafe(this.dependencies.stateManager.getGlobalSettingsKey("hooksEnabled"))
 		if (hooksEnabled) {
-			const diracMessages = this.dependencies.messageStateHandler.getDiracMessages()
+			const diracMessages = this.dependencies.messageStateHandler.getIsaacMessages()
 			const taskResumeResult = await executeHook({
 				hookName: "TaskResume",
 				hookInput: {
@@ -274,7 +274,7 @@ export class LifecycleManager {
 							ulid: this.dependencies.ulid,
 						},
 						previousState: {
-							lastMessageTs: lastDiracMessage?.ts?.toString() || "",
+							lastMessageTs: lastIsaacMessage?.ts?.toString() || "",
 							messageCount: diracMessages.length.toString(),
 							conversationHistoryDeleted: (
 								this.dependencies.taskState.conversationHistoryDeletedRange !== undefined
@@ -324,7 +324,7 @@ export class LifecycleManager {
 		}
 
 		const existingApiConversationHistory = this.dependencies.messageStateHandler.getApiConversationHistory()
-		let modifiedOldUserContent: DiracContent[]
+		let modifiedOldUserContent: IsaacContent[]
 		let modifiedApiConversationHistory: any[]
 		if (existingApiConversationHistory.length > 0) {
 			const lastMessage = existingApiConversationHistory[existingApiConversationHistory.length - 1]
@@ -332,7 +332,7 @@ export class LifecycleManager {
 				modifiedApiConversationHistory = [...existingApiConversationHistory]
 				modifiedOldUserContent = []
 			} else if (lastMessage.role === "user") {
-				const existingUserContent: DiracContent[] = Array.isArray(lastMessage.content)
+				const existingUserContent: IsaacContent[] = Array.isArray(lastMessage.content)
 					? lastMessage.content
 					: [{ type: "text", text: lastMessage.content }]
 				modifiedApiConversationHistory = existingApiConversationHistory.slice(0, -1)
@@ -348,7 +348,7 @@ export class LifecycleManager {
 		newUserContent.push(...modifiedOldUserContent)
 
 		const agoText = (() => {
-			const timestamp = lastDiracMessage?.ts ?? Date.now()
+			const timestamp = lastIsaacMessage?.ts ?? Date.now()
 			const now = Date.now()
 			const diff = now - timestamp
 			const minutes = Math.floor(diff / 60000)
@@ -360,7 +360,7 @@ export class LifecycleManager {
 			return "just now"
 		})()
 
-		const wasRecent = lastDiracMessage?.ts && Date.now() - lastDiracMessage.ts < 30_000
+		const wasRecent = lastIsaacMessage?.ts && Date.now() - lastIsaacMessage.ts < 30_000
 		const pendingContextWarning = await this.dependencies.fileContextTracker.retrieveAndClearPendingFileContextWarning()
 		const hasPendingFileContextWarnings = pendingContextWarning && pendingContextWarning.length > 0
 		const mode = this.dependencies.stateManager.getGlobalSettingsKey("mode")
@@ -484,14 +484,14 @@ export class LifecycleManager {
 						model: getHookModelContext(this.dependencies.api, this.dependencies.stateManager),
 					})
 
-					const lastDiracMessage = this.dependencies.messageStateHandler
-						.getDiracMessages()
+					const lastIsaacMessage = this.dependencies.messageStateHandler
+						.getIsaacMessages()
 						.slice()
 						.reverse()
 						.find((m) => !(m.ask === "resume_task" || m.ask === "resume_completed_task"))
 
-					let askType: DiracAsk
-					if (lastDiracMessage?.ask === "completion_result") {
+					let askType: IsaacAsk
+					if (lastIsaacMessage?.ask === "completion_result") {
 						askType = "resume_completed_task"
 					} else {
 						askType = "resume_task"
@@ -506,7 +506,7 @@ export class LifecycleManager {
 			}
 
 			try {
-				await this.dependencies.messageStateHandler.saveDiracMessagesAndUpdateHistory()
+				await this.dependencies.messageStateHandler.saveIsaacMessagesAndUpdateHistory()
 				await this.dependencies.postStateToWebview()
 			} catch (error) {
 				Logger.error("Failed to post state after setting abort flag", error)

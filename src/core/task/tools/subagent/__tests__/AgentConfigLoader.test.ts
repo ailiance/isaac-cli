@@ -5,7 +5,7 @@ import os from "os"
 import * as path from "path"
 import sinon from "sinon"
 import * as pluginModule from "@/core/plugins/PluginDiscoveryService"
-import { DiracDefaultTool, getToolUseNames } from "@/shared/tools"
+import { IsaacDefaultTool, getToolUseNames } from "@/shared/tools"
 import {
 	AgentConfigLoader,
 	getAgentsConfigPath,
@@ -42,11 +42,11 @@ You are a code reviewer.`
 		assert.equal(parsed.name, "code-reviewer")
 		assert.equal(parsed.description, "Reviews code for quality and best practices")
 		assert.equal(parsed.modelId, "sonnet")
-		assert.deepEqual(parsed.tools, [DiracDefaultTool.FILE_READ, DiracDefaultTool.LIST_FILES, DiracDefaultTool.SEARCH])
+		assert.deepEqual(parsed.tools, [IsaacDefaultTool.FILE_READ, IsaacDefaultTool.LIST_FILES, IsaacDefaultTool.SEARCH])
 		assert.equal(parsed.systemPrompt, "You are a code reviewer.")
 	})
 
-	it("supports raw Dirac tool ids in tools", () => {
+	it("supports raw Isaac tool ids in tools", () => {
 		const content = `---
 name: cli-agent
 description: Uses internal ids
@@ -59,7 +59,7 @@ modelId: sonnet
 Prompt body`
 
 		const parsed = parseAgentConfigFromYaml(content)
-		assert.deepEqual(parsed.tools, [DiracDefaultTool.FILE_READ, DiracDefaultTool.LIST_FILES])
+		assert.deepEqual(parsed.tools, [IsaacDefaultTool.FILE_READ, IsaacDefaultTool.LIST_FILES])
 	})
 
 	it("throws for unknown tools", () => {
@@ -121,10 +121,10 @@ Reviewer prompt`,
 		const localAgent = loader.getCachedConfig("local-agent")
 		const reviewer = loader.getCachedConfig("reviewer")
 		assert.equal(localAgent?.name, "local-agent")
-		assert.deepEqual(localAgent?.tools, [DiracDefaultTool.FILE_READ])
+		assert.deepEqual(localAgent?.tools, [IsaacDefaultTool.FILE_READ])
 		assert.equal(localAgent?.systemPrompt, "Prompt body")
 		assert.equal(reviewer?.name, "reviewer")
-		assert.deepEqual(reviewer?.tools, [DiracDefaultTool.LIST_FILES])
+		assert.deepEqual(reviewer?.tools, [IsaacDefaultTool.LIST_FILES])
 		assert.equal(loader.getAllCachedConfigs().size, 2)
 	})
 

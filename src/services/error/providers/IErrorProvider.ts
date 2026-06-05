@@ -1,9 +1,9 @@
 /**
  * Interface for error providers
- * Allows switching between different error tracking providers (Dirac, Sentry, etc.)
+ * Allows switching between different error tracking providers (Isaac, Sentry, etc.)
  */
 
-import type { DiracError } from "../DiracError"
+import type { IsaacError } from "../IsaacError"
 
 /**
  * Error settings that control when and how errors are logged
@@ -27,14 +27,14 @@ export interface IErrorProvider {
 	 * @param error The error to log
 	 * @param properties  Optional additional properties to attach to the error
 	 */
-	captureException(error: Error | DiracError, properties?: Record<string, unknown>): Promise<void>
+	captureException(error: Error | IsaacError, properties?: Record<string, unknown>): Promise<void>
 
 	/**
 	 * Sends a log message an error and optional properties
-	 * @param error The error to log (Error or DiracError)
+	 * @param error The error to log (Error or IsaacError)
 	 * @param properties Optional additional properties to attach
 	 */
-	logException(error: Error | DiracError, properties?: Record<string, unknown>): void
+	logException(error: Error | IsaacError, properties?: Record<string, unknown>): void
 
 	/**
 	 * Log a message with specified level

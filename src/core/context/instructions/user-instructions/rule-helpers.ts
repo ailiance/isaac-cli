@@ -1,5 +1,5 @@
 import { ensureRulesDirectoryExists, ensureWorkflowsDirectoryExists, GlobalFileNames } from "@core/storage/disk"
-import { DiracRulesToggles } from "@shared/dirac-rules"
+import { IsaacRulesToggles } from "@shared/dirac-rules"
 import { GlobalInstructionsFile } from "@shared/remote-config/schema"
 import { fileExistsAtPath, isDirectory, readDirectory } from "@utils/fs"
 import fs from "fs/promises"
@@ -41,10 +41,10 @@ export async function readDirectoryRecursive(
  */
 export async function synchronizeRuleToggles(
 	rulesDirectoryPath: string,
-	currentToggles: DiracRulesToggles,
+	currentToggles: IsaacRulesToggles,
 	allowedFileExtension = "",
 	excludedPaths: string[][] = [],
-): Promise<DiracRulesToggles> {
+): Promise<IsaacRulesToggles> {
 	// Create a copy of toggles to modify
 	const updatedToggles = { ...currentToggles }
 
@@ -111,9 +111,9 @@ export async function synchronizeRuleToggles(
  */
 export function synchronizeRemoteRuleToggles(
 	remoteRules: GlobalInstructionsFile[],
-	currentToggles: DiracRulesToggles,
-): DiracRulesToggles {
-	const updatedToggles: DiracRulesToggles = {}
+	currentToggles: IsaacRulesToggles,
+): IsaacRulesToggles {
+	const updatedToggles: IsaacRulesToggles = {}
 
 	// Create set of current remote rule names
 	const existingRuleNames = new Set(remoteRules.map((rule) => rule.name))
@@ -138,14 +138,14 @@ export function synchronizeRemoteRuleToggles(
 /**
  * Certain project rules have more than a single location where rules are allowed to be stored
  */
-export function combineRuleToggles(toggles1: DiracRulesToggles, toggles2: DiracRulesToggles): DiracRulesToggles {
+export function combineRuleToggles(toggles1: IsaacRulesToggles, toggles2: IsaacRulesToggles): IsaacRulesToggles {
 	return { ...toggles1, ...toggles2 }
 }
 
 /**
  * Read the content of rules files
  */
-export const getRuleFilesTotalContent = async (rulesFilePaths: string[], basePath: string, toggles: DiracRulesToggles) => {
+export const getRuleFilesTotalContent = async (rulesFilePaths: string[], basePath: string, toggles: IsaacRulesToggles) => {
 	return (await getRuleFilesTotalContentWithMetadata(rulesFilePaths, basePath, toggles)).content
 }
 
@@ -169,7 +169,7 @@ export type RuleLoadResult = {
 
 /**
  * Result type for rule loading functions that return formatted instructions.
- * Used by getGlobalDiracRules and getLocalDiracRules.
+ * Used by getGlobalIsaacRules and getLocalIsaacRules.
  */
 export type RuleLoadResultWithInstructions = {
 	instructions?: string
@@ -179,7 +179,7 @@ export type RuleLoadResultWithInstructions = {
 export const getRuleFilesTotalContentWithMetadata = async (
 	rulesFilePaths: string[],
 	basePath: string,
-	toggles: DiracRulesToggles,
+	toggles: IsaacRulesToggles,
 	opts?: { evaluationContext?: RuleEvaluationContext; ruleNamePrefix?: keyof typeof RULE_SOURCE_PREFIX },
 ): Promise<RuleLoadResult> => {
 	const evaluationContext = opts?.evaluationContext ?? {}
@@ -238,7 +238,7 @@ export const getRuleFilesTotalContentWithMetadata = async (
 
 export function getRemoteRulesTotalContentWithMetadata(
 	remoteRules: GlobalInstructionsFile[],
-	remoteToggles: DiracRulesToggles,
+	remoteToggles: IsaacRulesToggles,
 	opts?: { evaluationContext?: RuleEvaluationContext },
 ): RuleLoadResult {
 	const activatedConditionalRules: ActivatedConditionalRule[] = []
@@ -280,7 +280,7 @@ export function getRemoteRulesTotalContentWithMetadata(
  * Doesn't do anything if the dir already exists or doesn't exist
  * Returns whether there are any uncaught errors
  */
-export async function ensureLocalDiracDirExists(diracrulePath: string, defaultRuleFilename: string): Promise<boolean> {
+export async function ensureLocalIsaacDirExists(diracrulePath: string, defaultRuleFilename: string): Promise<boolean> {
 	try {
 		const exists = await fileExistsAtPath(diracrulePath)
 
@@ -319,26 +319,26 @@ export const createRuleFile = async (isGlobal: boolean, filename: string, cwd: s
 		let filePath: string
 		if (isGlobal) {
 			if (type === "workflow") {
-				const globalDiracWorkflowFilePath = await ensureWorkflowsDirectoryExists()
-				filePath = path.join(globalDiracWorkflowFilePath, filename)
+				const globalIsaacWorkflowFilePath = await ensureWorkflowsDirectoryExists()
+				filePath = path.join(globalIsaacWorkflowFilePath, filename)
 			} else {
-				const globalDiracRulesFilePath = await ensureRulesDirectoryExists()
-				filePath = path.join(globalDiracRulesFilePath, filename)
+				const globalIsaacRulesFilePath = await ensureRulesDirectoryExists()
+				filePath = path.join(globalIsaacRulesFilePath, filename)
 			}
 		} else {
-			const localDiracRulesFilePath = path.resolve(cwd, GlobalFileNames.diracRules)
+			const localIsaacRulesFilePath = path.resolve(cwd, GlobalFileNames.diracRules)
 
-			const hasError = await ensureLocalDiracDirExists(localDiracRulesFilePath, "default-rules.md")
+			const hasError = await ensureLocalIsaacDirExists(localIsaacRulesFilePath, "default-rules.md")
 			if (hasError === true) {
 				return { filePath: null, fileExists: false }
 			}
 
-			await fs.mkdir(localDiracRulesFilePath, { recursive: true })
+			await fs.mkdir(localIsaacRulesFilePath, { recursive: true })
 
 			if (type === "workflow") {
 				const localWorkflowsFilePath = path.resolve(cwd, GlobalFileNames.workflows)
 
-				const hasError = await ensureLocalDiracDirExists(localWorkflowsFilePath, "default-workflows.md")
+				const hasError = await ensureLocalIsaacDirExists(localWorkflowsFilePath, "default-workflows.md")
 				if (hasError === true) {
 					return { filePath: null, fileExists: false }
 				}
@@ -348,7 +348,7 @@ export const createRuleFile = async (isGlobal: boolean, filename: string, cwd: s
 				filePath = path.join(localWorkflowsFilePath, filename)
 			} else {
 				// diracrules file creation
-				filePath = path.join(localDiracRulesFilePath, filename)
+				filePath = path.join(localIsaacRulesFilePath, filename)
 			}
 		}
 

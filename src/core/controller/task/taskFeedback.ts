@@ -1,4 +1,4 @@
-import { Empty, StringRequest } from "@shared/proto/dirac/common"
+import { Empty, StringRequest } from "@shared/proto/isaac/common"
 import { telemetryService } from "@/services/telemetry"
 import { Logger } from "@/shared/services/Logger"
 import { Controller } from ".."

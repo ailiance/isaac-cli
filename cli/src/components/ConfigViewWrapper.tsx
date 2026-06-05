@@ -6,7 +6,7 @@ import { exec } from "node:child_process"
 import os from "node:os"
 import path from "node:path"
 
-import { RuleScope } from "@shared/proto/dirac/file"
+import { RuleScope } from "@shared/proto/isaac/file"
 import type { GlobalStateAndSettings, GlobalStateAndSettingsKey, LocalState, LocalStateKey } from "@shared/storage/state-keys"
 import React, { useCallback, useEffect, useState } from "react"
 
@@ -57,8 +57,8 @@ export const ConfigViewWrapper: React.FC<ConfigViewWrapperProps> = ({
 	const [workspaceStateLocal, setWorkspaceStateLocal] = useState<Record<string, unknown>>(initialWorkspaceState)
 
 	// Rules state
-	const [globalDiracRulesToggles, setGlobalDiracRulesToggles] = useState<Record<string, boolean>>({})
-	const [localDiracRulesToggles, setLocalDiracRulesToggles] = useState<Record<string, boolean>>({})
+	const [globalDiracRulesToggles, setGlobalIsaacRulesToggles] = useState<Record<string, boolean>>({})
+	const [localDiracRulesToggles, setLocalIsaacRulesToggles] = useState<Record<string, boolean>>({})
 	const [localCursorRulesToggles, setLocalCursorRulesToggles] = useState<Record<string, boolean>>({})
 	const [localWindsurfRulesToggles, setLocalWindsurfRulesToggles] = useState<Record<string, boolean>>({})
 	const [localAgentsRulesToggles, setLocalAgentsRulesToggles] = useState<Record<string, boolean>>({})
@@ -83,8 +83,8 @@ export const ConfigViewWrapper: React.FC<ConfigViewWrapperProps> = ({
 			const { refreshSkills } = await import("@/core/controller/file/refreshSkills")
 
 			const rulesData = await refreshRules(controller, {})
-			setGlobalDiracRulesToggles(rulesData.globalDiracRulesToggles?.toggles || {})
-			setLocalDiracRulesToggles(rulesData.localDiracRulesToggles?.toggles || {})
+			setGlobalIsaacRulesToggles(rulesData.globalDiracRulesToggles?.toggles || {})
+			setLocalIsaacRulesToggles(rulesData.localDiracRulesToggles?.toggles || {})
 			setLocalCursorRulesToggles(rulesData.localCursorRulesToggles?.toggles || {})
 			setLocalWindsurfRulesToggles(rulesData.localWindsurfRulesToggles?.toggles || {})
 			setLocalAgentsRulesToggles(rulesData.localAgentsRulesToggles?.toggles || {})
@@ -109,7 +109,7 @@ export const ConfigViewWrapper: React.FC<ConfigViewWrapperProps> = ({
 	// Toggle handlers
 	const handleToggleRule = useCallback(
 		async (isGlobal: boolean, rulePath: string, enabled: boolean, ruleType: string) => {
-			const { toggleDiracRule } = await import("@/core/controller/file/toggleDiracRule")
+			const { toggleIsaacRule } = await import("@/core/controller/file/toggleIsaacRule")
 
 			// Determine scope based on isGlobal and rule type
 			const scope = isGlobal ? RuleScope.GLOBAL : RuleScope.LOCAL
@@ -133,13 +133,13 @@ export const ConfigViewWrapper: React.FC<ConfigViewWrapperProps> = ({
 				toggles[rulePath] = enabled
 				controller.stateManager.setWorkspaceState("localAgentsRulesToggles", toggles)
 			} else {
-				// Dirac rules
-				const result = await toggleDiracRule(controller, { metadata: undefined, rulePath, enabled, scope })
+				// Isaac rules
+				const result = await toggleIsaacRule(controller, { metadata: undefined, rulePath, enabled, scope })
 				if (result.globalDiracRulesToggles?.toggles) {
-					setGlobalDiracRulesToggles(result.globalDiracRulesToggles.toggles)
+					setGlobalIsaacRulesToggles(result.globalDiracRulesToggles.toggles)
 				}
 				if (result.localDiracRulesToggles?.toggles) {
-					setLocalDiracRulesToggles(result.localDiracRulesToggles.toggles)
+					setLocalIsaacRulesToggles(result.localDiracRulesToggles.toggles)
 				}
 			}
 		},

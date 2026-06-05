@@ -1,5 +1,5 @@
-import { EmptyRequest } from "@shared/proto/dirac/common"
-import { BranchList } from "@shared/proto/dirac/worktree"
+import { EmptyRequest } from "@shared/proto/isaac/common"
+import { BranchList } from "@shared/proto/isaac/worktree"
 import { getAvailableBranches as getAvailableBranchesUtil } from "@utils/git-worktree"
 import { getWorkspacePath } from "@utils/path"
 import { Logger } from "@/shared/services/Logger"

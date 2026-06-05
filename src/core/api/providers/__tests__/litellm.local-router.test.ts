@@ -4,7 +4,7 @@ import { expect } from "chai"
 import sinon from "sinon"
 import * as instanceModule from "@/services/local-router/instance"
 import type { LocalRouter } from "@/services/local-router/LocalRouter"
-import { DiracStorageMessage } from "@/shared/messages/content"
+import { IsaacStorageMessage } from "@/shared/messages/content"
 import { mockFetchForTesting } from "@/shared/net"
 
 // Minimal fake LocalRouter
@@ -84,7 +84,7 @@ describe("LiteLlmHandler — LocalRouter integration", () => {
 			})
 			sinon.stub(handler, "ensureClient" as any).returns(fakeOpenAIClient)
 
-			const messages: DiracStorageMessage[] = [{ role: "user", content: "hello" }]
+			const messages: IsaacStorageMessage[] = [{ role: "user", content: "hello" }]
 			const chunks = []
 			for await (const chunk of handler.createMessage("system", messages)) {
 				chunks.push(chunk)
@@ -107,7 +107,7 @@ describe("LiteLlmHandler — LocalRouter integration", () => {
 				useLocalRouter: true,
 			})
 
-			const messages: DiracStorageMessage[] = [{ role: "user", content: "hello" }]
+			const messages: IsaacStorageMessage[] = [{ role: "user", content: "hello" }]
 			const chunks = []
 			for await (const chunk of handler.createMessage("system", messages)) {
 				chunks.push(chunk)
@@ -137,7 +137,7 @@ describe("LiteLlmHandler — LocalRouter integration", () => {
 				useLocalRouter: true,
 			})
 
-			const messages: DiracStorageMessage[] = [
+			const messages: IsaacStorageMessage[] = [
 				{ role: "user", content: "what is 2+2?" },
 				{ role: "assistant", content: "4" },
 				{ role: "user", content: "thanks" },
@@ -164,7 +164,7 @@ describe("LiteLlmHandler — LocalRouter integration", () => {
 			})
 			sinon.stub(handler, "ensureClient" as any).returns(fakeOpenAIClient)
 
-			const messages: DiracStorageMessage[] = [{ role: "user", content: "hello" }]
+			const messages: IsaacStorageMessage[] = [{ role: "user", content: "hello" }]
 			const chunks = []
 			for await (const chunk of handler.createMessage("system", messages)) {
 				chunks.push(chunk)
@@ -190,7 +190,7 @@ describe("LiteLlmHandler — LocalRouter integration", () => {
 			sinon.stub(handler, "ensureClient" as any).returns(fakeOpenAIClient)
 
 			// Message with image block → non-text, should skip LocalRouter
-			const messages: DiracStorageMessage[] = [
+			const messages: IsaacStorageMessage[] = [
 				{
 					role: "user",
 					content: [{ type: "image", source: { type: "base64", mediaType: "image/png", data: "abc" } }] as any,

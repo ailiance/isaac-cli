@@ -4,7 +4,7 @@ import { combineErrorRetryMessages } from "@shared/combineErrorRetryMessages"
 import { combineHookSequences } from "@shared/combineHookSequences"
 import { Mode } from "@shared/ExtensionMessage"
 import { getApiMetrics, getLastApiReqInfo } from "@shared/getApiMetrics"
-import { BooleanRequest } from "@shared/proto/dirac/common"
+import { BooleanRequest } from "@shared/proto/isaac/common"
 import { useCallback, useEffect, useMemo } from "react"
 import { useMount } from "react-use"
 import { useAppStore } from "@/app/store/appStore"
@@ -64,7 +64,7 @@ const ChatViewContent = ({ isHidden, showAnnouncement, hideAnnouncement, showHis
 	const shouldShowQuickWins = isProdHostedApp && (!taskHistory || taskHistory.length < QUICK_WINS_HISTORY_THRESHOLD)
 
 	//const task = messages.length > 0 ? (messages[0].say === "task" ? messages[0] : undefined) : undefined) : undefined
-	const task = useMemo(() => messages.at(0), [messages]) // leaving this less safe version here since if the first message is not a task, then the extension is in a bad state and needs to be debugged (see Dirac.abort)
+	const task = useMemo(() => messages.at(0), [messages]) // leaving this less safe version here since if the first message is not a task, then the extension is in a bad state and needs to be debugged (see Isaac.abort)
 	const modifiedMessages = useMemo(() => {
 		const slicedMessages = messages.slice(1)
 		// Only combine hook sequences if hooks are enabled

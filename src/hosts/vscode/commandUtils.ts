@@ -2,10 +2,10 @@ import * as fs from "fs/promises"
 import * as vscode from "vscode"
 import { sanitizeCellForLLM } from "@/integrations/misc/notebook-utils"
 import { ExtensionRegistryInfo } from "@/registry"
-import { CommandContext } from "@/shared/proto/index.dirac"
+import { CommandContext } from "@/shared/proto/index.isaac"
 import { Logger } from "@/shared/services/Logger"
 import { Controller } from "../../core/controller"
-import { DiracWebviewProvider } from "../../core/webview"
+import { IsaacWebviewProvider } from "../../core/webview"
 import { convertVscodeDiagnostics } from "./hostbridge/workspace/getDiagnostics"
 
 /**
@@ -56,7 +56,7 @@ export async function getContextForCommand(
 	options?: {
 		/**
 		 * When true, the editor keeps focus when showing the sidebar webview.
-		 * Use this for non-interruptive flows (e.g. copy terminal output to Dirac).
+		 * Use this for non-interruptive flows (e.g. copy terminal output to Isaac).
 		 */
 		preserveEditorFocus?: boolean
 	},
@@ -103,8 +103,8 @@ export async function getContextForCommand(
 	return { controller, commandContext }
 }
 
-export async function showWebview(preserveEditorFocus = true): Promise<DiracWebviewProvider> {
+export async function showWebview(preserveEditorFocus = true): Promise<IsaacWebviewProvider> {
 	await vscode.commands.executeCommand(ExtensionRegistryInfo.commands.FocusChatInput, preserveEditorFocus)
 
-	return DiracWebviewProvider.getInstance()
+	return IsaacWebviewProvider.getInstance()
 }

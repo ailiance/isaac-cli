@@ -11,13 +11,13 @@
 
 import { describe, it } from "mocha"
 import "should"
-import { DiracAssistantThinkingBlock, DiracStorageMessage, DiracTextContentBlock } from "@/shared/messages/content"
+import { IsaacAssistantThinkingBlock, IsaacStorageMessage, IsaacTextContentBlock } from "@/shared/messages/content"
 import { convertToOpenAiMessages, sanitizeGeminiMessages } from "../openai-format"
 
 describe("Thinking Trace Preservation", () => {
 	describe("convertToOpenAiMessages", () => {
 		it("should preserve reasoning_details on text blocks", () => {
-			const messages: DiracStorageMessage[] = [
+			const messages: IsaacStorageMessage[] = [
 				{
 					role: "assistant",
 					content: [
@@ -33,7 +33,7 @@ describe("Thinking Trace Preservation", () => {
 									index: 0,
 								},
 							],
-						} as DiracTextContentBlock,
+						} as IsaacTextContentBlock,
 					],
 				},
 			]
@@ -49,7 +49,7 @@ describe("Thinking Trace Preservation", () => {
 		})
 
 		it("should preserve thinking blocks with signatures", () => {
-			const messages: DiracStorageMessage[] = [
+			const messages: IsaacStorageMessage[] = [
 				{
 					role: "assistant",
 					content: [
@@ -57,11 +57,11 @@ describe("Thinking Trace Preservation", () => {
 							type: "thinking",
 							thinking: "Let me analyze this problem...",
 							signature: "valid-signature",
-						} as DiracAssistantThinkingBlock,
+						} as IsaacAssistantThinkingBlock,
 						{
 							type: "text",
 							text: "Here's my answer.",
-						} as DiracTextContentBlock,
+						} as IsaacTextContentBlock,
 					],
 				},
 			]
@@ -76,7 +76,7 @@ describe("Thinking Trace Preservation", () => {
 		})
 
 		it("should consolidate multiple reasoning_details entries", () => {
-			const messages: DiracStorageMessage[] = [
+			const messages: IsaacStorageMessage[] = [
 				{
 					role: "assistant",
 					content: [
@@ -99,7 +99,7 @@ describe("Thinking Trace Preservation", () => {
 									index: 0,
 								},
 							],
-						} as DiracTextContentBlock,
+						} as IsaacTextContentBlock,
 					],
 				},
 			]
@@ -114,7 +114,7 @@ describe("Thinking Trace Preservation", () => {
 		})
 
 		it("should filter out corrupted encrypted reasoning blocks", () => {
-			const messages: DiracStorageMessage[] = [
+			const messages: IsaacStorageMessage[] = [
 				{
 					role: "assistant",
 					content: [
@@ -137,7 +137,7 @@ describe("Thinking Trace Preservation", () => {
 									index: 1,
 								},
 							],
-						} as DiracTextContentBlock,
+						} as IsaacTextContentBlock,
 					],
 				},
 			]

@@ -1,6 +1,6 @@
 import { Environment } from "@shared/config-types"
 import type { ExtensionState } from "@shared/ExtensionMessage"
-import { EmptyRequest } from "@shared/proto/dirac/common"
+import { EmptyRequest } from "@shared/proto/isaac/common"
 import { create } from "zustand"
 import { useTaskStore } from "@/entities/task/store/taskStore"
 import { useSettingsStore } from "@/features/settings/store/settingsStore"

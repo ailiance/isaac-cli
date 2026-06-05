@@ -1,5 +1,5 @@
-import { StringArray } from "@shared/proto/dirac/common"
-import { OpenAiModelsRequest } from "@shared/proto/dirac/models"
+import { StringArray } from "@shared/proto/isaac/common"
+import { OpenAiModelsRequest } from "@shared/proto/isaac/models"
 import type { AxiosRequestConfig } from "axios"
 import axios from "axios"
 import { getAxiosSettings } from "@/shared/net"

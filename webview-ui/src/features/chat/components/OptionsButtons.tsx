@@ -1,4 +1,4 @@
-import { AskResponseRequest } from "@shared/proto/dirac/task"
+import { AskResponseRequest } from "@shared/proto/isaac/task"
 import styled from "styled-components"
 import { TaskServiceClient } from "@/shared/api/grpc-client"
 import { CODE_BLOCK_BG_COLOR } from "@/shared/ui/CodeBlock"

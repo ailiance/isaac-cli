@@ -1,9 +1,9 @@
-import { DiracDefaultTool } from "@/shared/tools"
-import type { DiracToolSpec } from "../spec"
+import { IsaacDefaultTool } from "@/shared/tools"
+import type { IsaacToolSpec } from "../spec"
 
-const id = DiracDefaultTool.ATTEMPT
+const id = IsaacDefaultTool.ATTEMPT
 
-export const attempt_completion: DiracToolSpec = {
+export const attempt_completion: IsaacToolSpec = {
 	id,
 	name: "attempt_completion",
 	description: "Presents a brief and informative summary of the final result. Keep it concise while covering important changes. Avoid redundant text.",

@@ -2,16 +2,16 @@ import { ApiHandler } from "@core/api"
 import { FileContextTracker } from "@core/context/context-tracking/FileContextTracker"
 import { getHookModelContext } from "@core/hooks/hook-model-context"
 import { getHooksEnabledSafe } from "@core/hooks/hooks-utils"
-import { DiracIgnoreController } from "@core/ignore/DiracIgnoreController"
+import { IsaacIgnoreController } from "@core/ignore/IsaacIgnoreController"
 import { CommandPermissionController } from "@core/permissions"
 import { DiffViewProvider } from "@integrations/editor/DiffViewProvider"
 import type { CommandExecutionOptions } from "@integrations/terminal"
 import { BrowserSession } from "@services/browser/BrowserSession"
 import { UrlContentFetcher } from "@services/browser/UrlContentFetcher"
-import { DiracAsk, DiracMessage, DiracSay, MultiCommandState } from "@shared/ExtensionMessage"
-import { DiracContent } from "@shared/messages/content"
-import { DiracDefaultTool, toolUseNames } from "@shared/tools"
-import { DiracAskResponse } from "@shared/WebviewMessage"
+import { IsaacAsk, IsaacMessage, IsaacSay, MultiCommandState } from "@shared/ExtensionMessage"
+import { IsaacContent } from "@shared/messages/content"
+import { IsaacDefaultTool, toolUseNames } from "@shared/tools"
+import { IsaacAskResponse } from "@shared/WebviewMessage"
 import { isParallelToolCallingEnabled, modelDoesntSupportWebp } from "@/utils/model-utils"
 // ailiance-agent fork: source the version from package.json so trace meta and
 // the package binary never drift apart at release time.
@@ -35,7 +35,7 @@ import { ToolDisplayUtils } from "./tools/utils/ToolDisplayUtils"
 import { ToolResultUtils } from "./tools/utils/ToolResultUtils"
 
 export function canonicalizeAttemptCompletionParams(block: ToolUse): boolean {
-	if (block.name === DiracDefaultTool.ATTEMPT && !block.params?.result && typeof block.params?.response === "string") {
+	if (block.name === IsaacDefaultTool.ATTEMPT && !block.params?.result && typeof block.params?.response === "string") {
 		block.params.result = block.params.response
 		return true
 	}
@@ -51,12 +51,12 @@ export class ToolExecutor {
 	private traceMetaWritten = false
 
 	// Auto-approval methods using the AutoApprove class
-	private shouldAutoApproveTool(toolName: DiracDefaultTool): boolean | [boolean, boolean] {
+	private shouldAutoApproveTool(toolName: IsaacDefaultTool): boolean | [boolean, boolean] {
 		return this.autoApprover.shouldAutoApproveTool(toolName)
 	}
 
 	private async shouldAutoApproveToolWithPath(
-		blockname: DiracDefaultTool,
+		blockname: IsaacDefaultTool,
 		autoApproveActionpath: string | undefined,
 	): Promise<boolean> {
 		return this.autoApprover.shouldAutoApproveToolWithPath(blockname, autoApproveActionpath)
@@ -71,7 +71,7 @@ export class ToolExecutor {
 		private browserSession: BrowserSession,
 		private diffViewProvider: DiffViewProvider,
 		private fileContextTracker: FileContextTracker,
-		private diracIgnoreController: DiracIgnoreController,
+		private diracIgnoreController: IsaacIgnoreController,
 		private commandPermissionController: CommandPermissionController,
 		private contextManager: ContextManager,
 		private stateManager: StateManager,
@@ -89,19 +89,19 @@ export class ToolExecutor {
 
 		// Callbacks to the Task (Entity)
 		private say: (
-			type: DiracSay,
+			type: IsaacSay,
 			text?: string,
 			images?: string[],
 			files?: string[],
 			partial?: boolean,
 		) => Promise<number | undefined>,
 		private ask: (
-			type: DiracAsk,
+			type: IsaacAsk,
 			text?: string,
 			partial?: boolean,
 			multiCommandState?: MultiCommandState,
 		) => Promise<{
-			response: DiracAskResponse
+			response: IsaacAskResponse
 			text?: string
 			images?: string[]
 			files?: string[]
@@ -109,8 +109,8 @@ export class ToolExecutor {
 			userEdits?: Record<string, string>
 		}>,
 		private saveCheckpoint: (isAttemptCompletionMessage?: boolean, completionMessageTs?: number) => Promise<void>,
-		private sayAndCreateMissingParamError: (toolName: DiracDefaultTool, paramName: string, relPath?: string) => Promise<any>,
-		private removeLastPartialMessageIfExistsWithType: (type: "ask" | "say", askOrSay: DiracAsk | DiracSay) => Promise<void>,
+		private sayAndCreateMissingParamError: (toolName: IsaacDefaultTool, paramName: string, relPath?: string) => Promise<any>,
+		private removeLastPartialMessageIfExistsWithType: (type: "ask" | "say", askOrSay: IsaacAsk | IsaacSay) => Promise<void>,
 		private executeCommandTool: (
 			command: string,
 			timeoutSeconds: number | undefined,
@@ -127,7 +127,7 @@ export class ToolExecutor {
 		private clearActiveHookExecution: () => Promise<void>,
 		private getActiveHookExecution: () => Promise<typeof taskState.activeHookExecution>,
 		private runUserPromptSubmitHook: (
-			userContent: DiracContent[],
+			userContent: IsaacContent[],
 			context: "initial_task" | "resume" | "feedback",
 		) => Promise<{ cancel?: boolean; wasCancelled?: boolean; contextModification?: string; errorMessage?: string }>,
 	) {
@@ -267,9 +267,9 @@ export class ToolExecutor {
 				executeCommandTool: this.executeCommandTool,
 				cancelRunningCommandTool: this.cancelRunningCommandTool,
 				doesLatestTaskCompletionHaveNewChanges: this.doesLatestTaskCompletionHaveNewChanges,
-				getDiracMessages: () => this.messageStateHandler.getDiracMessages(),
-				updateDiracMessage: async (index: number, updates: Partial<DiracMessage>) => {
-					await this.messageStateHandler.updateDiracMessage(index, updates)
+				getIsaacMessages: () => this.messageStateHandler.getIsaacMessages(),
+				updateIsaacMessage: async (index: number, updates: Partial<IsaacMessage>) => {
+					await this.messageStateHandler.updateIsaacMessage(index, updates)
 					await config.callbacks.postStateToWebview()
 				},
 				sayAndCreateMissingParamError: this.sayAndCreateMissingParamError,
@@ -393,10 +393,10 @@ export class ToolExecutor {
 	/**
 	 * Tools that are restricted in plan mode and can only be used in act mode
 	 */
-	private static readonly PLAN_MODE_RESTRICTED_TOOLS: DiracDefaultTool[] = [
-		DiracDefaultTool.FILE_NEW,
-		DiracDefaultTool.EDIT_FILE,
-		DiracDefaultTool.NEW_RULE,
+	private static readonly PLAN_MODE_RESTRICTED_TOOLS: IsaacDefaultTool[] = [
+		IsaacDefaultTool.FILE_NEW,
+		IsaacDefaultTool.EDIT_FILE,
+		IsaacDefaultTool.NEW_RULE,
 	]
 
 	/**
@@ -491,7 +491,7 @@ export class ToolExecutor {
 	 * @param toolName The name of the tool to check
 	 * @returns true if the tool is restricted in plan mode, false otherwise
 	 */
-	private isPlanModeToolRestricted(toolName: DiracDefaultTool): boolean {
+	private isPlanModeToolRestricted(toolName: IsaacDefaultTool): boolean {
 		return ToolExecutor.PLAN_MODE_RESTRICTED_TOOLS.includes(toolName)
 	}
 

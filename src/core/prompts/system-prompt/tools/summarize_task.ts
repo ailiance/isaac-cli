@@ -1,9 +1,9 @@
-import { DiracDefaultTool } from "@/shared/tools"
-import type { DiracToolSpec } from "../spec"
+import { IsaacDefaultTool } from "@/shared/tools"
+import type { IsaacToolSpec } from "../spec"
 
-const id = DiracDefaultTool.SUMMARIZE_TASK
+const id = IsaacDefaultTool.SUMMARIZE_TASK
 
-export const summarize_task: DiracToolSpec = {
+export const summarize_task: IsaacToolSpec = {
 	id,
 	name: "summarize_task",
 	description: "Summarize the task to free up context window space.",

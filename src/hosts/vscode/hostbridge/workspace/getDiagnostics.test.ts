@@ -1,7 +1,7 @@
 import { expect } from "chai"
 import { describe, it } from "mocha"
 import * as vscode from "vscode"
-import { DiagnosticSeverity } from "@/shared/proto/index.dirac"
+import { DiagnosticSeverity } from "@/shared/proto/index.isaac"
 import { convertToFileDiagnostics, convertVscodeDiagnostics } from "./getDiagnostics"
 
 describe("getDiagnostics conversion functions", () => {

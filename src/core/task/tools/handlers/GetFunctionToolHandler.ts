@@ -4,8 +4,8 @@ import { ASTAnchorBridge } from "@utils/ASTAnchorBridge"
 import { getReadablePath, isLocatedInWorkspace } from "@utils/path"
 import { formatResponse } from "@/core/prompts/responses"
 import { telemetryService } from "@/services/telemetry"
-import { DiracDefaultTool } from "@/shared/tools"
-import { DiracAssistantToolUseBlock, DiracStorageMessage, DiracUserToolResultContentBlock } from "@/shared/messages"
+import { IsaacDefaultTool } from "@/shared/tools"
+import { IsaacAssistantToolUseBlock, IsaacStorageMessage, IsaacUserToolResultContentBlock } from "@/shared/messages"
 import type { ToolResponse } from "../../index"
 import { showNotificationForApproval } from "../../utils"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
@@ -16,7 +16,7 @@ import { ToolResultUtils } from "../utils/ToolResultUtils"
 import { coerceToStringArray, coerceFirstStringArray } from "../utils/coerceArray"
 
 export class GetFunctionToolHandler implements IFullyManagedTool {
-	readonly name = DiracDefaultTool.GET_FUNCTION
+	readonly name = IsaacDefaultTool.GET_FUNCTION
 
 	constructor(private validator: ToolValidator) {}
 
@@ -56,7 +56,7 @@ export class GetFunctionToolHandler implements IFullyManagedTool {
 	}
 
 		private extractLastKnownHashFromHistory(
-		history: DiracStorageMessage[],
+		history: IsaacStorageMessage[],
 		targetPath: string,
 		functionName: string,
 	): string | undefined {
@@ -68,7 +68,7 @@ export class GetFunctionToolHandler implements IFullyManagedTool {
 			if (message.role === "assistant" && Array.isArray(message.content)) {
 				for (const block of message.content) {
 					if (block.type === "tool_use") {
-						const toolUseBlock = block as unknown as DiracAssistantToolUseBlock
+						const toolUseBlock = block as unknown as IsaacAssistantToolUseBlock
 						const input = toolUseBlock.input as any
 						const hasPathMatch =
 							input?.path === targetPath || (Array.isArray(input?.paths) && input.paths.includes(targetPath))
@@ -83,7 +83,7 @@ export class GetFunctionToolHandler implements IFullyManagedTool {
 							if (nextMessage && nextMessage.role === "user" && Array.isArray(nextMessage.content)) {
 								const resultBlock = nextMessage.content.find(
 									(c: any) =>
-										c.type === "tool_result" && (c as unknown as DiracUserToolResultContentBlock).tool_use_id === toolUseId,
+										c.type === "tool_result" && (c as unknown as IsaacUserToolResultContentBlock).tool_use_id === toolUseId,
 								)
 
 								if (resultBlock && resultBlock.type === "tool_result") {
@@ -243,7 +243,7 @@ export class GetFunctionToolHandler implements IFullyManagedTool {
 				block.isNativeToolCall,
 			)
 		} else {
-			const notificationMessage = `Dirac wants to extract ${functionNames.length} function(s) from ${relPaths.length} file(s)`
+			const notificationMessage = `Isaac wants to extract ${functionNames.length} function(s) from ${relPaths.length} file(s)`
 			showNotificationForApproval(notificationMessage, config.autoApprovalSettings.enableNotifications)
 
 			await config.callbacks.removeLastPartialMessageIfExistsWithType("say", "tool")

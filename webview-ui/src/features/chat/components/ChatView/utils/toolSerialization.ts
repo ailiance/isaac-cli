@@ -1,4 +1,4 @@
-import { DiracSayTool, DiracMessage, COMMAND_OUTPUT_STRING } from "@shared/ExtensionMessage"
+import { IsaacSayTool, IsaacMessage, COMMAND_OUTPUT_STRING } from "@shared/ExtensionMessage"
 import { DisplayUnit, DisplayUnitStatus } from "../../ChatRow/types"
 import { getIconForTool } from "../../../utils/toolIcons"
 
@@ -6,8 +6,8 @@ import { getIconForTool } from "../../../utils/toolIcons"
 import { cleanPathPrefix } from "@/shared/ui/CodeAccordian"
 
 export function serializeToolToDisplayUnits(
-	tool: DiracSayTool,
-	message: DiracMessage,
+	tool: IsaacSayTool,
+	message: IsaacMessage,
 	statusOverride?: DisplayUnitStatus
 ): DisplayUnit[] {
 	const relPaths = tool.paths || (tool.path ? [tool.path] : [])

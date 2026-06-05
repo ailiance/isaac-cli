@@ -23,7 +23,7 @@ export class PathResolver {
 	}
 
 	validate(resolvedPath: string): { ok: boolean; error?: string } {
-		return this.validator.checkDiracIgnorePath(resolvedPath)
+		return this.validator.checkIsaacIgnorePath(resolvedPath)
 	}
 
 	async resolveAndValidate(

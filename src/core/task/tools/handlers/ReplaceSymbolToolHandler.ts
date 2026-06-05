@@ -12,7 +12,7 @@ import { formatResponse } from "@/core/prompts/responses"
 import { HostProvider } from "@/hosts/host-provider"
 import { getDiagnosticsProviders } from "@/integrations/diagnostics/getDiagnosticsProviders"
 import { telemetryService } from "@/services/telemetry"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import { showNotificationForApproval } from "../../utils"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
@@ -36,7 +36,7 @@ interface FileBatch {
 }
 
 export class ReplaceSymbolToolHandler implements IFullyManagedTool {
-	readonly name = DiracDefaultTool.REPLACE_SYMBOL
+	readonly name = IsaacDefaultTool.REPLACE_SYMBOL
 	public diagnosticsTimeoutMs = 1500
 	public diagnosticsDelayMs = 500
 
@@ -258,7 +258,7 @@ export class ReplaceSymbolToolHandler implements IFullyManagedTool {
 				const fileNames = Array.from(batches.values())
 					.map((b) => path.basename(b.absolutePath))
 					.join(", ")
-				const notificationMessage = `Dirac wants to replace symbols [${symbolNames}] in [${fileNames}]`
+				const notificationMessage = `Isaac wants to replace symbols [${symbolNames}] in [${fileNames}]`
 				showNotificationForApproval(notificationMessage, config.autoApprovalSettings.enableNotifications)
 
 				// Show the diff for all files in the batch
@@ -331,7 +331,7 @@ export class ReplaceSymbolToolHandler implements IFullyManagedTool {
 
 				config.taskState.consecutiveMistakeCount = 0
 				config.taskState.didEditFile = true
-				config.services.fileContextTracker.markFileAsEditedByDirac(batch.displayPath)
+				config.services.fileContextTracker.markFileAsEditedByIsaac(batch.displayPath)
 				await config.services.fileContextTracker.trackFileContext(batch.displayPath, "dirac_edited")
 
 				appliedResults.push({

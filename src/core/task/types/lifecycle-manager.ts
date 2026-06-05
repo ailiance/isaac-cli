@@ -1,4 +1,4 @@
-import { DiracContent } from "@shared/messages/content"
+import { IsaacContent } from "@shared/messages/content"
 import { CommandPermissionController } from "../../permissions/CommandPermissionController"
 import { ApiHandler } from "../../../core/api"
 import { ICheckpointManager } from "../../../integrations/checkpoints/types"
@@ -9,7 +9,7 @@ import { BrowserSession } from "../../../services/browser/BrowserSession"
 import { UrlContentFetcher } from "../../../services/browser/UrlContentFetcher"
 import { ContextManager } from "../../context/context-management/ContextManager"
 import { FileContextTracker } from "../../context/context-tracking/FileContextTracker"
-import { DiracIgnoreController } from "../../ignore/DiracIgnoreController"
+import { IsaacIgnoreController } from "../../ignore/IsaacIgnoreController"
 import { StateManager } from "../../storage/StateManager"
 import { HookManager } from "../HookManager"
 import { MessageStateHandler } from "../message-state"
@@ -28,7 +28,7 @@ export interface LifecycleManagerDependencies {
 	postStateToWebview: () => Promise<void>
 	cancelTask: () => Promise<void>
 	checkpointManager?: ICheckpointManager
-	diracIgnoreController: DiracIgnoreController
+	diracIgnoreController: IsaacIgnoreController
 	terminalManager: ITerminalManager
 	urlContentFetcher: UrlContentFetcher
 	browserSession: BrowserSession
@@ -39,6 +39,6 @@ export interface LifecycleManagerDependencies {
 	commandPermissionController: CommandPermissionController
 	cwd: string
 	hookManager: HookManager
-	initiateTaskLoop: (userContent: DiracContent[]) => Promise<void>
+	initiateTaskLoop: (userContent: IsaacContent[]) => Promise<void>
 	recordEnvironment: () => Promise<void>
 }

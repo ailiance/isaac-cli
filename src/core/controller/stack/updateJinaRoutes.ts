@@ -1,8 +1,8 @@
 import { promises as fs } from "node:fs"
 import os from "node:os"
 import path from "node:path"
-import { Empty } from "@shared/proto/dirac/common"
-import { UpdateJinaRoutesRequest } from "@shared/proto/dirac/stack"
+import { Empty } from "@shared/proto/isaac/common"
+import { UpdateJinaRoutesRequest } from "@shared/proto/isaac/stack"
 import type { Controller } from "../index"
 
 const ROUTES_PATH = path.join(os.homedir(), ".isaac", "jina-router", "routes.json")

@@ -3,7 +3,7 @@
  * Handles the diff/merge logic for streaming text and message tracking
  */
 
-import type { DiracMessage } from "@shared/ExtensionMessage"
+import type { IsaacMessage } from "@shared/ExtensionMessage"
 import { useCallback, useRef } from "react"
 import { useTaskContext } from "../context/TaskContext"
 
@@ -33,7 +33,7 @@ export const useCompletedAskMessages = () => {
 	const processed = useProcessedMessages()
 
 	const getCompletedAskMessages = useCallback(() => {
-		const completedAsks: DiracMessage[] = []
+		const completedAsks: IsaacMessage[] = []
 
 		if (!state.diracMessages) {
 			return completedAsks
@@ -60,7 +60,7 @@ export const useLastCompletedAskMessage = () => {
 	const { state } = useTaskContext()
 	const processed = useProcessedMessages()
 
-	const getLastCompletedAskMessage = useCallback((): DiracMessage | null => {
+	const getLastCompletedAskMessage = useCallback((): IsaacMessage | null => {
 		if (!state.diracMessages) {
 			return null
 		}
@@ -108,7 +108,7 @@ export const useCompletionSignals = () => {
 		return false
 	}, [state.diracMessages])
 
-	const getCompletionMessage = useCallback((): DiracMessage | null => {
+	const getCompletionMessage = useCallback((): IsaacMessage | null => {
 		if (!state.diracMessages || state.diracMessages.length === 0) {
 			return null
 		}

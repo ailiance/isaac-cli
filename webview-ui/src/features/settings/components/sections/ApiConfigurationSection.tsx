@@ -1,5 +1,5 @@
 import { Mode } from "@shared/ExtensionMessage"
-import { UpdateSettingsRequest } from "@shared/proto/dirac/state"
+import { UpdateSettingsRequest } from "@shared/proto/isaac/state"
 import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 import { useState } from "react"
 import { syncModeConfigurations } from "@/features/settings/components/utils/providerUtils"

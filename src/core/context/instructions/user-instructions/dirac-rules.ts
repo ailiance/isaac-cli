@@ -9,7 +9,7 @@ import {
 import { formatResponse } from "@core/prompts/responses"
 import { ensureRulesDirectoryExists, GlobalFileNames } from "@core/storage/disk"
 import { StateManager } from "@core/storage/StateManager"
-import { DiracRulesToggles } from "@shared/dirac-rules"
+import { IsaacRulesToggles } from "@shared/dirac-rules"
 import { parseYamlFrontmatter } from "@utils/frontmatter"
 import { fileExistsAtPath, isDirectory, readDirectory } from "@utils/fs"
 import fs from "fs/promises"
@@ -19,23 +19,23 @@ import { pluginDiscoveryService } from "@/core/plugins/PluginDiscoveryService"
 import { Logger } from "@/shared/services/Logger"
 import { evaluateRuleConditionals, type RuleEvaluationContext } from "./rule-conditionals"
 
-export const getGlobalDiracRules = async (
-	globalDiracRulesFilePath: string,
-	toggles: DiracRulesToggles,
+export const getGlobalIsaacRules = async (
+	globalIsaacRulesFilePath: string,
+	toggles: IsaacRulesToggles,
 	opts?: { evaluationContext?: RuleEvaluationContext },
 ): Promise<RuleLoadResultWithInstructions> => {
 	let combinedContent = ""
 	const activatedConditionalRules: ActivatedConditionalRule[] = []
 
 	// 1. Get file-based rules
-	if (await fileExistsAtPath(globalDiracRulesFilePath)) {
-		if (await isDirectory(globalDiracRulesFilePath)) {
+	if (await fileExistsAtPath(globalIsaacRulesFilePath)) {
+		if (await isDirectory(globalIsaacRulesFilePath)) {
 			try {
-				const rulesFilePaths = await readDirectory(globalDiracRulesFilePath)
+				const rulesFilePaths = await readDirectory(globalIsaacRulesFilePath)
 				// Note: ruleNamePrefix explicitly set to "global" for clarity (matches the default)
 				const rulesFilesTotal = await getRuleFilesTotalContentWithMetadata(
 					rulesFilePaths,
-					globalDiracRulesFilePath,
+					globalIsaacRulesFilePath,
 					toggles,
 					{
 						evaluationContext: opts?.evaluationContext,
@@ -47,10 +47,10 @@ export const getGlobalDiracRules = async (
 					activatedConditionalRules.push(...rulesFilesTotal.activatedConditionalRules)
 				}
 			} catch {
-				Logger.error(`Failed to read .diracrules directory at ${globalDiracRulesFilePath}`)
+				Logger.error(`Failed to read .diracrules directory at ${globalIsaacRulesFilePath}`)
 			}
 		} else {
-			Logger.error(`${globalDiracRulesFilePath} is not a directory`)
+			Logger.error(`${globalIsaacRulesFilePath} is not a directory`)
 		}
 	}
 
@@ -91,14 +91,14 @@ export const getGlobalDiracRules = async (
 	}
 
 	return {
-		instructions: formatResponse.diracRulesGlobalDirectoryInstructions(globalDiracRulesFilePath, combinedContent),
+		instructions: formatResponse.diracRulesGlobalDirectoryInstructions(globalIsaacRulesFilePath, combinedContent),
 		activatedConditionalRules,
 	}
 }
 
-export const getLocalDiracRules = async (
+export const getLocalIsaacRules = async (
 	cwd: string,
-	toggles: DiracRulesToggles,
+	toggles: IsaacRulesToggles,
 	opts?: { evaluationContext?: RuleEvaluationContext },
 ): Promise<RuleLoadResultWithInstructions> => {
 	const diracRulesFilePath = path.resolve(cwd, GlobalFileNames.diracRules)
@@ -164,23 +164,23 @@ export const getLocalDiracRules = async (
 	return { instructions, activatedConditionalRules }
 }
 
-export async function refreshDiracRulesToggles(
+export async function refreshIsaacRulesToggles(
 	controller: Controller,
 	workingDirectory: string,
 ): Promise<{
-	globalToggles: DiracRulesToggles
-	localToggles: DiracRulesToggles
+	globalToggles: IsaacRulesToggles
+	localToggles: IsaacRulesToggles
 }> {
 	// Global toggles
 	const globalDiracRulesToggles = controller.stateManager.getGlobalSettingsKey("globalDiracRulesToggles")
-	const globalDiracRulesFilePath = await ensureRulesDirectoryExists()
-	const updatedGlobalToggles = await synchronizeRuleToggles(globalDiracRulesFilePath, globalDiracRulesToggles)
+	const globalIsaacRulesFilePath = await ensureRulesDirectoryExists()
+	const updatedGlobalToggles = await synchronizeRuleToggles(globalIsaacRulesFilePath, globalDiracRulesToggles)
 	controller.stateManager.setGlobalState("globalDiracRulesToggles", updatedGlobalToggles)
 
 	// Local toggles
 	const localDiracRulesToggles = controller.stateManager.getWorkspaceStateKey("localDiracRulesToggles")
-	const localDiracRulesFilePath = path.resolve(workingDirectory, GlobalFileNames.diracRules)
-	const updatedLocalToggles = await synchronizeRuleToggles(localDiracRulesFilePath, localDiracRulesToggles, "", [
+	const localIsaacRulesFilePath = path.resolve(workingDirectory, GlobalFileNames.diracRules)
+	const updatedLocalToggles = await synchronizeRuleToggles(localIsaacRulesFilePath, localDiracRulesToggles, "", [
 		[".diracrules", "workflows"],
 		[".diracrules", "hooks"],
 		[".diracrules", "skills"],

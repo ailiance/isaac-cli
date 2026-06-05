@@ -1,4 +1,4 @@
-import { HookInfo, HooksToggles, WorkspaceHooks } from "@shared/proto/dirac/file"
+import { HookInfo, HooksToggles, WorkspaceHooks } from "@shared/proto/isaac/file"
 import fs from "fs/promises"
 import os from "os"
 import path from "path"
@@ -11,7 +11,7 @@ export async function refreshHooks(
 	_request?: any,
 	globalHooksDirOverride?: string,
 ): Promise<HooksToggles> {
-	const globalHooksDir = globalHooksDirOverride || path.join(os.homedir(), "Documents", "Dirac", "Hooks")
+	const globalHooksDir = globalHooksDirOverride || path.join(os.homedir(), "Documents", "Isaac", "Hooks")
 	const isWindows = process.platform === "win32"
 
 	// Collect global hooks

@@ -1,6 +1,6 @@
 import { HostProvider } from "@hosts/host-provider"
 import type { BrowserSettings } from "@shared/BrowserSettings"
-import { ApiFormat, apiFormatToJSON } from "@shared/proto/dirac/models"
+import { ApiFormat, apiFormatToJSON } from "@shared/proto/isaac/models"
 import { ShowMessageType } from "@shared/proto/host/window"
 import type { TaskFeedbackType } from "@shared/WebviewMessage"
 import * as os from "os"
@@ -109,7 +109,7 @@ export interface TokenUsage {
 const MAX_ERROR_MESSAGE_LENGTH = 500
 
 /**
- * TelemetryService handles telemetry event tracking for the Dirac extension
+ * TelemetryService handles telemetry event tracking for the Isaac extension
  * Uses an abstracted telemetry provider to support multiple analytics backends
  * Respects user privacy settings and VSCode's global telemetry configuration
  */
@@ -265,13 +265,13 @@ export class TelemetryService {
 			SLASH_COMMAND_USED: "task.slash_command_used",
 			// Tracks when a feature is toggled on/off
 			FEATURE_TOGGLED: "task.feature_toggled",
-			// Tracks when individual Dirac rules are toggled on/off
+			// Tracks when individual Isaac rules are toggled on/off
 			RULE_TOGGLED: "task.rule_toggled",
 			// Tracks when auto condense setting is toggled on/off
 			AUTO_CONDENSE_TOGGLED: "task.auto_condense_toggled",
 			// Tracks when yolo mode setting is toggled on/off
 			YOLO_MODE_TOGGLED: "task.yolo_mode_toggled",
-			// Tracks when Dirac web tools setting is toggled on/off
+			// Tracks when Isaac web tools setting is toggled on/off
 			CLINE_WEB_TOOLS_TOGGLED: "task.dirac_web_tools_toggled",
 			// Tracks task initialization timing
 			INITIALIZATION: "task.initialization",
@@ -382,13 +382,13 @@ export class TelemetryService {
 		// We only enable telemetry if global host telemetry is enabled
 		const hostSetting = await HostProvider.env.getTelemetrySettings({})
 		if (hostSetting.isEnabled === Setting.DISABLED) {
-			// Only show warning if user has opted in to Dirac telemetry but host telemetry is disabled
+			// Only show warning if user has opted in to Isaac telemetry but host telemetry is disabled
 			if (didUserOptIn) {
 				void HostProvider.window
 					.showMessage({
 						type: ShowMessageType.WARNING,
 						message:
-							"Anonymous Dirac error and usage reporting is enabled, but IDE telemetry is disabled. To enable error and usage reporting for this extension, enable telemetry in IDE settings.",
+							"Anonymous Isaac error and usage reporting is enabled, but IDE telemetry is disabled. To enable error and usage reporting for this extension, enable telemetry in IDE settings.",
 						options: {
 							items: ["Open Settings"],
 						},
@@ -1409,13 +1409,13 @@ export class TelemetryService {
 	}
 
 	/**
-	 * Records when individual Dirac rules are toggled on/off
+	 * Records when individual Isaac rules are toggled on/off
 	 * @param ulid Unique identifier for the task (to track rule changes within task context)
 	 * @param ruleFileName The filename of the rule (sanitized to exclude full path)
 	 * @param enabled Whether the rule is being enabled (true) or disabled (false)
 	 * @param isGlobal Whether this is a global rule or workspace-specific rule
 	 */
-	public captureDiracRuleToggled(ulid: string, ruleFileName: string, enabled: boolean, isGlobal: boolean) {
+	public captureIsaacRuleToggled(ulid: string, ruleFileName: string, enabled: boolean, isGlobal: boolean) {
 		// Sanitize filename to remove any path information for privacy
 		const sanitizedFileName = ruleFileName.split("/").pop() || ruleFileName.split("\\").pop() || ruleFileName
 
@@ -1463,11 +1463,11 @@ export class TelemetryService {
 	}
 
 	/**
-	 * Records when Dirac web tools are enabled/disabled by the user
+	 * Records when Isaac web tools are enabled/disabled by the user
 	 * @param ulid Unique identifier for the task
-	 * @param enabled Whether Dirac web tools are enabled (true) or disabled (false)
+	 * @param enabled Whether Isaac web tools are enabled (true) or disabled (false)
 	 */
-	public captureDiracWebToolsToggle(ulid: string, enabled: boolean) {
+	public captureIsaacWebToolsToggle(ulid: string, enabled: boolean) {
 		this.capture({
 			event: TelemetryService.EVENTS.TASK.CLINE_WEB_TOOLS_TOGGLED,
 			properties: {

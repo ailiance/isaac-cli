@@ -1,5 +1,5 @@
-import { clearOnboardingModelsCache, getDiracOnboardingModels } from "@/core/controller/models/getDiracOnboardingModels"
-import type { OnboardingModel } from "@/shared/proto/dirac/state"
+import { clearOnboardingModelsCache, getIsaacOnboardingModels } from "@/core/controller/models/getIsaacOnboardingModels"
+import type { OnboardingModel } from "@/shared/proto/isaac/state"
 import { FEATURE_FLAGS, FeatureFlag, FeatureFlagDefaultValue } from "@/shared/services/feature-flags/feature-flags"
 import { Logger } from "@/shared/services/Logger"
 import { telemetryService } from "../telemetry"
@@ -65,7 +65,7 @@ export class FeatureFlagsService {
 			throw error
 		}
 
-		getDiracOnboardingModels() // Refresh onboarding models cache if relevant flag changed
+		getIsaacOnboardingModels() // Refresh onboarding models cache if relevant flag changed
 	}
 
 	private async getFeatureFlag(flagName: FeatureFlag): Promise<FeatureFlagPayload | undefined> {

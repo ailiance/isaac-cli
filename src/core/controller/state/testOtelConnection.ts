@@ -1,5 +1,5 @@
-import { EmptyRequest } from "@shared/proto/dirac/common"
-import { TestConnectionResult } from "@shared/proto/dirac/state"
+import { EmptyRequest } from "@shared/proto/isaac/common"
+import { TestConnectionResult } from "@shared/proto/isaac/state"
 
 const REMOTE_CONFIG_OTEL_PROVIDER_ID = "remote-config-otel"
 

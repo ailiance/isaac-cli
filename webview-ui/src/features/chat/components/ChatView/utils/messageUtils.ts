@@ -4,7 +4,7 @@
 
 import { combineApiRequests } from "@shared/combineApiRequests"
 import { combineCommandSequences } from "@shared/combineCommandSequences"
-import type { DiracMessage, DiracSayBrowserAction, DiracSayTool } from "@shared/ExtensionMessage"
+import type { IsaacMessage, IsaacSayBrowserAction, IsaacSayTool } from "@shared/ExtensionMessage"
 
 /**
  * Low-stakes tool types that should be grouped together
@@ -23,12 +23,12 @@ const LOW_STAKES_TOOLS = new Set([
 /**
  * Check if a tool message is a low-stakes tool
  */
-export function isLowStakesTool(message: DiracMessage): boolean {
+export function isLowStakesTool(message: IsaacMessage): boolean {
 	if (message.say !== "tool" && message.ask !== "tool") {
 		return false
 	}
 	try {
-		const tool = JSON.parse(message.text || "{}") as DiracSayTool
+		const tool = JSON.parse(message.text || "{}") as IsaacSayTool
 		return LOW_STAKES_TOOLS.has(tool.tool)
 	} catch {
 		return false
@@ -38,21 +38,21 @@ export function isLowStakesTool(message: DiracMessage): boolean {
 /**
  * Check if a message group is a tool group (array with _isToolGroup marker)
  */
-export function isToolGroup(item: DiracMessage | DiracMessage[]): item is DiracMessage[] & { _isToolGroup: true } {
+export function isToolGroup(item: IsaacMessage | IsaacMessage[]): item is IsaacMessage[] & { _isToolGroup: true } {
 	return Array.isArray(item) && (item as any)._isToolGroup === true
 }
 
 /**
  * Combine API requests and command sequences in messages
  */
-export function processMessages(messages: DiracMessage[]): DiracMessage[] {
+export function processMessages(messages: IsaacMessage[]): IsaacMessage[] {
 	return combineApiRequests(combineCommandSequences(messages))
 }
 
 /**
  * Filter messages that should be visible in the chat
  */
-export function filterVisibleMessages(messages: DiracMessage[]): DiracMessage[] {
+export function filterVisibleMessages(messages: IsaacMessage[]): IsaacMessage[] {
 	return messages.filter((message, index, arr) => {
 		switch (message.ask) {
 			case "completion_result":
@@ -96,7 +96,7 @@ export function filterVisibleMessages(messages: DiracMessage[]): DiracMessage[] 
 /**
  * Check if a message is part of a browser session
  */
-export function isBrowserSessionMessage(message: DiracMessage): boolean {
+export function isBrowserSessionMessage(message: IsaacMessage): boolean {
 	if (message.type === "ask") {
 		return ["browser_action_launch"].includes(message.ask!)
 	}
@@ -119,9 +119,9 @@ export function isBrowserSessionMessage(message: DiracMessage): boolean {
 /**
  * Group messages, combining browser session messages into arrays
  */
-export function groupMessages(visibleMessages: DiracMessage[]): (DiracMessage | DiracMessage[])[] {
-	const result: (DiracMessage | DiracMessage[])[] = []
-	let currentGroup: DiracMessage[] = []
+export function groupMessages(visibleMessages: IsaacMessage[]): (IsaacMessage | IsaacMessage[])[] {
+	const result: (IsaacMessage | IsaacMessage[])[] = []
+	let currentGroup: IsaacMessage[] = []
 	let isInBrowserSession = false
 
 	const endBrowserSession = () => {
@@ -154,7 +154,7 @@ export function groupMessages(visibleMessages: DiracMessage[]): (DiracMessage | 
 			if (isBrowserSessionMessage(message)) {
 				currentGroup.push(message)
 				if (message.say === "browser_action") {
-					const browserAction = JSON.parse(message.text || "{}") as DiracSayBrowserAction
+					const browserAction = JSON.parse(message.text || "{}") as IsaacSayBrowserAction
 					if (browserAction.action === "close") {
 						endBrowserSession()
 					}
@@ -178,7 +178,7 @@ export function groupMessages(visibleMessages: DiracMessage[]): (DiracMessage | 
 /**
  * Get the task message from the messages array
  */
-export function getTaskMessage(messages: DiracMessage[]): DiracMessage | undefined {
+export function getTaskMessage(messages: IsaacMessage[]): IsaacMessage | undefined {
 	return messages.at(0)
 }
 
@@ -194,7 +194,7 @@ export function shouldShowScrollButton(disableAutoScroll: boolean, isAtBottom: b
  */
 export function findReasoningForApiReq(
 	apiReqTs: number,
-	allMessages: DiracMessage[],
+	allMessages: IsaacMessage[],
 ): { reasoning: string | undefined; responseStarted: boolean } {
 	const apiReqIndex = allMessages.findIndex((m) => m.ts === apiReqTs && m.say === "api_req_started")
 	if (apiReqIndex === -1) {
@@ -228,7 +228,7 @@ export function findReasoningForApiReq(
  */
 export function findApiReqInfoForCheckpoint(
 	checkpointTs: number,
-	allMessages: DiracMessage[],
+	allMessages: IsaacMessage[],
 ): { cost: number | undefined; request: string | undefined } {
 	const checkpointIndex = allMessages.findIndex((m) => m.ts === checkpointTs && m.say === "checkpoint_created")
 	if (checkpointIndex === -1) {
@@ -255,7 +255,7 @@ export function findApiReqInfoForCheckpoint(
 /**
  * Check if a checkpoint at the given index would be displayed (not absorbed into a tool group).
  */
-function isDisplayedCheckpoint(checkpointIndex: number, allMessages: DiracMessage[]): boolean {
+function isDisplayedCheckpoint(checkpointIndex: number, allMessages: IsaacMessage[]): boolean {
 	for (let i = checkpointIndex - 1; i >= 0; i--) {
 		const msg = allMessages[i]
 		if (msg.say === "api_req_started" || msg.say === "api_req_finished") {
@@ -269,7 +269,7 @@ function isDisplayedCheckpoint(checkpointIndex: number, allMessages: DiracMessag
 		}
 		if (msg.say === "tool" || msg.ask === "tool") {
 			try {
-				const tool = JSON.parse(msg.text || "{}") as DiracSayTool
+				const tool = JSON.parse(msg.text || "{}") as IsaacSayTool
 				if (LOW_STAKES_TOOLS.has(tool.tool)) {
 					return false
 				}
@@ -283,7 +283,7 @@ function isDisplayedCheckpoint(checkpointIndex: number, allMessages: DiracMessag
 /**
  * Find the total cost for the segment starting at a checkpoint.
  */
-export function findNextSegmentCost(checkpointTs: number, allMessages: DiracMessage[]): number | undefined {
+export function findNextSegmentCost(checkpointTs: number, allMessages: IsaacMessage[]): number | undefined {
 	const checkpointIndex = allMessages.findIndex((m) => m.ts === checkpointTs && m.say === "checkpoint_created")
 	if (checkpointIndex === -1) {
 		return undefined
@@ -318,7 +318,7 @@ export function findNextSegmentCost(checkpointTs: number, allMessages: DiracMess
 /**
  * Check if a text message's associated API request is still in progress.
  */
-export function isTextMessagePendingToolCall(textTs: number, allMessages: DiracMessage[]): boolean {
+export function isTextMessagePendingToolCall(textTs: number, allMessages: IsaacMessage[]): boolean {
 	const textIndex = allMessages.findIndex((m) => m.ts === textTs)
 	if (textIndex === -1) {
 		return false
@@ -341,7 +341,7 @@ export function isTextMessagePendingToolCall(textTs: number, allMessages: DiracM
 /**
  * Check if a tool group should be hidden because its tools are currently being displayed in the loading state animation.
  */
-export function isToolGroupInFlight(toolGroupMessages: DiracMessage[], allMessages: DiracMessage[]): boolean {
+export function isToolGroupInFlight(toolGroupMessages: IsaacMessage[], allMessages: IsaacMessage[]): boolean {
 	if (toolGroupMessages.length === 0) {
 		return false
 	}
@@ -402,7 +402,7 @@ export function isToolGroupInFlight(toolGroupMessages: DiracMessage[], allMessag
 /**
  * Filter a tool group to exclude tools that are in the "current activities" range.
  */
-export function getToolsNotInCurrentActivities(toolGroupMessages: DiracMessage[], allMessages: DiracMessage[]): DiracMessage[] {
+export function getToolsNotInCurrentActivities(toolGroupMessages: IsaacMessage[], allMessages: IsaacMessage[]): IsaacMessage[] {
 	const tsToIndex = new Map<number, number>()
 	for (let i = 0; i < allMessages.length; i++) {
 		tsToIndex.set(allMessages[i].ts, i)
@@ -460,7 +460,7 @@ export function getToolsNotInCurrentActivities(toolGroupMessages: DiracMessage[]
 /**
  * Returns true if this api_req_started should be fully absorbed into a low-stakes tool group.
  */
-export function isApiReqAbsorbable(apiReqTs: number, allMessages: DiracMessage[]): boolean {
+export function isApiReqAbsorbable(apiReqTs: number, allMessages: IsaacMessage[]): boolean {
 	const apiReqIndex = allMessages.findIndex((m) => m.ts === apiReqTs && m.say === "api_req_started")
 	if (apiReqIndex === -1) {
 		return false
@@ -494,7 +494,7 @@ export function isApiReqAbsorbable(apiReqTs: number, allMessages: DiracMessage[]
 /**
  * Check if an api_req_started at a given index produces low-stakes tools.
  */
-function isApiReqFollowedOnlyByLowStakesTools(index: number, messages: (DiracMessage | DiracMessage[])[]): boolean {
+function isApiReqFollowedOnlyByLowStakesTools(index: number, messages: (IsaacMessage | IsaacMessage[])[]): boolean {
 	let hasLowStakesTool = false
 	let hasReasoning = false
 	for (let i = index + 1; i < messages.length; i++) {
@@ -527,14 +527,14 @@ function isApiReqFollowedOnlyByLowStakesTools(index: number, messages: (DiracMes
 /**
  * Group consecutive low-stakes tools into arrays.
  */
-export function groupLowStakesTools(groupedMessages: (DiracMessage | DiracMessage[])[]): (DiracMessage | DiracMessage[])[] {
-	const result: (DiracMessage | DiracMessage[])[] = []
-	let toolGroup: DiracMessage[] = []
-	let pendingReasoning: DiracMessage[] = []
-	let pendingApiReq: DiracMessage[] = []
+export function groupLowStakesTools(groupedMessages: (IsaacMessage | IsaacMessage[])[]): (IsaacMessage | IsaacMessage[])[] {
+	const result: (IsaacMessage | IsaacMessage[])[] = []
+	let toolGroup: IsaacMessage[] = []
+	let pendingReasoning: IsaacMessage[] = []
+	let pendingApiReq: IsaacMessage[] = []
 	let hasTools = false
 	let hasApiReq = false
-	const pendingTools: DiracMessage[] = []
+	const pendingTools: IsaacMessage[] = []
 
 	const flushPending = () => {
 		pendingApiReq.forEach((m) => result.push(m))
@@ -546,7 +546,7 @@ export function groupLowStakesTools(groupedMessages: (DiracMessage | DiracMessag
 
 	const commitToolGroup = () => {
 		if (toolGroup.length > 0 && (hasTools || hasApiReq)) {
-			const group = toolGroup as DiracMessage[] & { _isToolGroup: boolean }
+			const group = toolGroup as IsaacMessage[] & { _isToolGroup: boolean }
 			group._isToolGroup = true
 			result.push(group)
 			pendingReasoning = []
@@ -640,11 +640,11 @@ export function groupLowStakesTools(groupedMessages: (DiracMessage | DiracMessag
  * Check if the chat is currently waiting for a response from the model.
  */
 export function getIsWaitingForResponse(
-	modifiedMessages: DiracMessage[],
-	lastRawMessage: DiracMessage | undefined,
-	groupedMessages: (DiracMessage | DiracMessage[])[],
-	lastVisibleMessage: DiracMessage | undefined,
-	lastVisibleRow: DiracMessage | DiracMessage[] | undefined,
+	modifiedMessages: IsaacMessage[],
+	lastRawMessage: IsaacMessage | undefined,
+	groupedMessages: (IsaacMessage | IsaacMessage[])[],
+	lastVisibleMessage: IsaacMessage | undefined,
+	lastVisibleRow: IsaacMessage | IsaacMessage[] | undefined,
 ): boolean {
 	const lastMsg = modifiedMessages[modifiedMessages.length - 1]
 

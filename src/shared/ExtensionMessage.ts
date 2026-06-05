@@ -5,12 +5,12 @@ import type { Environment } from "../config"
 import { AutoApprovalSettings } from "./AutoApprovalSettings"
 import { ApiConfiguration } from "./api"
 import { BrowserSettings } from "./BrowserSettings"
-import { DiracFeatureSetting } from "./DiracFeatureSetting"
+import { IsaacFeatureSetting } from "./IsaacFeatureSetting"
 import { BannerCardData } from "./dirac/banner"
-import { DiracRulesToggles } from "./dirac-rules"
+import { IsaacRulesToggles } from "./dirac-rules"
 import { HistoryItem } from "./HistoryItem"
-import { DiracMessageModelInfo } from "./messages"
-import { OnboardingModelGroup } from "./proto/dirac/state"
+import { IsaacMessageModelInfo } from "./messages"
+import { OnboardingModelGroup } from "./proto/isaac/state"
 import { SkillMetadata } from "./skills"
 import { isOpenaiReasoningEffort, Mode, OPENAI_REASONING_EFFORT_OPTIONS, OpenaiReasoningEffort } from "./storage/types"
 export type { Mode, OpenaiReasoningEffort }
@@ -47,7 +47,7 @@ export interface ExtensionState {
 	preferredLanguage?: string
 	mode: Mode
 	checkpointManagerErrorMessage?: string
-	diracMessages: DiracMessage[]
+	diracMessages: IsaacMessage[]
 	currentTaskItem?: HistoryItem
 	planActSeparateModelsSetting: boolean
 	enableCheckpointsSetting?: boolean
@@ -67,30 +67,30 @@ export interface ExtensionState {
 	lastCompletedCommandTs?: number
 	version: string
 	distinctId: string
-	globalDiracRulesToggles: DiracRulesToggles
-	localDiracRulesToggles: DiracRulesToggles
-	localWorkflowToggles: DiracRulesToggles
-	globalWorkflowToggles: DiracRulesToggles
-	localCursorRulesToggles: DiracRulesToggles
-	localWindsurfRulesToggles: DiracRulesToggles
-	remoteRulesToggles?: DiracRulesToggles
-	remoteWorkflowToggles?: DiracRulesToggles
-	localAgentsRulesToggles: DiracRulesToggles
+	globalDiracRulesToggles: IsaacRulesToggles
+	localDiracRulesToggles: IsaacRulesToggles
+	localWorkflowToggles: IsaacRulesToggles
+	globalWorkflowToggles: IsaacRulesToggles
+	localCursorRulesToggles: IsaacRulesToggles
+	localWindsurfRulesToggles: IsaacRulesToggles
+	remoteRulesToggles?: IsaacRulesToggles
+	remoteWorkflowToggles?: IsaacRulesToggles
+	localAgentsRulesToggles: IsaacRulesToggles
 	partial?: boolean
 	strictPlanModeEnabled?: boolean
 	yoloModeToggled?: boolean
 	autoApproveAllToggled?: boolean
 	useAutoCondense?: boolean
 	subagentsEnabled?: boolean
-	diracWebToolsEnabled?: DiracFeatureSetting
-	worktreesEnabled?: DiracFeatureSetting
+	diracWebToolsEnabled?: IsaacFeatureSetting
+	worktreesEnabled?: IsaacFeatureSetting
 	customPrompt?: string
 	favoritedModelIds: string[]
 	// NEW: Add workspace information
 	workspaceRoots: WorkspaceRoot[]
 	primaryRootIndex: number
 	isMultiRootWorkspace: boolean
-	multiRootSetting: DiracFeatureSetting
+	multiRootSetting: IsaacFeatureSetting
 	lastDismissedInfoBannerVersion: number
 	lastDismissedModelBannerVersion: number
 	lastDismissedCliBannerVersion: number
@@ -115,12 +115,12 @@ export interface ExtensionState {
 	githubCopilotModels?: Record<string, any>
 }
 
-export interface DiracMessage {
+export interface IsaacMessage {
 	ts: number
 	type: "ask" | "say"
-	ask?: DiracAsk
+	ask?: IsaacAsk
 	reasoningTokens?: number
-	say?: DiracSay
+	say?: IsaacSay
 	text?: string
 	reasoning?: string
 	images?: string[]
@@ -132,11 +132,11 @@ export interface DiracMessage {
 	isOperationOutsideWorkspace?: boolean
 	conversationHistoryIndex?: number
 	conversationHistoryDeletedRange?: [number, number] // for when conversation history is truncated for API requests
-	modelInfo?: DiracMessageModelInfo
+	modelInfo?: IsaacMessageModelInfo
 	multiCommandState?: MultiCommandState
 }
 
-export type DiracAsk =
+export type IsaacAsk =
 	| "followup"
 	| "plan_mode_respond"
 	| "act_mode_respond"
@@ -156,7 +156,7 @@ export type DiracAsk =
 	| "report_bug"
 	| "use_subagents"
 
-export type DiracSay =
+export type IsaacSay =
 	| "task"
 	| "error"
 	| "error_retry"
@@ -196,7 +196,7 @@ export interface ReadFileResult {
 	label: string
 }
 
-export interface DiracSayTool {
+export interface IsaacSayTool {
 	tool:
 		| "editedExistingFile"
 		| "newFileCreated"
@@ -270,7 +270,7 @@ export interface DiracSayTool {
 	contextLines?: number
 	startLine?: string
 	endLine?: string
-	browser_action?: DiracSayBrowserAction
+	browser_action?: IsaacSayBrowserAction
 	browser_action_result?: BrowserActionResult
 	readFileResults?: ReadFileResult[]
 
@@ -301,7 +301,7 @@ export interface DiracSayTool {
 	asyncError?: string
 }
 
-export interface DiracSayHook {
+export interface IsaacSayHook {
 	hookName: string // Name of the hook (e.g., "PreToolUse", "PostToolUse")
 	toolName?: string // Tool name if applicable (for PreToolUse/PostToolUse)
 	status: "running" | "completed" | "failed" | "cancelled" // Execution status
@@ -337,13 +337,13 @@ export type HookOutputStreamMeta = {
 export const browserActions = ["launch", "click", "type", "scroll_down", "scroll_up", "close"] as const
 export type BrowserAction = (typeof browserActions)[number]
 
-export interface DiracSayBrowserAction {
+export interface IsaacSayBrowserAction {
 	action: BrowserAction
 	coordinate?: string
 	text?: string
 }
 
-export interface DiracSayGenerateExplanation {
+export interface IsaacSayGenerateExplanation {
 	title: string
 	fromRef: string
 	toRef: string
@@ -371,7 +371,7 @@ export interface SubagentStatusItem {
 	error?: string
 }
 
-export interface DiracSaySubagentStatus {
+export interface IsaacSaySubagentStatus {
 	status: "running" | "completed" | "failed"
 	total: number
 	completed: number
@@ -395,30 +395,30 @@ export type BrowserActionResult = {
 	currentMousePosition?: string
 }
 
-export interface DiracAskUseSubagents {
+export interface IsaacAskUseSubagents {
 	prompts: string[]
 	timeout?: number
 	max_turns?: number
 	include_history?: boolean
 }
 
-export interface DiracPlanModeResponse {
+export interface IsaacPlanModeResponse {
 	response: string
 	options?: string[]
 	selected?: string
 }
 
-export interface DiracAskQuestion {
+export interface IsaacAskQuestion {
 	question: string
 	options?: string[]
 	selected?: string
 }
 
-export interface DiracAskNewTask {
+export interface IsaacAskNewTask {
 	context: string
 }
 
-export interface DiracApiReqInfo {
+export interface IsaacApiReqInfo {
 	request?: string
 	tokensIn?: number
 	tokensOut?: number
@@ -428,7 +428,7 @@ export interface DiracApiReqInfo {
 	cost?: number
 	contextWindow?: number
 	contextUsagePercentage?: number
-	cancelReason?: DiracApiReqCancelReason
+	cancelReason?: IsaacApiReqCancelReason
 	streamingFailedMessage?: string
 	retryStatus?: {
 		attempt: number
@@ -438,7 +438,7 @@ export interface DiracApiReqInfo {
 	}
 }
 
-export interface DiracSubagentUsageInfo {
+export interface IsaacSubagentUsageInfo {
 	source: "subagents"
 	tokensIn: number
 	tokensOut: number
@@ -447,7 +447,7 @@ export interface DiracSubagentUsageInfo {
 	cost: number
 }
 
-export type DiracApiReqCancelReason = "streaming_failed" | "user_cancelled" | "retries_exhausted"
+export type IsaacApiReqCancelReason = "streaming_failed" | "user_cancelled" | "retries_exhausted"
 
 export const COMMAND_OUTPUT_STRING = "Output:"
 export const COMMAND_REQ_APP_STRING = "REQ_APP"

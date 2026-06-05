@@ -1,5 +1,5 @@
-import { EmptyRequest } from "@shared/proto/dirac/common"
-import { StackActionResult } from "@shared/proto/dirac/stack"
+import { EmptyRequest } from "@shared/proto/isaac/common"
+import { StackActionResult } from "@shared/proto/isaac/stack"
 import { localStackManager } from "@/services/local-stack/LocalStackManager"
 import type { Controller } from "../index"
 

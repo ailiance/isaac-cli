@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 import { ErrorSettings } from "@/services/error"
-import { EmptyRequest } from "@/shared/proto/index.dirac"
+import { EmptyRequest } from "@/shared/proto/index.isaac"
 import { GetTelemetrySettingsResponse, Setting } from "@/shared/proto/index.host"
 
 export async function getTelemetrySettings(_: EmptyRequest): Promise<GetTelemetrySettingsResponse> {

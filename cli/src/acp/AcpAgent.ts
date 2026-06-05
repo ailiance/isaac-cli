@@ -1,33 +1,33 @@
 /**
- * AcpAgent - Thin wrapper that bridges stdio connection to DiracAgent.
+ * AcpAgent - Thin wrapper that bridges stdio connection to IsaacAgent.
  *
- * This class wraps the DiracAgent and connects it to an ACP AgentSideConnection
+ * This class wraps the IsaacAgent and connects it to an ACP AgentSideConnection
  * for stdio-based communication. It:
  * - Wires up the permission handler to call connection.requestPermission()
- * - Subscribes to DiracAgent session events and forwards them to connection.sessionUpdate()
- * - Delegates all acp.Agent methods to the internal DiracAgent
+ * - Subscribes to IsaacAgent session events and forwards them to connection.sessionUpdate()
+ * - Delegates all acp.Agent methods to the internal IsaacAgent
  *
- * For programmatic usage without stdio, use DiracAgent directly.
+ * For programmatic usage without stdio, use IsaacAgent directly.
  *
  * @module acp
  */
 
 import type * as acp from "@agentclientprotocol/sdk"
 import { Logger } from "@/shared/services/Logger.js"
-import { DiracAgent } from "../agent/DiracAgent.js"
+import { IsaacAgent } from "../agent/IsaacAgent.js"
 import { type AcpAgentOptions, type SessionUpdateType } from "../agent/types.js"
 
 /**
- * ACP Agent wrapper that bridges stdio connection to DiracAgent.
+ * ACP Agent wrapper that bridges stdio connection to IsaacAgent.
  *
  * This is the class used by runAcpMode() for stdio-based ACP communication.
- * It creates an internal DiracAgent and wires up the connection for:
+ * It creates an internal IsaacAgent and wires up the connection for:
  * - Permission requests (via connection.requestPermission)
  * - Session updates (via connection.sessionUpdate)
  */
 export class AcpAgent implements acp.Agent {
 	private readonly connection: acp.AgentSideConnection
-	private readonly diracAgent: DiracAgent
+	private readonly diracAgent: IsaacAgent
 
 	/** Track which sessions we've subscribed to for event forwarding */
 	private readonly subscribedSessions: Set<string> = new Set()
@@ -39,8 +39,8 @@ export class AcpAgent implements acp.Agent {
 	constructor(connection: acp.AgentSideConnection, options: AcpAgentOptions) {
 		this.connection = connection
 
-		// Create the internal DiracAgent
-		this.diracAgent = new DiracAgent(options)
+		// Create the internal IsaacAgent
+		this.diracAgent = new IsaacAgent(options)
 
 		// Wire up the permission handler to use the connection
 		this.diracAgent.setPermissionHandler(async (request) => {
@@ -139,7 +139,7 @@ export class AcpAgent implements acp.Agent {
 	}
 
 	// ============================================================
-	// acp.Agent Interface Implementation - Delegate to DiracAgent
+	// acp.Agent Interface Implementation - Delegate to IsaacAgent
 	// ============================================================
 
 	async initialize(params: acp.InitializeRequest): Promise<acp.InitializeResponse> {

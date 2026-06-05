@@ -1,4 +1,4 @@
-import type { DiracMessage, Mode } from "@shared/ExtensionMessage"
+import type { IsaacMessage, Mode } from "@shared/ExtensionMessage"
 import { memo, useMemo } from "react"
 import { useSettingsStore } from "@/features/settings/store/settingsStore"
 import { cn } from "@/lib/utils"
@@ -10,9 +10,9 @@ import { ToolGroupRenderer } from "./ToolGroupRenderer"
 
 interface MessageRendererProps {
 	index: number
-	messageOrGroup: DiracMessage | DiracMessage[]
-	groupedMessages: (DiracMessage | DiracMessage[])[]
-	modifiedMessages: DiracMessage[]
+	messageOrGroup: IsaacMessage | IsaacMessage[]
+	groupedMessages: (IsaacMessage | IsaacMessage[])[]
+	modifiedMessages: IsaacMessage[]
 	expandedRows: Record<number, boolean>
 	onToggleExpand: (ts: number) => void
 	onHeightChange: (isTaller: boolean) => void
@@ -131,8 +131,8 @@ export const MessageRenderer = memo(
  * This allows us to encapsulate the rendering logic while maintaining performance
  */
 export const createMessageRenderer = (
-	groupedMessages: (DiracMessage | DiracMessage[])[],
-	modifiedMessages: DiracMessage[],
+	groupedMessages: (IsaacMessage | IsaacMessage[])[],
+	modifiedMessages: IsaacMessage[],
 	expandedRows: Record<number, boolean>,
 	onToggleExpand: (ts: number) => void,
 	onHeightChange: (isTaller: boolean) => void,
@@ -141,7 +141,7 @@ export const createMessageRenderer = (
 	messageHandlers: MessageHandlers,
 	footerActive: boolean,
 ) => {
-	return (index: number, messageOrGroup: DiracMessage | DiracMessage[]) => (
+	return (index: number, messageOrGroup: IsaacMessage | IsaacMessage[]) => (
 		<MessageRenderer
 			expandedRows={expandedRows}
 			footerActive={footerActive}

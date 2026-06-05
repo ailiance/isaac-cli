@@ -1,5 +1,5 @@
 import { Logger } from "@/shared/services/Logger"
-import { BlobStoreSettings, blobStorage } from "../../storage/DiracBlobStorage"
+import { BlobStoreSettings, blobStorage } from "../../storage/IsaacBlobStorage"
 
 import { SyncQueue, SyncQueueItem } from "./queue"
 

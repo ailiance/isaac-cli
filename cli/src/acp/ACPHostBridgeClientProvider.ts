@@ -17,7 +17,7 @@ import type {
 } from "@generated/hosts/host-bridge-client-types"
 import type { HostBridgeClientProvider, StreamingCallbacks } from "@hosts/host-provider-types"
 import * as proto from "@shared/proto/index"
-import { DiracClient } from "@/shared/dirac"
+import { IsaacClient } from "@/shared/dirac"
 import { Logger } from "@/shared/services/Logger"
 
 /**
@@ -112,36 +112,36 @@ class ACPEnvServiceClient implements EnvServiceClientInterface {
 		this.version = version
 	}
 
-	async debugLog(request: proto.dirac.StringRequest): Promise<proto.dirac.Empty> {
+	async debugLog(request: proto.isaac.StringRequest): Promise<proto.isaac.Empty> {
 		Logger.debug(request.value)
-		return proto.dirac.Empty.create()
+		return proto.isaac.Empty.create()
 	}
 
-	async clipboardWriteText(_request: proto.dirac.StringRequest): Promise<proto.dirac.Empty> {
+	async clipboardWriteText(_request: proto.isaac.StringRequest): Promise<proto.isaac.Empty> {
 		Logger.debug("[ACPEnvServiceClient] clipboardWriteText called (stub)")
-		return proto.dirac.Empty.create()
+		return proto.isaac.Empty.create()
 	}
 
-	async clipboardReadText(_request: proto.dirac.EmptyRequest): Promise<proto.dirac.String> {
+	async clipboardReadText(_request: proto.isaac.EmptyRequest): Promise<proto.isaac.String> {
 		Logger.debug("[ACPEnvServiceClient] clipboardReadText called (stub)")
-		return proto.dirac.String.create({ value: "" })
+		return proto.isaac.String.create({ value: "" })
 	}
 
-	async getHostVersion(_request: proto.dirac.EmptyRequest): Promise<proto.host.GetHostVersionResponse> {
+	async getHostVersion(_request: proto.isaac.EmptyRequest): Promise<proto.host.GetHostVersionResponse> {
 		// Return version info for the ACP agent.
 		return proto.host.GetHostVersionResponse.create({
 			version: this.version,
 			platform: "ISAAC ACP Agent",
-			diracType: DiracClient.Cli,
+			diracType: IsaacClient.Cli,
 		})
 	}
 
-	async getIdeRedirectUri(_request: proto.dirac.EmptyRequest): Promise<proto.dirac.String> {
+	async getIdeRedirectUri(_request: proto.isaac.EmptyRequest): Promise<proto.isaac.String> {
 		Logger.debug("[ACPEnvServiceClient] getIdeRedirectUri called (stub)")
-		return proto.dirac.String.create({ value: "" })
+		return proto.isaac.String.create({ value: "" })
 	}
 
-	async getTelemetrySettings(_request: proto.dirac.EmptyRequest): Promise<proto.host.GetTelemetrySettingsResponse> {
+	async getTelemetrySettings(_request: proto.isaac.EmptyRequest): Promise<proto.host.GetTelemetrySettingsResponse> {
 		// Return telemetry as disabled by default in ACP mode.
 		return proto.host.GetTelemetrySettingsResponse.create({
 			isEnabled: proto.host.Setting.DISABLED,
@@ -149,7 +149,7 @@ class ACPEnvServiceClient implements EnvServiceClientInterface {
 	}
 
 	subscribeToTelemetrySettings(
-		_request: proto.dirac.EmptyRequest,
+		_request: proto.isaac.EmptyRequest,
 		callbacks: StreamingCallbacks<proto.host.TelemetrySettingsEvent>,
 	): () => void {
 		// Send initial telemetry settings (disabled) and return unsubscribe function.
@@ -162,21 +162,21 @@ class ACPEnvServiceClient implements EnvServiceClientInterface {
 		return () => {}
 	}
 
-	async shutdown(_request: proto.dirac.EmptyRequest): Promise<proto.dirac.Empty> {
+	async shutdown(_request: proto.isaac.EmptyRequest): Promise<proto.isaac.Empty> {
 		// Next phase: Graceful ACP connection shutdown.
 		// This would cleanly close the ACP connection and release resources.
 		Logger.debug("[ACPEnvServiceClient] shutdown called (stub)")
-		return proto.dirac.Empty.create()
+		return proto.isaac.Empty.create()
 	}
 
-	async openExternal(request: proto.dirac.StringRequest): Promise<proto.dirac.Empty> {
+	async openExternal(request: proto.isaac.StringRequest): Promise<proto.isaac.Empty> {
 		const url = request.value || ""
 		if (url) {
 			Logger.debug(`[ACPEnvServiceClient] openExternal: ${url}`)
 			const { openUrlInBrowser } = await import("../utils/browser")
 			await openUrlInBrowser(url)
 		}
-		return proto.dirac.Empty.create()
+		return proto.isaac.Empty.create()
 	}
 }
 
@@ -333,13 +333,13 @@ class ACPWorkspaceServiceClient implements WorkspaceServiceClientInterface {
 		return proto.host.OpenInFileExplorerPanelResponse.create({})
 	}
 
-	async openDiracSidebarPanel(
-		_request: proto.host.OpenDiracSidebarPanelRequest,
-	): Promise<proto.host.OpenDiracSidebarPanelResponse> {
-		// Next phase: Send ACP extension notification to open Dirac sidebar.
-		// This would show the Dirac panel/sidebar in the editor.
-		Logger.debug("[ACPWorkspaceServiceClient] openDiracSidebarPanel called (stub)")
-		return proto.host.OpenDiracSidebarPanelResponse.create({})
+	async openIsaacSidebarPanel(
+		_request: proto.host.OpenIsaacSidebarPanelRequest,
+	): Promise<proto.host.OpenIsaacSidebarPanelResponse> {
+		// Next phase: Send ACP extension notification to open Isaac sidebar.
+		// This would show the Isaac panel/sidebar in the editor.
+		Logger.debug("[ACPWorkspaceServiceClient] openIsaacSidebarPanel called (stub)")
+		return proto.host.OpenIsaacSidebarPanelResponse.create({})
 	}
 
 	async openTerminalPanel(_request: proto.host.OpenTerminalRequest): Promise<proto.host.OpenTerminalResponse> {

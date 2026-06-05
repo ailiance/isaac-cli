@@ -4,9 +4,9 @@
  */
 
 import type * as vscode from "vscode"
-import { DiracWebviewProvider } from "@/core/webview"
+import { IsaacWebviewProvider } from "@/core/webview"
 
-export class CliWebviewProvider extends DiracWebviewProvider {
+export class CliWebviewProvider extends IsaacWebviewProvider {
 	constructor(context: vscode.ExtensionContext) {
 		super(context)
 	}

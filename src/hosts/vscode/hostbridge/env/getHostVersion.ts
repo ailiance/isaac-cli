@@ -1,14 +1,14 @@
-import { EmptyRequest } from "@shared/proto/dirac/common"
+import { EmptyRequest } from "@shared/proto/isaac/common"
 import * as vscode from "vscode"
 import { ExtensionRegistryInfo } from "@/registry"
-import { DiracClient } from "@/shared/dirac"
+import { IsaacClient } from "@/shared/dirac"
 import { GetHostVersionResponse } from "@/shared/proto/index.host"
 
 export async function getHostVersion(_: EmptyRequest): Promise<GetHostVersionResponse> {
 	return {
 		platform: vscode.env.appName,
 		version: vscode.version,
-		diracType: DiracClient.VSCode,
+		diracType: IsaacClient.VSCode,
 		diracVersion: ExtensionRegistryInfo.version,
 	}
 }

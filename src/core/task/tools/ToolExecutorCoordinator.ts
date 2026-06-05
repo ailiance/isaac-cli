@@ -1,5 +1,5 @@
 import type { ToolUse } from "@core/assistant-message"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../index"
 import { AskFollowupQuestionToolHandler } from "./handlers/AskFollowupQuestionToolHandler"
 import { AttemptCompletionHandler } from "./handlers/AttemptCompletionHandler"
@@ -33,7 +33,7 @@ import type { TaskConfig } from "./types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "./types/UIHelpers"
 
 export interface IToolHandler {
-	readonly name: DiracDefaultTool
+	readonly name: IsaacDefaultTool
 	execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse>
 	getDescription(block: ToolUse): string
 }
@@ -52,7 +52,7 @@ export interface IFullyManagedTool extends IToolHandler, IPartialBlockHandler {
  */
 export class SharedToolHandler implements IFullyManagedTool {
 	constructor(
-		public readonly name: DiracDefaultTool,
+		public readonly name: IsaacDefaultTool,
 		private baseHandler: IFullyManagedTool,
 	) {}
 
@@ -78,38 +78,38 @@ export class ToolExecutorCoordinator {
 	private dynamicSubagentHandlers = new Map<string, IToolHandler>()
 	private mcpHandlers = new Map<string, IToolHandler>()
 
-	private readonly toolHandlersMap: Record<DiracDefaultTool, (v: ToolValidator) => IToolHandler | undefined> = {
-		[DiracDefaultTool.ASK]: (_v: ToolValidator) => new AskFollowupQuestionToolHandler(),
-		[DiracDefaultTool.ATTEMPT]: (_v: ToolValidator) => new AttemptCompletionHandler(),
-		[DiracDefaultTool.BASH]: (v: ToolValidator) => new ExecuteCommandToolHandler(v),
-		[DiracDefaultTool.FILE_READ]: (v: ToolValidator) => new ReadFileToolHandler(v),
-		[DiracDefaultTool.FILE_NEW]: (v: ToolValidator) => new WriteToFileToolHandler(v),
-		[DiracDefaultTool.SEARCH]: (v: ToolValidator) => new SearchFilesToolHandler(v),
-		[DiracDefaultTool.LIST_FILES]: (v: ToolValidator) => new ListFilesToolHandler(v),
-		[DiracDefaultTool.GET_FUNCTION]: (v: ToolValidator) => new GetFunctionToolHandler(v),
-		[DiracDefaultTool.GET_FILE_SKELETON]: (v: ToolValidator) => new GetFileSkeletonToolHandler(v),
-		[DiracDefaultTool.FIND_SYMBOL_REFERENCES]: (v: ToolValidator) => new FindSymbolReferencesToolHandler(v),
+	private readonly toolHandlersMap: Record<IsaacDefaultTool, (v: ToolValidator) => IToolHandler | undefined> = {
+		[IsaacDefaultTool.ASK]: (_v: ToolValidator) => new AskFollowupQuestionToolHandler(),
+		[IsaacDefaultTool.ATTEMPT]: (_v: ToolValidator) => new AttemptCompletionHandler(),
+		[IsaacDefaultTool.BASH]: (v: ToolValidator) => new ExecuteCommandToolHandler(v),
+		[IsaacDefaultTool.FILE_READ]: (v: ToolValidator) => new ReadFileToolHandler(v),
+		[IsaacDefaultTool.FILE_NEW]: (v: ToolValidator) => new WriteToFileToolHandler(v),
+		[IsaacDefaultTool.SEARCH]: (v: ToolValidator) => new SearchFilesToolHandler(v),
+		[IsaacDefaultTool.LIST_FILES]: (v: ToolValidator) => new ListFilesToolHandler(v),
+		[IsaacDefaultTool.GET_FUNCTION]: (v: ToolValidator) => new GetFunctionToolHandler(v),
+		[IsaacDefaultTool.GET_FILE_SKELETON]: (v: ToolValidator) => new GetFileSkeletonToolHandler(v),
+		[IsaacDefaultTool.FIND_SYMBOL_REFERENCES]: (v: ToolValidator) => new FindSymbolReferencesToolHandler(v),
 
-		[DiracDefaultTool.EDIT_FILE]: (v: ToolValidator) => new EditFileToolHandler(v),
-		[DiracDefaultTool.DIAGNOSTICS_SCAN]: (v: ToolValidator) => new DiagnosticsScanToolHandler(v),
-		[DiracDefaultTool.REPLACE_SYMBOL]: (v: ToolValidator) => new ReplaceSymbolToolHandler(v),
-		[DiracDefaultTool.RENAME_SYMBOL]: (v: ToolValidator) => new RenameSymbolToolHandler(v),
-		[DiracDefaultTool.BROWSER]: (_v: ToolValidator) => new BrowserToolHandler(),
+		[IsaacDefaultTool.EDIT_FILE]: (v: ToolValidator) => new EditFileToolHandler(v),
+		[IsaacDefaultTool.DIAGNOSTICS_SCAN]: (v: ToolValidator) => new DiagnosticsScanToolHandler(v),
+		[IsaacDefaultTool.REPLACE_SYMBOL]: (v: ToolValidator) => new ReplaceSymbolToolHandler(v),
+		[IsaacDefaultTool.RENAME_SYMBOL]: (v: ToolValidator) => new RenameSymbolToolHandler(v),
+		[IsaacDefaultTool.BROWSER]: (_v: ToolValidator) => new BrowserToolHandler(),
 
-		[DiracDefaultTool.NEW_TASK]: (_v: ToolValidator) => new NewTaskHandler(),
-		[DiracDefaultTool.PLAN_MODE]: (_v: ToolValidator) => new PlanModeRespondHandler(),
-		[DiracDefaultTool.CONDENSE]: (_v: ToolValidator) => new CondenseHandler(),
-		[DiracDefaultTool.SUMMARIZE_TASK]: (_v: ToolValidator) => new SummarizeTaskHandler(_v),
-		[DiracDefaultTool.REPORT_BUG]: (_v: ToolValidator) => new ReportBugHandler(),
-		[DiracDefaultTool.NEW_RULE]: (v: ToolValidator) =>
-			new SharedToolHandler(DiracDefaultTool.NEW_RULE, new WriteToFileToolHandler(v)),
-		[DiracDefaultTool.GENERATE_EXPLANATION]: (_v: ToolValidator) => new GenerateExplanationToolHandler(),
-		[DiracDefaultTool.USE_SKILL]: (_v: ToolValidator) => new UseSkillToolHandler(),
-		[DiracDefaultTool.LIST_SKILLS]: (_v: ToolValidator) => new ListSkillsToolHandler(),
-		[DiracDefaultTool.USE_SUBAGENTS]: (_v: ToolValidator) => new UseSubagentsToolHandler(),
-		[DiracDefaultTool.GET_TOOL_RESULT]: (_v: ToolValidator) => new GetToolResultToolHandler(),
+		[IsaacDefaultTool.NEW_TASK]: (_v: ToolValidator) => new NewTaskHandler(),
+		[IsaacDefaultTool.PLAN_MODE]: (_v: ToolValidator) => new PlanModeRespondHandler(),
+		[IsaacDefaultTool.CONDENSE]: (_v: ToolValidator) => new CondenseHandler(),
+		[IsaacDefaultTool.SUMMARIZE_TASK]: (_v: ToolValidator) => new SummarizeTaskHandler(_v),
+		[IsaacDefaultTool.REPORT_BUG]: (_v: ToolValidator) => new ReportBugHandler(),
+		[IsaacDefaultTool.NEW_RULE]: (v: ToolValidator) =>
+			new SharedToolHandler(IsaacDefaultTool.NEW_RULE, new WriteToFileToolHandler(v)),
+		[IsaacDefaultTool.GENERATE_EXPLANATION]: (_v: ToolValidator) => new GenerateExplanationToolHandler(),
+		[IsaacDefaultTool.USE_SKILL]: (_v: ToolValidator) => new UseSkillToolHandler(),
+		[IsaacDefaultTool.LIST_SKILLS]: (_v: ToolValidator) => new ListSkillsToolHandler(),
+		[IsaacDefaultTool.USE_SUBAGENTS]: (_v: ToolValidator) => new UseSubagentsToolHandler(),
+		[IsaacDefaultTool.GET_TOOL_RESULT]: (_v: ToolValidator) => new GetToolResultToolHandler(),
 
-		[DiracDefaultTool.FIND_TOOLS]: (_v: ToolValidator) => new FindToolsToolHandler(),
+		[IsaacDefaultTool.FIND_TOOLS]: (_v: ToolValidator) => new FindToolsToolHandler(),
 	}
 
 	/**
@@ -119,7 +119,7 @@ export class ToolExecutorCoordinator {
 		this.handlers.set(handler.name, handler)
 	}
 
-	registerByName(toolName: DiracDefaultTool, validator: ToolValidator): void {
+	registerByName(toolName: IsaacDefaultTool, validator: ToolValidator): void {
 		const handler = this.toolHandlersMap[toolName]?.(validator)
 		if (handler) {
 			this.register(handler)
@@ -127,7 +127,7 @@ export class ToolExecutorCoordinator {
 	}
 
 	/**
-	 * Register a dynamically-named tool handler (e.g. MCP tools whose names are not in DiracDefaultTool).
+	 * Register a dynamically-named tool handler (e.g. MCP tools whose names are not in IsaacDefaultTool).
 	 */
 	registerDynamicTool(toolName: string, handler: IToolHandler): void {
 		this.mcpHandlers.set(toolName, handler)
@@ -159,7 +159,7 @@ export class ToolExecutorCoordinator {
 			if (existingHandler) {
 				return existingHandler
 			}
-			const handler = new SharedToolHandler(toolName as DiracDefaultTool, new UseSubagentsToolHandler())
+			const handler = new SharedToolHandler(toolName as IsaacDefaultTool, new UseSubagentsToolHandler())
 			this.dynamicSubagentHandlers.set(toolName, handler)
 			return handler
 		}

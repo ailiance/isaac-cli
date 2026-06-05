@@ -1,5 +1,5 @@
-import { Empty, EmptyRequest } from "@shared/proto/dirac/common"
-import { OpenRouterCompatibleModelInfo } from "@shared/proto/dirac/models"
+import { Empty, EmptyRequest } from "@shared/proto/isaac/common"
+import { OpenRouterCompatibleModelInfo } from "@shared/proto/isaac/models"
 import { telemetryService } from "@/services/telemetry"
 import { Logger } from "@/shared/services/Logger"
 import { GlobalStateAndSettings } from "@/shared/storage/state-keys"

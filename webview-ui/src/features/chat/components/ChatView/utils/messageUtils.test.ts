@@ -1,22 +1,22 @@
-import type { DiracMessage } from "@shared/ExtensionMessage"
+import type { IsaacMessage } from "@shared/ExtensionMessage"
 import { describe, expect, it } from "vitest"
 import { groupLowStakesTools, isToolGroup } from "./messageUtils"
 
-const createTextMessage = (ts: number, text: string): DiracMessage => ({
+const createTextMessage = (ts: number, text: string): IsaacMessage => ({
 	type: "say",
 	say: "text",
 	text,
 	ts,
 })
 
-const createToolMessage = (ts: number, tool: string): DiracMessage => ({
+const createToolMessage = (ts: number, tool: string): IsaacMessage => ({
 	type: "say",
 	say: "tool",
 	text: JSON.stringify({ tool, path: "src/file.ts" }),
 	ts,
 })
 
-const createReasoningMessage = (ts: number, text: string): DiracMessage => ({
+const createReasoningMessage = (ts: number, text: string): IsaacMessage => ({
 	type: "say",
 	say: "reasoning",
 	text,

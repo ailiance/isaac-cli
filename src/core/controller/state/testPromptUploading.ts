@@ -1,7 +1,7 @@
-import { EmptyRequest } from "@shared/proto/dirac/common"
-import { TestConnectionResult } from "@shared/proto/dirac/state"
+import { EmptyRequest } from "@shared/proto/isaac/common"
+import { TestConnectionResult } from "@shared/proto/isaac/state"
 import { Logger } from "@/shared/services/Logger"
-import { blobStorage } from "@/shared/storage/DiracBlobStorage"
+import { blobStorage } from "@/shared/storage/IsaacBlobStorage"
 import { Controller } from ".."
 
 /**

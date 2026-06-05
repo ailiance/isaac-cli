@@ -1,4 +1,4 @@
-import { DeleteWorktreeRequest, WorktreeResult } from "@shared/proto/dirac/worktree"
+import { DeleteWorktreeRequest, WorktreeResult } from "@shared/proto/isaac/worktree"
 import { deleteWorktree as deleteWorktreeUtil } from "@utils/git-worktree"
 import { getWorkspacePath } from "@utils/path"
 import { rm } from "fs/promises"

@@ -14,7 +14,7 @@
  */
 
 import { findLastIndex } from "@shared/array"
-import { DiracToolResponseContent } from "@shared/messages"
+import { IsaacToolResponseContent } from "@shared/messages"
 import { Logger } from "@/shared/services/Logger"
 import { orchestrateCommandExecution } from "./CommandOrchestrator"
 import { StandaloneTerminalManager } from "./standalone/StandaloneTerminalManager"
@@ -88,7 +88,7 @@ export class CommandExecutor {
 		command: string,
 		timeoutSeconds: number | undefined,
 		options?: CommandExecutionOptions,
-	): Promise<[boolean, DiracToolResponseContent]> {
+	): Promise<[boolean, IsaacToolResponseContent]> {
 		// S2-B: short-circuit if the caller-provided AbortSignal already fired.
 		// We surface this as an AbortError (name === "AbortError") so callers
 		// can distinguish cancellation from genuine command errors.
@@ -235,12 +235,12 @@ export class CommandExecutor {
 			await new Promise((resolve) => setTimeout(resolve, 300))
 
 			// Find the last command_output message and update it
-			const messages = this.callbacks.getDiracMessages()
+			const messages = this.callbacks.getIsaacMessages()
 			const lastCommandOutputIndex = findLastIndex(messages, (m) => m.ask === "command_output")
 			if (lastCommandOutputIndex !== -1) {
 				const existingText = messages[lastCommandOutputIndex].text || ""
 				const cancellationNotice = "\n\nCommand(s) cancelled by user."
-				await this.callbacks.updateDiracMessage(lastCommandOutputIndex, {
+				await this.callbacks.updateIsaacMessage(lastCommandOutputIndex, {
 					text: existingText + cancellationNotice,
 				})
 			}

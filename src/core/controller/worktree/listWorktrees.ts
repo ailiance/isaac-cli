@@ -1,5 +1,5 @@
-import { EmptyRequest } from "@shared/proto/dirac/common"
-import { WorktreeList } from "@shared/proto/dirac/worktree"
+import { EmptyRequest } from "@shared/proto/isaac/common"
+import { WorktreeList } from "@shared/proto/isaac/worktree"
 import { getGitRootPath, listWorktrees as listWorktreesUtil } from "@utils/git-worktree"
 import { arePathsEqual, getWorkspacePath } from "@utils/path"
 import { HostProvider } from "@/hosts/host-provider"

@@ -1,5 +1,5 @@
-import { getSavedApiConversationHistory, getSavedDiracMessages } from "@core/storage/disk"
-import { DiracWebviewProvider } from "@core/webview"
+import { getSavedApiConversationHistory, getSavedIsaacMessages } from "@core/storage/disk"
+import { IsaacWebviewProvider } from "@core/webview"
 import { AutoApprovalSettings, DEFAULT_AUTO_APPROVAL_SETTINGS } from "@shared/AutoApprovalSettings"
 import { ApiProvider } from "@shared/api"
 import { HistoryItem } from "@shared/HistoryItem"
@@ -83,8 +83,8 @@ async function updateAutoApprovalSettings(controller?: Controller) {
  * @returns The created HTTP server instance
  */
 export async function createTestServer(controller: Controller): Promise<http.Server> {
-	// Try to show the Dirac sidebar
-	Logger.log("[createTestServer] Opening Dirac in sidebar...")
+	// Try to show the Isaac sidebar
+	Logger.log("[createTestServer] Opening Isaac in sidebar...")
 	vscode.commands.executeCommand(`workbench.view.${ExtensionRegistryInfo.name}-ActivityBar`)
 
 	// Then ensure the webview is focused/loaded
@@ -146,10 +146,10 @@ export async function createTestServer(controller: Controller): Promise<http.Ser
 				}
 
 				// Get a visible webview instance
-				const visibleWebview = DiracWebviewProvider.getVisibleInstance()
+				const visibleWebview = IsaacWebviewProvider.getVisibleInstance()
 				if (!visibleWebview || !visibleWebview.controller) {
 					res.writeHead(500)
-					res.end(JSON.stringify({ error: "No active Dirac instance found" }))
+					res.end(JSON.stringify({ error: "No active Isaac instance found" }))
 					return
 				}
 
@@ -299,10 +299,10 @@ export async function createTestServer(controller: Controller): Promise<http.Ser
 						let apiConversationHistory: any[] = []
 						try {
 							if (typeof taskId === "string") {
-								messages = await getSavedDiracMessages(taskId)
+								messages = await getSavedIsaacMessages(taskId)
 							}
 						} catch (error) {
-							Logger.log(`Error getting saved Dirac messages: ${error}`)
+							Logger.log(`Error getting saved Isaac messages: ${error}`)
 						}
 
 						try {

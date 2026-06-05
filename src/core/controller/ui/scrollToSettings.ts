@@ -1,4 +1,4 @@
-import { KeyValuePair, StringRequest } from "@shared/proto/dirac/common"
+import { KeyValuePair, StringRequest } from "@shared/proto/isaac/common"
 import { Controller } from ".."
 
 /**

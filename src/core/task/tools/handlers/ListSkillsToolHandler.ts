@@ -1,12 +1,12 @@
 import type { ToolUse } from "@core/assistant-message"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IPartialBlockHandler, IToolHandler } from "../ToolExecutorCoordinator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 
 export class ListSkillsToolHandler implements IToolHandler, IPartialBlockHandler {
-	readonly name = DiracDefaultTool.LIST_SKILLS
+	readonly name = IsaacDefaultTool.LIST_SKILLS
 
 	constructor() {}
 

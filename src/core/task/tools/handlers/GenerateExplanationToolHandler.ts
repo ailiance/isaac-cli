@@ -14,25 +14,25 @@ import { telemetryService } from "@/services/telemetry"
 import fs from "fs/promises"
 import path from "path"
 import simpleGit from "simple-git"
-import type { DiracSayGenerateExplanation } from "@/shared/ExtensionMessage"
+import type { IsaacSayGenerateExplanation } from "@/shared/ExtensionMessage"
 import { Logger } from "@/shared/services/Logger"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IPartialBlockHandler, IToolHandler } from "../ToolExecutorCoordinator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 
 /**
- * Helper to create a stringified DiracSayGenerateExplanation message
+ * Helper to create a stringified IsaacSayGenerateExplanation message
  */
 function createExplanationMessage(
 	title: string,
 	fromRef: string,
 	toRef: string,
-	status: DiracSayGenerateExplanation["status"],
+	status: IsaacSayGenerateExplanation["status"],
 	error?: string,
 ): string {
-	const message: DiracSayGenerateExplanation = { title, fromRef, toRef, status }
+	const message: IsaacSayGenerateExplanation = { title, fromRef, toRef, status }
 	if (error) {
 		message.error = error
 	}
@@ -40,7 +40,7 @@ function createExplanationMessage(
 }
 
 export class GenerateExplanationToolHandler implements IToolHandler, IPartialBlockHandler {
-	readonly name = DiracDefaultTool.GENERATE_EXPLANATION
+	readonly name = IsaacDefaultTool.GENERATE_EXPLANATION
 
 	getDescription(block: ToolUse): string {
 		const title = block.params.title || "code changes"

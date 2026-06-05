@@ -1,4 +1,4 @@
-import { DiracWebviewProvider } from "@/core/webview"
+import { IsaacWebviewProvider } from "@/core/webview"
 import { Logger } from "@/shared/services/Logger"
 
 export const TASK_URI_PATH = "/task"
@@ -30,7 +30,7 @@ export class SharedUriHandler {
 				}),
 		)
 
-		const visibleWebview = DiracWebviewProvider.getVisibleInstance()
+		const visibleWebview = IsaacWebviewProvider.getVisibleInstance()
 
 		if (!visibleWebview) {
 			Logger.warn("SharedUriHandler: No visible webview found")

@@ -7,7 +7,7 @@ import { GetFileSkeletonToolHandler } from "@core/task/tools/handlers/GetFileSke
 import { GetFunctionToolHandler } from "@core/task/tools/handlers/GetFunctionToolHandler"
 import { ReplaceSymbolToolHandler } from "@core/task/tools/handlers/ReplaceSymbolToolHandler"
 import { ToolValidator } from "@core/task/tools/ToolValidator"
-import { DiracDefaultTool } from "@shared/tools"
+import { IsaacDefaultTool } from "@shared/tools"
 import { stripHashes } from "@shared/utils/line-hashing"
 import { AnchorStateManager } from "@utils/AnchorStateManager"
 import { before, beforeEach, describe, it } from "mocha"
@@ -58,7 +58,7 @@ function createMockConfig(cwd: string) {
 				},
 			},
 			fileContextTracker: {
-				markFileAsEditedByDirac: sinon.stub(),
+				markFileAsEditedByIsaac: sinon.stub(),
 				trackFileContext: sinon.stub().resolves(),
 			},
 			diracIgnoreController: {
@@ -176,7 +176,7 @@ describe("Language Compatibility Tests (Big Four)", () => {
 
 			it("get_file_skeleton", async () => {
 				const result = await handlers.skeleton.execute(config, {
-					name: DiracDefaultTool.GET_FILE_SKELETON,
+					name: IsaacDefaultTool.GET_FILE_SKELETON,
 					params: { paths: [`sample.${lang.ext}`] },
 				} as any)
 				await assertSnapshot(path.join(langDir, "get_file_skeleton.txt"), result as string)
@@ -192,7 +192,7 @@ describe("Language Compatibility Tests (Big Four)", () => {
 				it("get_function", async () => {
 					for (const test of testCases.get_function) {
 						const result = await handlers.getFunction.execute(config, {
-							name: DiracDefaultTool.GET_FUNCTION,
+							name: IsaacDefaultTool.GET_FUNCTION,
 							params: { paths: [`sample.${lang.ext}`], function_names: test.symbols },
 						} as any)
 						await assertSnapshot(path.join(langDir, `get_function_${test.name}.txt`), result as string)
@@ -202,7 +202,7 @@ describe("Language Compatibility Tests (Big Four)", () => {
 				it("find_symbol_references", async () => {
 					for (const test of testCases.find_symbol_references) {
 						const result = await handlers.references.execute(config, {
-							name: DiracDefaultTool.FIND_SYMBOL_REFERENCES,
+							name: IsaacDefaultTool.FIND_SYMBOL_REFERENCES,
 							params: {
 								paths: [`sample.${lang.ext}`],
 								symbols: test.symbols,
@@ -220,7 +220,7 @@ describe("Language Compatibility Tests (Big Four)", () => {
 						for (const test of testCases.replace_symbol) {
 							const testConfig = createMockConfig(langDir)
 							const result = await handlers.replace.execute(testConfig, {
-								name: DiracDefaultTool.REPLACE_SYMBOL,
+								name: IsaacDefaultTool.REPLACE_SYMBOL,
 								params: {
 									path: `sample.${lang.ext}`,
 									symbol: test.symbol,

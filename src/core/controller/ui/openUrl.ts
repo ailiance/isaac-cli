@@ -1,5 +1,5 @@
-import type { StringRequest } from "@shared/proto/dirac/common"
-import { Empty } from "@shared/proto/dirac/common"
+import type { StringRequest } from "@shared/proto/isaac/common"
+import { Empty } from "@shared/proto/isaac/common"
 import { Logger } from "@/shared/services/Logger"
 import { openUrlInBrowser } from "../../../utils/github-url-utils"
 import type { Controller } from "../index"

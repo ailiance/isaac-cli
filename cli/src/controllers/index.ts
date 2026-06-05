@@ -12,7 +12,7 @@ import type {
 import type { HostBridgeClientProvider, StreamingCallbacks } from "@hosts/host-provider-types"
 import * as proto from "@shared/proto/index"
 import { StateManager } from "@/core/storage/StateManager"
-import { DiracClient } from "@/shared/dirac"
+import { IsaacClient } from "@/shared/dirac"
 import { version as CLI_VERSION } from "../../package.json"
 import { printError, printInfo, printWarning } from "../utils/display"
 
@@ -87,37 +87,37 @@ export class CliEnvServiceClient implements EnvServiceClientInterface {
 		return setting === "disabled" ? proto.host.Setting.DISABLED : proto.host.Setting.ENABLED
 	}
 
-	async clipboardWriteText(request: proto.dirac.StringRequest): Promise<proto.dirac.Empty> {
+	async clipboardWriteText(request: proto.isaac.StringRequest): Promise<proto.isaac.Empty> {
 		this.clipboardContent = request.value || ""
 		printInfo(`📋 Copied to clipboard`)
-		return proto.dirac.Empty.create()
+		return proto.isaac.Empty.create()
 	}
 
-	async clipboardReadText(_request: proto.dirac.EmptyRequest): Promise<proto.dirac.String> {
-		return proto.dirac.String.create({ value: this.clipboardContent })
+	async clipboardReadText(_request: proto.isaac.EmptyRequest): Promise<proto.isaac.String> {
+		return proto.isaac.String.create({ value: this.clipboardContent })
 	}
 
-	async getHostVersion(_request: proto.dirac.EmptyRequest): Promise<proto.host.GetHostVersionResponse> {
+	async getHostVersion(_request: proto.isaac.EmptyRequest): Promise<proto.host.GetHostVersionResponse> {
 		return proto.host.GetHostVersionResponse.create({
 			version: CLI_VERSION,
 			platform: "ISAAC CLI - Node.js",
-			diracType: DiracClient.Cli,
+			diracType: IsaacClient.Cli,
 		})
 	}
 
-	async getIdeRedirectUri(_request: proto.dirac.EmptyRequest): Promise<proto.dirac.String> {
+	async getIdeRedirectUri(_request: proto.isaac.EmptyRequest): Promise<proto.isaac.String> {
 		// CLI doesn't have IDE redirect
-		return proto.dirac.String.create({ value: "" })
+		return proto.isaac.String.create({ value: "" })
 	}
 
-	async getTelemetrySettings(_request: proto.dirac.EmptyRequest): Promise<proto.host.GetTelemetrySettingsResponse> {
+	async getTelemetrySettings(_request: proto.isaac.EmptyRequest): Promise<proto.host.GetTelemetrySettingsResponse> {
 		return proto.host.GetTelemetrySettingsResponse.create({
 			isEnabled: this.getTelemetrySetting(),
 		})
 	}
 
 	subscribeToTelemetrySettings(
-		_request: proto.dirac.EmptyRequest,
+		_request: proto.isaac.EmptyRequest,
 		callbacks: StreamingCallbacks<proto.host.TelemetrySettingsEvent>,
 	): () => void {
 		// Send initial settings
@@ -130,20 +130,20 @@ export class CliEnvServiceClient implements EnvServiceClientInterface {
 		return () => {}
 	}
 
-	debugLog(request: proto.dirac.StringRequest): Promise<proto.dirac.Empty> {
+	debugLog(request: proto.isaac.StringRequest): Promise<proto.isaac.Empty> {
 		const message = request.value || ""
 		if (process.env.IS_DEV) {
 			printInfo(`[DebugLog] ${message}`)
 		}
-		return Promise.resolve(proto.dirac.Empty.create())
+		return Promise.resolve(proto.isaac.Empty.create())
 	}
 
-	async shutdown(_request: proto.dirac.EmptyRequest): Promise<proto.dirac.Empty> {
+	async shutdown(_request: proto.isaac.EmptyRequest): Promise<proto.isaac.Empty> {
 		printInfo("Shutting down...")
-		return proto.dirac.Empty.create()
+		return proto.isaac.Empty.create()
 	}
 
-	async openExternal(request: proto.dirac.StringRequest): Promise<proto.dirac.Empty> {
+	async openExternal(request: proto.isaac.StringRequest): Promise<proto.isaac.Empty> {
 		const url = request.value || ""
 		if (url) {
 			// In CLI mode, we don't want to throw if the browser fails to open.
@@ -164,7 +164,7 @@ export class CliEnvServiceClient implements EnvServiceClientInterface {
 				printInfo("Please open the URL manually if it didn't open.")
 			}
 		}
-		return proto.dirac.Empty.create()
+		return proto.isaac.Empty.create()
 	}
 }
 
@@ -282,11 +282,11 @@ export class CliWorkspaceServiceClient implements WorkspaceServiceClientInterfac
 		return proto.host.OpenInFileExplorerPanelResponse.create({})
 	}
 
-	async openDiracSidebarPanel(
-		_request: proto.host.OpenDiracSidebarPanelRequest,
-	): Promise<proto.host.OpenDiracSidebarPanelResponse> {
+	async openIsaacSidebarPanel(
+		_request: proto.host.OpenIsaacSidebarPanelRequest,
+	): Promise<proto.host.OpenIsaacSidebarPanelResponse> {
 		// No sidebar in CLI
-		return proto.host.OpenDiracSidebarPanelResponse.create({})
+		return proto.host.OpenIsaacSidebarPanelResponse.create({})
 	}
 
 	async openTerminalPanel(_request: proto.host.OpenTerminalRequest): Promise<proto.host.OpenTerminalResponse> {

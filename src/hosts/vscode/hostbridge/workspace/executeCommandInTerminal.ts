@@ -13,7 +13,7 @@ export async function executeCommandInTerminal(
 	try {
 		// Create terminal with fixed options
 		const terminalOptions: vscode.TerminalOptions = {
-			name: "Dirac",
+			name: "Isaac",
 			iconPath: new vscode.ThemeIcon("dirac-icon"),
 			env: {
 				DIRAC_ACTIVE: "true",

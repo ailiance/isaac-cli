@@ -11,8 +11,8 @@
 /* eslint-disable no-console */
 // Console output is intentional here for plain text mode
 
-import type { DiracMessage, ExtensionState } from "@shared/ExtensionMessage"
-import { StringRequest } from "@shared/proto/dirac/common"
+import type { IsaacMessage, ExtensionState } from "@shared/ExtensionMessage"
+import { StringRequest } from "@shared/proto/isaac/common"
 import type { Controller } from "@/core/controller"
 import { getRequestRegistry } from "@/core/controller/grpc-handler"
 import { subscribeToState } from "@/core/controller/state/subscribeToState"
@@ -58,7 +58,7 @@ export async function runPlainTextTask(options: PlainTextTaskOptions): Promise<b
 	let hasEmittedTaskStarted = false
 	// Track which messages have been processed (by timestamp)
 	const processedMessages = new Map<number, string>()
-	const lastProcessedPartialMessages = new Map<number, DiracMessage>()
+	const lastProcessedPartialMessages = new Map<number, IsaacMessage>()
 
 	const isViewTaskOnly = Boolean(options.taskId) && !prompt
 
@@ -92,7 +92,7 @@ export async function runPlainTextTask(options: PlainTextTaskOptions): Promise<b
 	}
 
 	// Helper to process a message and track completion state
-	const processMessage = (message: DiracMessage) => {
+	const processMessage = (message: IsaacMessage) => {
 		const text = message.text || ""
 		const ts = message.ts || 0
 
@@ -242,7 +242,7 @@ export async function runPlainTextTask(options: PlainTextTaskOptions): Promise<b
 
 	// Print final summary if verbose or yolo
 	if (!jsonOutput && (verbose || yolo)) {
-		const messages = controller.task?.messageStateHandler.getDiracMessages() || []
+		const messages = controller.task?.messageStateHandler.getIsaacMessages() || []
 		const metrics = getApiMetrics(messages)
 		if (metrics.totalTokensIn > 0 || metrics.totalCost > 0) {
 			process.stderr.write(`\n${"-".repeat(40)}\n`)
@@ -288,7 +288,7 @@ export async function runPlainTextTask(options: PlainTextTaskOptions): Promise<b
  * - Nothing else goes to stdout (stdout is reserved for final result only)
  */
 function handleMessageForPipeMode(
-	message: DiracMessage,
+	message: IsaacMessage,
 	verbose: boolean,
 	yolo: boolean,
 	isUpdate?: boolean,
@@ -444,7 +444,7 @@ function handleMessageForPipeMode(
 /**
  * Identify if a message is a tool call and return its type/name
  */
-function getToolType(message: DiracMessage): string | null {
+function getToolType(message: IsaacMessage): string | null {
 	if (message.type === "say") {
 		const toolSays = [
 			"tool",
@@ -510,7 +510,7 @@ function getToolType(message: DiracMessage): string | null {
 /**
  * Handle formatting and printing of API request messages
  */
-function handleApiReqMessage(message: DiracMessage, statusPrefix: string, isUpdate?: boolean): void {
+function handleApiReqMessage(message: IsaacMessage, statusPrefix: string, isUpdate?: boolean): void {
 	const timestamp = message.ts ? `[${new Date(message.ts).toLocaleTimeString("en-GB", { hour12: false })}] ` : ""
 	const fullText = message.text ?? ""
 	let info: any = {}

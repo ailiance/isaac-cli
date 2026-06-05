@@ -1,5 +1,5 @@
-import { Empty } from "@shared/proto/dirac/common"
-import { OnboardingProgressRequest } from "@shared/proto/dirac/state"
+import { Empty } from "@shared/proto/isaac/common"
+import { OnboardingProgressRequest } from "@shared/proto/isaac/state"
 import { Logger } from "@/shared/services/Logger"
 import { telemetryService } from "../../../services/telemetry"
 import type { Controller } from "../index"

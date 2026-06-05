@@ -1,6 +1,6 @@
 import OpenAI from "openai"
 import { ModelInfo, openAiModelInfoSaneDefaults } from "@shared/api"
-import { DiracStorageMessage } from "@/shared/messages/content"
+import { IsaacStorageMessage } from "@/shared/messages/content"
 import { createOpenAIClient } from "@/shared/net"
 import { ApiHandler, CommonApiHandlerOptions } from "../"
 import { withRetry } from "../retry"
@@ -50,7 +50,7 @@ export class OpenAiResponsesCompatibleHandler implements ApiHandler {
 	}
 
 	@withRetry()
-	async *createMessage(systemPrompt: string, messages: DiracStorageMessage[], tools?: ChatCompletionTool[]): ApiStream {
+	async *createMessage(systemPrompt: string, messages: IsaacStorageMessage[], tools?: ChatCompletionTool[]): ApiStream {
 		// Add web_search tool for OpenAI
 		const finalTools = [...(tools || [])]
 		finalTools.push({ type: "web_search" } as any)

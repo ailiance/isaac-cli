@@ -134,7 +134,7 @@ export async function migrateCustomInstructionsToGlobalRules(context: vscode.Ext
 		const customInstructions = (await context.globalState.get("customInstructions")) as string | undefined
 
 		if (customInstructions?.trim()) {
-			Logger.log("Migrating custom instructions to global Dirac rules...")
+			Logger.log("Migrating custom instructions to global Isaac rules...")
 
 			// Create global .diracrules directory if it doesn't exist
 			const globalRulesDir = await ensureRulesDirectoryExists()
@@ -166,7 +166,7 @@ export async function migrateCustomInstructionsToGlobalRules(context: vscode.Ext
 
 			// Remove customInstructions from global state only after successful file creation
 			await context.globalState.update("customInstructions", undefined)
-			Logger.log("Successfully migrated custom instructions to global Dirac rules")
+			Logger.log("Successfully migrated custom instructions to global Isaac rules")
 		}
 	} catch (error) {
 		Logger.error("Failed to migrate custom instructions to global rules:", error)

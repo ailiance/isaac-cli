@@ -1,11 +1,11 @@
 import { Anthropic } from "@anthropic-ai/sdk"
-import { DiracMessageMetricsInfo, DiracMessageModelInfo } from "./metrics"
+import { IsaacMessageMetricsInfo, IsaacMessageModelInfo } from "./metrics"
 
-export type DiracPromptInputContent = string
+export type IsaacPromptInputContent = string
 
-export type DiracMessageRole = "user" | "assistant"
+export type IsaacMessageRole = "user" | "assistant"
 
-export interface DiracReasoningDetailParam {
+export interface IsaacReasoningDetailParam {
 	type: "reasoning.text" | string
 	text: string
 	signature: string
@@ -13,7 +13,7 @@ export interface DiracReasoningDetailParam {
 	index: number
 }
 
-interface DiracSharedMessageParam {
+interface IsaacSharedMessageParam {
 	// The id of the response that the block belongs to
 	call_id?: string
 }
@@ -21,83 +21,83 @@ interface DiracSharedMessageParam {
 export const REASONING_DETAILS_PROVIDERS = ["dirac", "openrouter"]
 
 /**
- * An extension of Anthropic.MessageParam that includes Dirac-specific fields: reasoning_details.
+ * An extension of Anthropic.MessageParam that includes Isaac-specific fields: reasoning_details.
  * This ensures backward compatibility where the messages were stored in Anthropic format with additional
  * fields unknown to Anthropic SDK.
  */
-export interface DiracTextContentBlock extends Anthropic.TextBlockParam, DiracSharedMessageParam {
+export interface IsaacTextContentBlock extends Anthropic.TextBlockParam, IsaacSharedMessageParam {
 	// reasoning_details only exists for providers listed in REASONING_DETAILS_PROVIDERS
-	reasoning_details?: DiracReasoningDetailParam[]
+	reasoning_details?: IsaacReasoningDetailParam[]
 	// Thought Signature associates with Gemini
 	signature?: string
 }
 
-export interface DiracImageContentBlock extends Anthropic.ImageBlockParam, DiracSharedMessageParam {}
+export interface IsaacImageContentBlock extends Anthropic.ImageBlockParam, IsaacSharedMessageParam {}
 
-export interface DiracDocumentContentBlock extends Anthropic.DocumentBlockParam, DiracSharedMessageParam {}
+export interface IsaacDocumentContentBlock extends Anthropic.DocumentBlockParam, IsaacSharedMessageParam {}
 
-export interface DiracUserToolResultContentBlock extends Anthropic.ToolResultBlockParam, DiracSharedMessageParam {}
+export interface IsaacUserToolResultContentBlock extends Anthropic.ToolResultBlockParam, IsaacSharedMessageParam {}
 
 /**
  * Assistant only content types
  */
-export interface DiracAssistantToolUseBlock extends Anthropic.ToolUseBlockParam, DiracSharedMessageParam {
+export interface IsaacAssistantToolUseBlock extends Anthropic.ToolUseBlockParam, IsaacSharedMessageParam {
 	// reasoning_details only exists for providers listed in REASONING_DETAILS_PROVIDERS
-	reasoning_details?: unknown[] | DiracReasoningDetailParam[]
+	reasoning_details?: unknown[] | IsaacReasoningDetailParam[]
 	// Thought Signature associates with Gemini
 	signature?: string
 }
 
-export interface DiracAssistantThinkingBlock extends Anthropic.ThinkingBlock, DiracSharedMessageParam {
+export interface IsaacAssistantThinkingBlock extends Anthropic.ThinkingBlock, IsaacSharedMessageParam {
 	// The summary items returned by OpenAI response API
 	// The reasoning details that will be moved to the text block when finalized
-	summary?: unknown[] | DiracReasoningDetailParam[]
+	summary?: unknown[] | IsaacReasoningDetailParam[]
 }
 
-export interface DiracAssistantRedactedThinkingBlock extends Anthropic.RedactedThinkingBlockParam, DiracSharedMessageParam {}
+export interface IsaacAssistantRedactedThinkingBlock extends Anthropic.RedactedThinkingBlockParam, IsaacSharedMessageParam {}
 
-export type DiracToolResponseContent = DiracPromptInputContent | Array<DiracTextContentBlock | DiracImageContentBlock>
+export type IsaacToolResponseContent = IsaacPromptInputContent | Array<IsaacTextContentBlock | IsaacImageContentBlock>
 
-export type DiracUserContent =
-	| DiracTextContentBlock
-	| DiracImageContentBlock
-	| DiracDocumentContentBlock
-	| DiracUserToolResultContentBlock
+export type IsaacUserContent =
+	| IsaacTextContentBlock
+	| IsaacImageContentBlock
+	| IsaacDocumentContentBlock
+	| IsaacUserToolResultContentBlock
 
-export type DiracAssistantContent =
-	| DiracTextContentBlock
-	| DiracImageContentBlock
-	| DiracDocumentContentBlock
-	| DiracAssistantToolUseBlock
-	| DiracAssistantThinkingBlock
-	| DiracAssistantRedactedThinkingBlock
+export type IsaacAssistantContent =
+	| IsaacTextContentBlock
+	| IsaacImageContentBlock
+	| IsaacDocumentContentBlock
+	| IsaacAssistantToolUseBlock
+	| IsaacAssistantThinkingBlock
+	| IsaacAssistantRedactedThinkingBlock
 
-export type DiracContent = DiracUserContent | DiracAssistantContent | Anthropic.ContentBlockParam
+export type IsaacContent = IsaacUserContent | IsaacAssistantContent | Anthropic.ContentBlockParam
 
 /**
- * An extension of Anthropic.MessageParam that includes Dirac-specific fields.
+ * An extension of Anthropic.MessageParam that includes Isaac-specific fields.
  * This ensures backward compatibility where the messages were stored in Anthropic format,
- * while allowing for additional metadata specific to Dirac to avoid unknown fields in Anthropic SDK
+ * while allowing for additional metadata specific to Isaac to avoid unknown fields in Anthropic SDK
  * added by ignoring the type checking for those fields.
  */
-export interface DiracStorageMessage extends Anthropic.MessageParam {
+export interface IsaacStorageMessage extends Anthropic.MessageParam {
 	/**
 	 * Response ID associated with this message
 	 */
 	id?: string
-	role: DiracMessageRole
-	content: DiracPromptInputContent | DiracContent[]
+	role: IsaacMessageRole
+	content: IsaacPromptInputContent | IsaacContent[]
 	/**
 	 * NOTE: model information used when generating this message.
 	 * Internal use for message conversion only.
 	 * MUST be removed before sending message to any LLM provider.
 	 */
-	modelInfo?: DiracMessageModelInfo
+	modelInfo?: IsaacMessageModelInfo
 	/**
 	 * LLM operational and performance metrics for this message
 	 * Includes token counts, costs.
 	 */
-	metrics?: DiracMessageMetricsInfo
+	metrics?: IsaacMessageMetricsInfo
 	/**
 	 * Timestamp of when the message was created
 	 */
@@ -105,11 +105,11 @@ export interface DiracStorageMessage extends Anthropic.MessageParam {
 }
 
 /**
- * Converts DiracStorageMessage to Anthropic.MessageParam by removing Dirac-specific fields
- * Dirac-specific fields (like modelInfo, reasoning_details) are properly omitted.
+ * Converts IsaacStorageMessage to Anthropic.MessageParam by removing Isaac-specific fields
+ * Isaac-specific fields (like modelInfo, reasoning_details) are properly omitted.
  */
-export function convertDiracStorageToAnthropicMessage(
-	diracMessage: DiracStorageMessage,
+export function convertIsaacStorageToAnthropicMessage(
+	diracMessage: IsaacStorageMessage,
 	provider = "anthropic",
 ): Anthropic.MessageParam {
 	const { role, content } = diracMessage
@@ -122,7 +122,7 @@ export function convertDiracStorageToAnthropicMessage(
 	// Removes thinking block that has no signature (invalid thinking block that's incompatible with Anthropic API)
 	const filteredContent = content.filter((b) => b.type !== "thinking" || !!b.signature)
 
-	// Handle array content - strip Dirac-specific fields for non-reasoning_details providers
+	// Handle array content - strip Isaac-specific fields for non-reasoning_details providers
 	const shouldCleanContent = !REASONING_DETAILS_PROVIDERS.includes(provider)
 	const cleanedContent = shouldCleanContent
 		? filteredContent.map(cleanContentBlock)
@@ -132,21 +132,21 @@ export function convertDiracStorageToAnthropicMessage(
 }
 
 /**
- * Clean a content block by removing Dirac-specific fields and returning only Anthropic-compatible fields
+ * Clean a content block by removing Isaac-specific fields and returning only Anthropic-compatible fields
  */
-export function cleanContentBlock(block: DiracContent): Anthropic.ContentBlock {
-	// Fast path: if no Dirac-specific fields exist, return as-is
-	const hasDiracFields =
+export function cleanContentBlock(block: IsaacContent): Anthropic.ContentBlock {
+	// Fast path: if no Isaac-specific fields exist, return as-is
+	const hasIsaacFields =
 		"reasoning_details" in block ||
 		"call_id" in block ||
 		"summary" in block ||
 		(block.type !== "thinking" && "signature" in block)
 
-	if (!hasDiracFields) {
+	if (!hasIsaacFields) {
 		return block as Anthropic.ContentBlock
 	}
 
-	// Removes Dirac-specific fields & the signature field that's added for Gemini.
+	// Removes Isaac-specific fields & the signature field that's added for Gemini.
 	const { reasoning_details, call_id, summary, ...rest } = block as any
 
 	// Remove signature from non-thinking blocks that were added for Gemini

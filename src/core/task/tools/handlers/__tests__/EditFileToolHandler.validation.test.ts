@@ -2,7 +2,7 @@ import { strict as assert } from "node:assert"
 import fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
-import { DiracDefaultTool } from "@shared/tools"
+import { IsaacDefaultTool } from "@shared/tools"
 import { AnchorStateManager } from "@utils/AnchorStateManager"
 import { ANCHOR_DELIMITER } from "@utils/line-hashing"
 import { afterEach, beforeEach, describe, it } from "mocha"
@@ -112,7 +112,7 @@ function createConfig() {
 			},
 			fileContextTracker: {
 				trackFileContext: sinon.stub().resolves(),
-				markFileAsEditedByDirac: sinon.stub(),
+				markFileAsEditedByIsaac: sinon.stub(),
 			},
 			browserSession: {},
 			urlContentFetcher: {},
@@ -179,7 +179,7 @@ describe("EditFileToolHandler.execute – validation", () => {
 		const edits = [{ edit_type: "replace", anchor: anchors[1], end_anchor: anchors[1], text: "new line 2" }]
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.EDIT_FILE,
+			name: IsaacDefaultTool.EDIT_FILE,
 			params: {
 				files: [
 					{
@@ -211,7 +211,7 @@ describe("EditFileToolHandler.execute – validation", () => {
 
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.EDIT_FILE,
+			name: IsaacDefaultTool.EDIT_FILE,
 			params: {
 				files: [
 					{

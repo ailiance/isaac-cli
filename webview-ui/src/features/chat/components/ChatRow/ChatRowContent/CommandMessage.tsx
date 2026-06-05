@@ -1,9 +1,9 @@
-import { DiracMessage } from "@shared/ExtensionMessage"
+import { IsaacMessage } from "@shared/ExtensionMessage"
 import { memo } from "react"
 import { CommandOutputRow } from "@/features/chat/components/CommandOutputRow"
 
 interface CommandMessageProps {
-	message: DiracMessage
+	message: IsaacMessage
 	icon: JSX.Element | null
 	title: JSX.Element | null
 	isCommandExecuting: boolean

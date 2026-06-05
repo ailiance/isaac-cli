@@ -10,7 +10,7 @@ import { printError, printInfo, printWarning } from "./utils/display"
 import { DIRAC_CLI_DIR } from "./utils/path"
 
 export { URI } from "vscode-uri"
-export { DiracFileStorage } from "@/shared/storage"
+export { IsaacFileStorage } from "@/shared/storage"
 
 export const CLI_LOG_FILE = path.join(DIRAC_CLI_DIR.log, "dirac.1.log")
 

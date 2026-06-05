@@ -1,4 +1,4 @@
-import { LanguageModelChatSelector } from "@shared/proto/dirac/models"
+import { LanguageModelChatSelector } from "@shared/proto/isaac/models"
 
 /**
  * Represents a VS Code language model in the native VS Code format

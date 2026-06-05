@@ -1,7 +1,7 @@
 import { DEFAULT_AUTO_APPROVAL_SETTINGS } from "@shared/AutoApprovalSettings"
 import { DEFAULT_BROWSER_SETTINGS } from "@shared/BrowserSettings"
 import { Environment } from "@shared/config-types"
-import type { DiracMessage, ExtensionState } from "@shared/ExtensionMessage"
+import type { IsaacMessage, ExtensionState } from "@shared/ExtensionMessage"
 import { SkillMetadata } from "@shared/skills"
 import { DEFAULT_PLATFORM } from "@shared/ExtensionMessage"
 import {
@@ -16,7 +16,7 @@ import {
 	liteLlmModelInfoSaneDefaults,
 } from "@shared/api"
 import { fromProtobufModels } from "@shared/proto-conversions/models/typeConversion"
-import { EmptyRequest } from "@shared/proto/dirac/common"
+import { EmptyRequest } from "@shared/proto/isaac/common"
 import { ModelsServiceClient } from "@/shared/api/grpc-client"
 import { create } from "zustand"
 
@@ -27,7 +27,7 @@ interface SettingsState {
 	setShowWelcome: (show: boolean) => void
 	availableTerminalProfiles: any[]
 	diracModels: any
-	refreshDiracModels: () => void
+	refreshIsaacModels: () => void
 	openRouterModels: any
 	refreshOpenRouterModels: () => void
 	refreshBasetenModels: () => void
@@ -110,7 +110,7 @@ interface SettingsState {
 	writePromptMetadataDirectory?: string
 
 	// Chat & History (Moved from other stores)
-	diracMessages: DiracMessage[]
+	diracMessages: IsaacMessage[]
 	taskHistory: any[]
 	currentTaskItem?: any
 	checkpointManagerErrorMessage?: string
@@ -130,13 +130,13 @@ interface SettingsState {
 
 	// Actions
 	setSettings: (settings: Partial<SettingsState>) => void
-	setDiracMessages: (messages: DiracMessage[]) => void
-	updatePartialMessage: (message: DiracMessage) => void
+	setIsaacMessages: (messages: IsaacMessage[]) => void
+	updatePartialMessage: (message: IsaacMessage) => void
 	setTaskHistory: (history: any[]) => void
 	setExpandTaskHeader: (expand: boolean) => void
 	setTotalTasksSize: (size: number) => void
-	setGlobalDiracRulesToggles: (toggles: Record<string, boolean>) => void
-	setLocalDiracRulesToggles: (toggles: Record<string, boolean>) => void
+	setGlobalIsaacRulesToggles: (toggles: Record<string, boolean>) => void
+	setLocalIsaacRulesToggles: (toggles: Record<string, boolean>) => void
 	setLocalCursorRulesToggles: (toggles: Record<string, boolean>) => void
 	setLocalWindsurfRulesToggles: (toggles: Record<string, boolean>) => void
 	setLocalAgentsRulesToggles: (toggles: Record<string, boolean>) => void
@@ -218,9 +218,9 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 	setShowWelcome: () => {},
 	availableTerminalProfiles: [],
 	diracModels: {},
-	refreshDiracModels: async () => {
+	refreshIsaacModels: async () => {
 		try {
-			const response = await ModelsServiceClient.refreshDiracModelsRpc(EmptyRequest.create())
+			const response = await ModelsServiceClient.refreshIsaacModelsRpc(EmptyRequest.create())
 			set({
 				diracModels: {
 					[openRouterDefaultModelId]: openRouterDefaultModelInfo,
@@ -228,7 +228,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 				},
 			})
 		} catch (error) {
-			console.error("Failed to refresh Dirac models:", error)
+			console.error("Failed to refresh Isaac models:", error)
 		}
 	},
 	openRouterModels: {
@@ -310,7 +310,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 	navigateToChat: () => {},
 	navigateToWorktrees: () => {},
 	onRelinquishControl: () => () => {},
-	setDiracMessages: (messages) => set({ diracMessages: messages }),
+	setIsaacMessages: (messages) => set({ diracMessages: messages }),
 	updatePartialMessage: (message) =>
 		set((state) => {
 			const lastIndex = state.diracMessages.findLastIndex((msg) => msg.ts === message.ts)
@@ -324,8 +324,8 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 	setTaskHistory: (history) => set({ taskHistory: history }),
 	setExpandTaskHeader: (expand) => set({ expandTaskHeader: expand }),
 	setTotalTasksSize: (size) => set({ totalTasksSize: size }),
-	setGlobalDiracRulesToggles: (toggles) => set({ globalDiracRulesToggles: toggles }),
-	setLocalDiracRulesToggles: (toggles) => set({ localDiracRulesToggles: toggles }),
+	setGlobalIsaacRulesToggles: (toggles) => set({ globalDiracRulesToggles: toggles }),
+	setLocalIsaacRulesToggles: (toggles) => set({ localDiracRulesToggles: toggles }),
 	setLocalCursorRulesToggles: (toggles) => set({ localCursorRulesToggles: toggles }),
 	setLocalWindsurfRulesToggles: (toggles) => set({ localWindsurfRulesToggles: toggles }),
 	setLocalAgentsRulesToggles: (toggles) => set({ localAgentsRulesToggles: toggles }),

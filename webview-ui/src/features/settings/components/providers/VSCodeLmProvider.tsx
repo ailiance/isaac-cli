@@ -1,5 +1,5 @@
 import { Mode } from "@shared/ExtensionMessage"
-import { EmptyRequest } from "@shared/proto/dirac/common"
+import { EmptyRequest } from "@shared/proto/isaac/common"
 import { VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react"
 import { useCallback, useEffect, useState } from "react"
 import { useInterval } from "react-use"

@@ -1,9 +1,9 @@
-import { DiracDefaultTool } from "@/shared/tools"
-import type { DiracToolSpec } from "../spec"
+import { IsaacDefaultTool } from "@/shared/tools"
+import type { IsaacToolSpec } from "../spec"
 
-const id = DiracDefaultTool.REPLACE_SYMBOL
+const id = IsaacDefaultTool.REPLACE_SYMBOL
 
-export const replace_symbol: DiracToolSpec = {
+export const replace_symbol: IsaacToolSpec = {
 	id,
 	name: "replace_symbol",
 	description:

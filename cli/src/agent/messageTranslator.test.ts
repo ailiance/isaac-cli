@@ -1,14 +1,14 @@
 /**
  * Unit tests for messageTranslator.ts
  *
- * Tests the translation of Dirac messages to ACP session updates,
+ * Tests the translation of Isaac messages to ACP session updates,
  * validating conformance to the ACP protocol schema.
  *
  * @see https://agentclientprotocol.com/schema
  */
 
 import type * as acp from "@agentclientprotocol/sdk"
-import type { DiracMessage } from "@shared/ExtensionMessage"
+import type { IsaacMessage } from "@shared/ExtensionMessage"
 import { beforeEach, describe, expect, it } from "vitest"
 import { createSessionState, translateMessage, translateMessages } from "./messageTranslator"
 import type { AcpSessionState } from "./types"
@@ -19,14 +19,14 @@ import { AcpSessionStatus } from "./types"
 // =============================================================================
 
 /**
- * Create a minimal DiracMessage for testing.
+ * Create a minimal IsaacMessage for testing.
  */
-function createDiracMessage(overrides: Partial<DiracMessage>): DiracMessage {
+function createIsaacMessage(overrides: Partial<IsaacMessage>): IsaacMessage {
 	return {
 		ts: Date.now(),
 		type: "say",
 		...overrides,
-	} as DiracMessage
+	} as IsaacMessage
 }
 
 /**
@@ -209,7 +209,7 @@ describe("translateMessage - say messages", () => {
 
 	describe("text messages", () => {
 		it("should translate say:text to agent_message_chunk", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "text",
 				text: "Hello, this is a response.",
@@ -228,7 +228,7 @@ describe("translateMessage - say messages", () => {
 		})
 
 		it("should translate Codex web search marker text to a completed search tool call", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "text",
 				text: "[Web Search: snow model albedo]",
@@ -257,7 +257,7 @@ describe("translateMessage - say messages", () => {
 
 		it("should leave prose containing a web search marker as assistant text", () => {
 			const text = "I checked [Web Search: snow model albedo] and found relevant papers."
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "text",
 				text,
@@ -272,7 +272,7 @@ describe("translateMessage - say messages", () => {
 		})
 
 		it("should use fallback query text for empty web search markers", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "text",
 				text: "\n[Web Search: ]\n",
@@ -289,7 +289,7 @@ describe("translateMessage - say messages", () => {
 		})
 
 		it("should keep partial web search marker tool calls in progress until the final marker arrives", () => {
-			const partialMessage = createDiracMessage({
+			const partialMessage = createIsaacMessage({
 				type: "say",
 				say: "text",
 				text: "[Web Search: snow model albedo]",
@@ -303,7 +303,7 @@ describe("translateMessage - say messages", () => {
 			expect(toolCall.status).toBe("in_progress")
 			expect(sessionState.currentToolCallId).toBe(toolCall.toolCallId)
 
-			const finalMessage = createDiracMessage({
+			const finalMessage = createIsaacMessage({
 				type: "say",
 				say: "text",
 				text: "[Web Search: snow model albedo]",
@@ -321,7 +321,7 @@ describe("translateMessage - say messages", () => {
 		})
 
 		it("should not generate update for empty text", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "text",
 				text: "",
@@ -333,7 +333,7 @@ describe("translateMessage - say messages", () => {
 		})
 
 		it("should not generate update for undefined text", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "text",
 			})
@@ -346,7 +346,7 @@ describe("translateMessage - say messages", () => {
 
 	describe("reasoning messages", () => {
 		it("should translate say:reasoning to agent_thought_chunk", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "reasoning",
 				reasoning: "I need to analyze the code structure first.",
@@ -365,7 +365,7 @@ describe("translateMessage - say messages", () => {
 		})
 
 		it("should fall back to text field if reasoning is undefined", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "reasoning",
 				text: "Thinking about the problem...",
@@ -383,7 +383,7 @@ describe("translateMessage - say messages", () => {
 
 	describe("error messages", () => {
 		it("should translate say:error to agent_message_chunk with error prefix", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "error",
 				text: "Failed to read file",
@@ -402,7 +402,7 @@ describe("translateMessage - say messages", () => {
 		it("should update current tool call to failed status on error", () => {
 			sessionState.currentToolCallId = "active-tool-123"
 
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "error",
 				text: "Operation failed",
@@ -423,7 +423,7 @@ describe("translateMessage - say messages", () => {
 		})
 
 		it("should handle error_retry message type", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "error_retry",
 				text: "Retrying after failure",
@@ -436,7 +436,7 @@ describe("translateMessage - say messages", () => {
 		})
 
 		it("should handle diff_error message type", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "diff_error",
 				text: "Diff application failed",
@@ -451,7 +451,7 @@ describe("translateMessage - say messages", () => {
 
 	describe("command messages", () => {
 		it("should translate say:command to tool_call with execute kind", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "command",
 				text: "npm install",
@@ -475,7 +475,7 @@ describe("translateMessage - say messages", () => {
 		})
 
 		it("should use terminal content when the client supports terminal output", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "command",
 				text: "npm test",
@@ -499,7 +499,7 @@ describe("translateMessage - say messages", () => {
 
 		it("should truncate long command titles", () => {
 			const longCommand = "npm install --save-dev very-long-package-name-that-exceeds-fifty-characters-limit"
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "command",
 				text: longCommand,
@@ -520,7 +520,7 @@ describe("translateMessage - say messages", () => {
 		it("should translate say:command_output to tool_call_update when tool is active", () => {
 			sessionState.currentToolCallId = "command-tool-123"
 
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "command_output",
 				text: "added 5 packages",
@@ -549,7 +549,7 @@ describe("translateMessage - say messages", () => {
 		it("should mark tool as completed when commandCompleted is true", () => {
 			sessionState.currentToolCallId = "command-tool-456"
 
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "command_output",
 				text: "Done!",
@@ -571,7 +571,7 @@ describe("translateMessage - say messages", () => {
 			sessionState.currentToolCallId = "command-tool-terminal"
 
 			const result = translateMessage(
-				createDiracMessage({
+				createIsaacMessage({
 					type: "say",
 					say: "command_output",
 					text: "line 1\n",
@@ -601,7 +601,7 @@ describe("translateMessage - say messages", () => {
 			sessionState.currentToolCallId = "command-tool-terminal"
 
 			const result = translateMessage(
-				createDiracMessage({
+				createIsaacMessage({
 					type: "say",
 					say: "command_output",
 					text: "tests passed",
@@ -636,7 +636,7 @@ describe("translateMessage - say messages", () => {
 		})
 
 		it("should fall back to agent_message_chunk when no active tool", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "command_output",
 				text: "Output without active tool",
@@ -656,7 +656,7 @@ describe("translateMessage - say messages", () => {
 				path: "/src/index.ts",
 				content: "export const hello = 'world';",
 			}
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "tool",
 				text: JSON.stringify(toolInfo),
@@ -690,7 +690,7 @@ describe("translateMessage - say messages", () => {
 					{ path: "/src/b.ts", status: "success", label: "Read full file" },
 				],
 			}
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "tool",
 				text: JSON.stringify(toolInfo),
@@ -716,7 +716,7 @@ describe("translateMessage - say messages", () => {
 +const y = 2;
  console.log(x);`,
 			}
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "tool",
 				text: JSON.stringify(toolInfo),
@@ -744,7 +744,7 @@ describe("translateMessage - say messages", () => {
 				path: "/src/new-file.ts",
 				content: "// New file content",
 			}
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "tool",
 				text: JSON.stringify(toolInfo),
@@ -765,7 +765,7 @@ describe("translateMessage - say messages", () => {
 				tool: "fileDeleted",
 				path: "/src/old-file.ts",
 			}
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "tool",
 				text: JSON.stringify(toolInfo),
@@ -788,7 +788,7 @@ describe("translateMessage - say messages", () => {
 				regex: "TODO|FIXME",
 				content: "Found 3 matches...",
 			}
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "tool",
 				text: JSON.stringify(toolInfo),
@@ -810,7 +810,7 @@ describe("translateMessage - say messages", () => {
 				tool: "readFile",
 				path: "/src/large-file.ts",
 			}
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "tool",
 				text: JSON.stringify(toolInfo),
@@ -834,7 +834,7 @@ describe("translateMessage - say messages", () => {
 				path: "/src/file.ts",
 				content: "More content...",
 			}
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "tool",
 				text: JSON.stringify(toolInfo),
@@ -848,7 +848,7 @@ describe("translateMessage - say messages", () => {
 		})
 
 		it("should handle invalid JSON in tool message gracefully", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "tool",
 				text: "not valid json",
@@ -866,7 +866,7 @@ describe("translateMessage - say messages", () => {
 				tool: "execute_command",
 				command: "npm test",
 			}
-			const askMessage = createDiracMessage({
+			const askMessage = createIsaacMessage({
 				type: "ask",
 				ask: "tool",
 				text: JSON.stringify(toolInfo),
@@ -883,7 +883,7 @@ describe("translateMessage - say messages", () => {
 			expect(toolCall.status).toBe("pending")
 			expect(sessionState.currentToolCallId).toBe(toolCall.toolCallId)
 
-			const sayMessage = createDiracMessage({
+			const sayMessage = createIsaacMessage({
 				type: "say",
 				say: "tool",
 				text: "npm test",
@@ -904,7 +904,7 @@ describe("translateMessage - say messages", () => {
 
 		it("should let auto-approved command output complete the previewed command tool call", () => {
 			const askResult = translateMessage(
-				createDiracMessage({
+				createIsaacMessage({
 					type: "ask",
 					ask: "tool",
 					text: JSON.stringify({ tool: "execute_command", command: "npm test" }),
@@ -915,7 +915,7 @@ describe("translateMessage - say messages", () => {
 			const toolCall = askResult.updates[0] as acp.ToolCall & { sessionUpdate: "tool_call" }
 
 			translateMessage(
-				createDiracMessage({
+				createIsaacMessage({
 					type: "say",
 					say: "tool",
 					text: "npm test",
@@ -924,7 +924,7 @@ describe("translateMessage - say messages", () => {
 			)
 
 			const outputResult = translateMessage(
-				createDiracMessage({
+				createIsaacMessage({
 					type: "say",
 					say: "command_output",
 					text: "tests passed",
@@ -944,7 +944,7 @@ describe("translateMessage - say messages", () => {
 		it("should let terminal-capable auto-approved command output complete the previewed command tool call", () => {
 			const clientOptions = { clientCapabilities: { _meta: { terminal_output: true } } }
 			const askResult = translateMessage(
-				createDiracMessage({
+				createIsaacMessage({
 					type: "ask",
 					ask: "tool",
 					text: JSON.stringify({ tool: "execute_command", command: "npm test" }),
@@ -956,7 +956,7 @@ describe("translateMessage - say messages", () => {
 			const toolCall = askResult.updates[0] as acp.ToolCall & { sessionUpdate: "tool_call" }
 
 			const commandPreview = translateMessage(
-				createDiracMessage({
+				createIsaacMessage({
 					type: "say",
 					say: "tool",
 					text: "npm test",
@@ -969,7 +969,7 @@ describe("translateMessage - say messages", () => {
 			expect(previewUpdate.content).toEqual([{ type: "terminal", terminalId: toolCall.toolCallId }])
 
 			const outputResult = translateMessage(
-				createDiracMessage({
+				createIsaacMessage({
 					type: "say",
 					say: "command_output",
 					text: "tests passed",
@@ -1003,7 +1003,7 @@ describe("translateMessage - say messages", () => {
 				action: "launch",
 				url: "https://example.com",
 			}
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "browser_action_launch",
 				text: JSON.stringify(actionInfo),
@@ -1026,7 +1026,7 @@ describe("translateMessage - say messages", () => {
 				action: "click",
 				coordinate: [100, 200],
 			}
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "browser_action",
 				text: JSON.stringify(actionInfo),
@@ -1049,7 +1049,7 @@ describe("translateMessage - say messages", () => {
 				screenshot: "base64data...",
 				success: true,
 			}
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "browser_action_result",
 				text: JSON.stringify(resultInfo),
@@ -1067,7 +1067,7 @@ describe("translateMessage - say messages", () => {
 
 	describe("completion messages", () => {
 		it("should translate say:completion_result to agent_message_chunk", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "completion_result",
 				text: "Task completed successfully!",
@@ -1086,7 +1086,7 @@ describe("translateMessage - say messages", () => {
 
 	describe("informational messages", () => {
 		it("should translate say:info to agent_message_chunk", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "info",
 				text: "Some informational message",
@@ -1099,7 +1099,7 @@ describe("translateMessage - say messages", () => {
 		})
 
 		it("should not echo user feedback back", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "user_feedback",
 				text: "User's input text",
@@ -1112,7 +1112,7 @@ describe("translateMessage - say messages", () => {
 		})
 
 		it("should not echo task message back", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "task",
 				text: "User's original prompt",
@@ -1132,7 +1132,7 @@ describe("translateMessage - say messages", () => {
 				status: "running",
 				toolName: "write_to_file",
 			}
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "hook_status",
 				text: JSON.stringify(hookInfo),
@@ -1150,7 +1150,7 @@ describe("translateMessage - say messages", () => {
 		})
 
 		it("should suppress hook_output_stream messages", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "hook_output_stream",
 				text: "verbose hook output...",
@@ -1180,7 +1180,7 @@ describe("translateMessage - ask messages", () => {
 				question: "What would you like me to do next?",
 				options: ["Continue", "Stop"],
 			}
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "ask",
 				ask: "followup",
 				text: JSON.stringify(followupData),
@@ -1199,7 +1199,7 @@ describe("translateMessage - ask messages", () => {
 		})
 
 		it("should handle plain text followup", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "ask",
 				ask: "followup",
 				text: "Do you want to continue?",
@@ -1219,7 +1219,7 @@ describe("translateMessage - ask messages", () => {
 				response: "Here is my plan for the task...",
 				options: ["Approve", "Revise"],
 			}
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "ask",
 				ask: "plan_mode_respond",
 				text: JSON.stringify(planResponse),
@@ -1237,7 +1237,7 @@ describe("translateMessage - ask messages", () => {
 
 	describe("command permissions", () => {
 		it("should translate ask:command to tool_call with permission request", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "ask",
 				ask: "command",
 				text: "rm -rf node_modules",
@@ -1278,7 +1278,7 @@ describe("translateMessage - ask messages", () => {
 				path: "/src/config.ts",
 				diff: "...",
 			}
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "ask",
 				ask: "tool",
 				text: JSON.stringify(toolInfo),
@@ -1308,7 +1308,7 @@ describe("translateMessage - ask messages", () => {
 				tool: "readFile",
 				path: "/src/file.ts",
 			}
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "ask",
 				ask: "tool",
 				text: JSON.stringify(toolInfo),
@@ -1326,7 +1326,7 @@ describe("translateMessage - ask messages", () => {
 				tool: "editedExistingFile",
 				path: "/src/file.ts",
 			}
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "ask",
 				ask: "tool",
 				text: JSON.stringify(toolInfo),
@@ -1347,7 +1347,7 @@ describe("translateMessage - ask messages", () => {
 
 	describe("browser action permissions", () => {
 		it("should translate ask:browser_action_launch to tool_call with permission", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "ask",
 				ask: "browser_action_launch",
 				text: "https://suspicious-site.com",
@@ -1369,7 +1369,7 @@ describe("translateMessage - ask messages", () => {
 
 	describe("completion and resume asks", () => {
 		it("should translate ask:completion_result to agent_message_chunk", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "ask",
 				ask: "completion_result",
 				text: "Task completed. Would you like to review?",
@@ -1385,7 +1385,7 @@ describe("translateMessage - ask messages", () => {
 		})
 
 		it("should translate ask:resume_task to agent_message_chunk", () => {
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "ask",
 				ask: "resume_task",
 				text: "Would you like to resume the previous task?",
@@ -1411,10 +1411,10 @@ describe("translateMessages", () => {
 	})
 
 	it("should translate multiple messages in sequence", () => {
-		const messages: DiracMessage[] = [
-			createDiracMessage({ type: "say", say: "text", text: "First message" }),
-			createDiracMessage({ type: "say", say: "reasoning", reasoning: "Thinking..." }),
-			createDiracMessage({ type: "say", say: "text", text: "Second message" }),
+		const messages: IsaacMessage[] = [
+			createIsaacMessage({ type: "say", say: "text", text: "First message" }),
+			createIsaacMessage({ type: "say", say: "reasoning", reasoning: "Thinking..." }),
+			createIsaacMessage({ type: "say", say: "text", text: "Second message" }),
 		]
 
 		const updates = translateMessages(messages, sessionState)
@@ -1426,9 +1426,9 @@ describe("translateMessages", () => {
 	})
 
 	it("should maintain session state across messages", () => {
-		const messages: DiracMessage[] = [
-			createDiracMessage({ type: "say", say: "command", text: "npm test" }),
-			createDiracMessage({ type: "say", say: "command_output", text: "All tests passed", commandCompleted: true }),
+		const messages: IsaacMessage[] = [
+			createIsaacMessage({ type: "say", say: "command", text: "npm test" }),
+			createIsaacMessage({ type: "say", say: "command_output", text: "All tests passed", commandCompleted: true }),
 		]
 
 		const updates = translateMessages(messages, sessionState)
@@ -1477,7 +1477,7 @@ describe("diff parsing", () => {
 			path: "/file.ts",
 			diff: diff,
 		}
-		const message = createDiracMessage({
+		const message = createIsaacMessage({
 			type: "say",
 			say: "tool",
 			text: JSON.stringify(toolInfo),
@@ -1508,7 +1508,7 @@ describe("diff parsing", () => {
 			path: "/file.ts",
 			diff: diff,
 		}
-		const message = createDiracMessage({
+		const message = createIsaacMessage({
 			type: "say",
 			say: "tool",
 			text: JSON.stringify(toolInfo),
@@ -1538,7 +1538,7 @@ describe("diff parsing", () => {
 			path: "/file.ts",
 			diff: diff,
 		}
-		const message = createDiracMessage({
+		const message = createIsaacMessage({
 			type: "say",
 			say: "tool",
 			text: JSON.stringify(toolInfo),
@@ -1573,7 +1573,7 @@ describe("diff parsing", () => {
 			path: "/file.ts",
 			diff: diff,
 		}
-		const message = createDiracMessage({
+		const message = createIsaacMessage({
 			type: "say",
 			say: "tool",
 			text: JSON.stringify(toolInfo),
@@ -1619,7 +1619,7 @@ describe("tool kind mapping", () => {
 	toolKindCases.forEach(({ tool, expectedKind }) => {
 		it(`should map ${tool} to kind "${expectedKind}"`, () => {
 			const toolInfo = { tool, path: "/test/path" }
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "tool",
 				text: JSON.stringify(toolInfo),
@@ -1637,7 +1637,7 @@ describe("tool kind mapping", () => {
 
 	it("should default to 'other' for unknown tool types", () => {
 		const toolInfo = { tool: "unknownTool", path: "/test" }
-		const message = createDiracMessage({
+		const message = createIsaacMessage({
 			type: "say",
 			say: "tool",
 			text: JSON.stringify(toolInfo),
@@ -1676,7 +1676,7 @@ describe("tool title building", () => {
 	titleCases.forEach(({ tool, path, regex, expectedContains }) => {
 		it(`should build title for ${tool} containing "${expectedContains}"`, () => {
 			const toolInfo = { tool, path, regex }
-			const message = createDiracMessage({
+			const message = createIsaacMessage({
 				type: "say",
 				say: "tool",
 				text: JSON.stringify(toolInfo),
@@ -1698,7 +1698,7 @@ describe("tool title building", () => {
 			toolName: "activate_project",
 			path: "/repo",
 		}
-		const message = createDiracMessage({
+		const message = createIsaacMessage({
 			type: "say",
 			say: "tool",
 			text: JSON.stringify(toolInfo),
@@ -1725,7 +1725,7 @@ describe("session state management", () => {
 	})
 
 	it("should set currentToolCallId when creating a new tool call", () => {
-		const message = createDiracMessage({
+		const message = createIsaacMessage({
 			type: "say",
 			say: "command",
 			text: "npm test",
@@ -1741,7 +1741,7 @@ describe("session state management", () => {
 	it("should clear currentToolCallId when tool completes", () => {
 		sessionState.currentToolCallId = "test-tool-123"
 
-		const message = createDiracMessage({
+		const message = createIsaacMessage({
 			type: "say",
 			say: "command_output",
 			text: "Done",
@@ -1756,7 +1756,7 @@ describe("session state management", () => {
 	it("should clear currentToolCallId on error", () => {
 		sessionState.currentToolCallId = "test-tool-456"
 
-		const message = createDiracMessage({
+		const message = createIsaacMessage({
 			type: "say",
 			say: "error",
 			text: "Something went wrong",
@@ -1768,7 +1768,7 @@ describe("session state management", () => {
 	})
 
 	it("should track pending tool calls for permission requests", () => {
-		const message = createDiracMessage({
+		const message = createIsaacMessage({
 			type: "ask",
 			ask: "command",
 			text: "rm -rf /",

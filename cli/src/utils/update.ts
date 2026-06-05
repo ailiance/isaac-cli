@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process"
 import { realpathSync } from "node:fs"
 import { exit } from "node:process"
-import { DiracEndpoint } from "@/config"
+import { IsaacEndpoint } from "@/config"
 import { fetch } from "@/shared/net"
 import { printInfo, printWarning } from "./display"
 
@@ -126,7 +126,7 @@ export function autoUpdateOnStartup(currentVersion: string): void {
 	setImmediate(async () => {
 		try {
 			// Skip if using bundled enterprise config (single source of truth)
-			if (DiracEndpoint.isBundledConfig()) {
+			if (IsaacEndpoint.isBundledConfig()) {
 				return
 			}
 

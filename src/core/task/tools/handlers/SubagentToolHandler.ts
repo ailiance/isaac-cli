@@ -2,13 +2,13 @@ import type { ToolUse } from "@core/assistant-message"
 import { Logger } from "@/shared/services/Logger"
 import { formatResponse } from "@core/prompts/responses"
 import {
-	DiracAskUseSubagents,
-	DiracSaySubagentStatus,
-	DiracSubagentUsageInfo,
+	IsaacAskUseSubagents,
+	IsaacSaySubagentStatus,
+	IsaacSubagentUsageInfo,
 	SubagentStatusItem,
 } from "@shared/ExtensionMessage"
 import { telemetryService } from "@/services/telemetry"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import { showNotificationForApproval } from "../../utils"
 import { AgentConfigLoader } from "../subagent/AgentConfigLoader"
@@ -37,7 +37,7 @@ function collectPrompts(block: ToolUse, configuredSubagentName?: string): string
 
 
 export class UseSubagentsToolHandler implements IFullyManagedTool {
-	readonly name = DiracDefaultTool.USE_SUBAGENTS
+	readonly name = IsaacDefaultTool.USE_SUBAGENTS
 
 	getDescription(_block: ToolUse): string {
 		const configuredSubagentName = resolveConfiguredSubagentName(_block.name)
@@ -76,7 +76,7 @@ export class UseSubagentsToolHandler implements IFullyManagedTool {
 			timeout: isNaN(timeout as number) ? undefined : timeout,
 			max_turns: isNaN(maxTurns as number) ? undefined : maxTurns,
 			include_history: includeHistory || undefined,
-		} satisfies DiracAskUseSubagents)
+		} satisfies IsaacAskUseSubagents)
 		const autoApproveResult = uiHelpers.shouldAutoApproveTool(this.name)
 		const [shouldAutoApprove] = Array.isArray(autoApproveResult) ? autoApproveResult : [autoApproveResult, false]
 
@@ -130,7 +130,7 @@ export class UseSubagentsToolHandler implements IFullyManagedTool {
 		const apiConfig = config.services.stateManager.getApiConfiguration()
 		const currentMode = config.services.stateManager.getGlobalSettingsKey("mode")
 		const provider = (currentMode === "plan" ? apiConfig.planModeApiProvider : apiConfig.actModeApiProvider) as string
-		const approvalPayload: DiracAskUseSubagents = { prompts, timeout, max_turns: maxTurns, include_history: includeHistory }
+		const approvalPayload: IsaacAskUseSubagents = { prompts, timeout, max_turns: maxTurns, include_history: includeHistory }
 		const approvalBody = JSON.stringify(approvalPayload)
 
 		const autoApproveResult = config.autoApprover?.shouldAutoApproveTool(this.name)
@@ -151,8 +151,8 @@ export class UseSubagentsToolHandler implements IFullyManagedTool {
 		} else {
 			showNotificationForApproval(
 				prompts.length === 1
-					? `Dirac wants to use ${configuredSubagentName ? `the '${configuredSubagentName}' subagent` : "a subagent"}`
-					: `Dirac wants to use ${prompts.length} subagents`,
+					? `Isaac wants to use ${configuredSubagentName ? `the '${configuredSubagentName}' subagent` : "a subagent"}`
+					: `Isaac wants to use ${prompts.length} subagents`,
 				config.autoApprovalSettings.enableNotifications,
 			)
 			const { didApprove } = await ToolResultUtils.askApprovalAndPushFeedback("use_subagents", approvalBody, config)
@@ -199,7 +199,7 @@ export class UseSubagentsToolHandler implements IFullyManagedTool {
 			latestToolCall: undefined,
 		}))
 
-		const emitStatus = async (status: DiracSaySubagentStatus["status"], partial: boolean) => {
+		const emitStatus = async (status: IsaacSaySubagentStatus["status"], partial: boolean) => {
 			const completed = entries.filter((entry) => entry.status === "completed" || entry.status === "failed").length
 			const successes = entries.filter((entry) => entry.status === "completed").length
 			const failures = entries.filter((entry) => entry.status === "failed").length
@@ -212,7 +212,7 @@ export class UseSubagentsToolHandler implements IFullyManagedTool {
 			const maxContextTokens = entries.reduce((acc, entry) => Math.max(acc, entry.contextTokens || 0), 0)
 			const maxContextUsagePercentage = entries.reduce((acc, entry) => Math.max(acc, entry.contextUsagePercentage || 0), 0)
 
-			const payload: DiracSaySubagentStatus = {
+			const payload: IsaacSaySubagentStatus = {
 				status,
 				total: entries.length,
 				completed,
@@ -233,7 +233,7 @@ export class UseSubagentsToolHandler implements IFullyManagedTool {
 		}
 
 		let statusUpdateQueue: Promise<void> = Promise.resolve()
-		const queueStatusUpdate = (status: DiracSaySubagentStatus["status"], partial: boolean): Promise<void> => {
+		const queueStatusUpdate = (status: IsaacSaySubagentStatus["status"], partial: boolean): Promise<void> => {
 			statusUpdateQueue = statusUpdateQueue.catch(() => undefined).then(() => emitStatus(status, partial))
 			return statusUpdateQueue
 		}
@@ -330,7 +330,7 @@ export class UseSubagentsToolHandler implements IFullyManagedTool {
 		const failures = entries.filter((entry) => entry.status === "failed").length
 		await queueStatusUpdate(failures > 0 ? "failed" : "completed", false)
 
-		const subagentUsagePayload: DiracSubagentUsageInfo = {
+		const subagentUsagePayload: IsaacSubagentUsageInfo = {
 			source: "subagents",
 			tokensIn: usageTokensIn,
 			tokensOut: usageTokensOut,

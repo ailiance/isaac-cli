@@ -4,7 +4,7 @@ import * as path from "node:path"
 import { type ElectronApplication, expect, type Frame, type Page, test } from "@playwright/test"
 import { downloadAndUnzipVSCode, SilentReporter } from "@vscode/test-electron"
 import { _electron } from "playwright"
-import { DiracApiServerMock } from "../fixtures/server"
+import { IsaacApiServerMock } from "../fixtures/server"
 
 interface E2ETestDirectories {
 	workspaceDir: string
@@ -139,17 +139,17 @@ export class E2ETestHelper {
 	}
 
 	public async signin(webview: Frame): Promise<void> {
-		await webview.getByRole("button", { name: "Sign in to Dirac" }).click({ delay: 100 })
+		await webview.getByRole("button", { name: "Sign in to Isaac" }).click({ delay: 100 })
 
 		// Verify start up page is no longer visible
-		await expect(webview.getByRole("button", { name: "Sign in to Dirac" })).not.toBeVisible()
+		await expect(webview.getByRole("button", { name: "Sign in to Isaac" })).not.toBeVisible()
 
 		await webview.getByRole("button", { name: "Close" }).click({ delay: 50 })
 	}
 
-	public static async openDiracSidebar(page: Page): Promise<void> {
+	public static async openIsaacSidebar(page: Page): Promise<void> {
 		await page
-			.getByRole("tab", { name: /Dirac|ailiance-agent|ISAAC/ })
+			.getByRole("tab", { name: /Isaac|ailiance-agent|ISAAC/ })
 			.locator("a")
 			.click()
 	}
@@ -172,11 +172,11 @@ export class E2ETestHelper {
 }
 
 /**
- * NOTE: Use the `e2e` test fixture for all E2E tests to test the Dirac extension.
+ * NOTE: Use the `e2e` test fixture for all E2E tests to test the Isaac extension.
  *
- * Extended Playwright test configuration for Dirac E2E testing.
+ * Extended Playwright test configuration for Isaac E2E testing.
  *
- * This test configuration provides a comprehensive setup for end-to-end testing of the Dirac VS Code extension,
+ * This test configuration provides a comprehensive setup for end-to-end testing of the Isaac VS Code extension,
  * including server mocking, temporary directories, VS Code instance management, and helper utilities.
  *
  * NOTE: Default to run in single-root workspace; use `e2eMultiRoot` for multi-root workspace tests.
@@ -184,26 +184,26 @@ export class E2ETestHelper {
  * @extends test - Base Playwright test with multiple fixture extensions
  *
  * Fixtures provided:
- * - `server`: Shared DiracApiServerMock instance for API mocking (reused across all tests)
+ * - `server`: Shared IsaacApiServerMock instance for API mocking (reused across all tests)
  * - `workspaceDir`: Path to the test workspace directory
  * - `userDataDir`: Temporary directory for VS Code user data
  * - `extensionsDir`: Temporary directory for VS Code extensions
  * - `openVSCode`: Function that returns a Promise resolving to an ElectronApplication instance
  * - `app`: ElectronApplication instance with automatic cleanup
  * - `helper`: E2ETestHelper instance for test utilities
- * - `page`: Playwright Page object representing the main VS Code window with Dirac sidebar opened
- * - `sidebar`: Playwright Frame object representing the Dirac extension's sidebar iframe
+ * - `page`: Playwright Page object representing the main VS Code window with Isaac sidebar opened
+ * - `sidebar`: Playwright Frame object representing the Isaac extension's sidebar iframe
  *
  * @returns Extended test object with all fixtures available for E2E test scenarios:
- * - **server**: Automatically starts and manages a DiracApiServerMock instance
+ * - **server**: Automatically starts and manages a IsaacApiServerMock instance
  * - **workspaceDir**: Sets up a test workspace directory from fixtures
  * - **userDataDir**: Creates a temporary directory for VS Code user data
  * - **extensionsDir**: Creates a temporary directory for VS Code extensions
  * - **openVSCode**: Factory function that launches VS Code with proper configuration for testing
  * - **app**: Manages the VS Code ElectronApplication lifecycle with automatic cleanup
  * - **helper**: Provides E2ETestHelper utilities for test operations
- * - **page**: Configures the main VS Code window with notifications disabled and Dirac sidebar open
- * - **sidebar**: Provides access to the Dirac extension's sidebar frame
+ * - **page**: Configures the main VS Code window with notifications disabled and Isaac sidebar open
+ * - **sidebar**: Provides access to the Isaac extension's sidebar frame
  *
  * @example
  * ```typescript
@@ -214,19 +214,19 @@ export class E2ETestHelper {
  *
  * @remarks
  * - Automatically handles VS Code download and setup
- * - Installs the Dirac extension in development mode
+ * - Installs the Isaac extension in development mode
  * - Records test videos for debugging
  * - Performs cleanup of temporary directories after each test
  * - Configures VS Code with disabled updates, workspace trust, and welcome screens
  */
 export const e2e = test
-	.extend<{ server: DiracApiServerMock | null }>({
+	.extend<{ server: IsaacApiServerMock | null }>({
 		server: async ({}, use) => {
 			// Start server if it doesn't exist
-			if (!DiracApiServerMock.globalSharedServer) {
-				await DiracApiServerMock.startGlobalServer()
+			if (!IsaacApiServerMock.globalSharedServer) {
+				await IsaacApiServerMock.startGlobalServer()
 			}
-			await use(DiracApiServerMock.globalSharedServer)
+			await use(IsaacApiServerMock.globalSharedServer)
 		},
 	})
 	.extend<E2ETestDirectories>({
@@ -253,7 +253,7 @@ export const e2e = test
 			const executablePath = await downloadAndUnzipVSCode(channel, undefined, new SilentReporter())
 
 			await use(async (workspacePath: string) => {
-				// Create isolated Dirac data directory for this test
+				// Create isolated Isaac data directory for this test
 				const diracTestDir = mkdtempSync(path.join(os.tmpdir(), "dirac-e2e-"))
 
 				const app = await _electron.launch({
@@ -320,7 +320,7 @@ export const e2e = test
 					E2ETestHelper.rmForRetries(extensionsDir, { recursive: true }),
 				]
 
-				// Clean up the isolated Dirac data directory
+				// Clean up the isolated Isaac data directory
 				// Find all temp directories matching our pattern
 				const tmpDir = os.tmpdir()
 				try {
@@ -364,7 +364,7 @@ export const e2e = test
 	})
 	.extend<{ sidebar: Frame }>({
 		sidebar: async ({ page, helper, server }, use) => {
-			await E2ETestHelper.openDiracSidebar(page)
+			await E2ETestHelper.openIsaacSidebar(page)
 			const sidebar = await helper.getSidebar(page)
 			await use(sidebar)
 		},

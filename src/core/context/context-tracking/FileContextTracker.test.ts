@@ -82,7 +82,7 @@ describe("FileContextTracker", () => {
 		expect(fileEntry.dirac_edit_date).to.be.null
 	})
 
-	it("should add a record when a file is edited by Dirac", async () => {
+	it("should add a record when a file is edited by Isaac", async () => {
 		await tracker.trackFileContext(filePath, "dirac_edited")
 
 		// Verify saveTaskMetadata was called with the correct data
@@ -203,12 +203,12 @@ describe("FileContextTracker", () => {
 		expect(modifiedFiles).to.include(filePath)
 	})
 
-	it("should not track Dirac edits as user edits", async () => {
+	it("should not track Isaac edits as user edits", async () => {
 		// First track the file to set up the watcher
 		await tracker.trackFileContext(filePath, "read_tool")
 
-		// Mark the file as edited by Dirac
-		tracker.markFileAsEditedByDirac(filePath)
+		// Mark the file as edited by Isaac
+		tracker.markFileAsEditedByIsaac(filePath)
 
 		// Reset the stubs to check the next calls
 		getTaskMetadataStub.resetHistory()

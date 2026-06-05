@@ -2,7 +2,7 @@ export type {
 	ITelemetryProvider,
 	TelemetrySettings,
 } from "./providers/ITelemetryProvider"
-export { DiracTelemetryProvider } from "./providers/DiracTelemetryProvider"
+export { IsaacTelemetryProvider } from "./providers/IsaacTelemetryProvider"
 export {
 	type TelemetryProviderConfig,
 	TelemetryProviderFactory,

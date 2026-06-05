@@ -1,4 +1,4 @@
-// ISAAC fork: rebrand command descriptions, drop /askDirac (RAG over upstream source)
+// ISAAC fork: rebrand command descriptions, drop /askIsaac (RAG over upstream source)
 export interface SlashCommand {
 	name: string
 	description?: string
@@ -38,7 +38,7 @@ export const BASE_SLASH_COMMANDS: SlashCommand[] = [
 		cliCompatible: true,
 	},
 
-	// ISAAC fork: dropped /askDirac (RAG over upstream Dirac source — irrelevant here)
+	// ISAAC fork: dropped /askIsaac (RAG over upstream Isaac source — irrelevant here)
 ]
 
 // VS Code-only slash commands

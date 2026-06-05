@@ -1,13 +1,13 @@
 import type { ToolUse } from "@core/assistant-message"
 import { getActiveMcpToolSet } from "@core/mcp/retrieval/session"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IPartialBlockHandler, IToolHandler } from "../ToolExecutorCoordinator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 
 export class FindToolsToolHandler implements IToolHandler, IPartialBlockHandler {
-	readonly name = DiracDefaultTool.FIND_TOOLS
+	readonly name = IsaacDefaultTool.FIND_TOOLS
 
 	constructor() {}
 

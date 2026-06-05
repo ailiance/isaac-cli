@@ -9,7 +9,7 @@ import {
     requestyDefaultModelId,
     requestyDefaultModelInfo,
 } from "@shared/api"
-import type { OnboardingModelGroup } from "@shared/proto/dirac/state"
+import type { OnboardingModelGroup } from "@shared/proto/isaac/state"
 import { create } from "zustand"
 
 interface ModelsState {
@@ -26,7 +26,7 @@ interface ModelsState {
 
 	// Actions
 	setOnboardingModels: (models?: OnboardingModelGroup) => void
-	setDiracModels: (models: Record<string, ModelInfo> | null) => void
+	setIsaacModels: (models: Record<string, ModelInfo> | null) => void
 	setOpenRouterModels: (models: Record<string, ModelInfo>) => void
 	setVercelAiGatewayModels: (models: Record<string, ModelInfo>) => void
 	setLiteLlmModels: (models: Record<string, ModelInfo>) => void
@@ -59,7 +59,7 @@ export const useModelsStore = create<ModelsState>((set) => ({
 	huggingFaceModels: {},
 
 	setOnboardingModels: (models) => set({ onboardingModels: models }),
-	setDiracModels: (models) => set({ diracModels: models }),
+	setIsaacModels: (models) => set({ diracModels: models }),
 	setOpenRouterModels: (models) => set({ openRouterModels: models }),
 	setVercelAiGatewayModels: (models) => set({ vercelAiGatewayModels: models }),
 	setLiteLlmModels: (models) => set({ liteLlmModels: models }),

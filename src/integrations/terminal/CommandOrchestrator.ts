@@ -17,7 +17,7 @@ import { setTimeout as setTimeoutPromise } from "node:timers/promises"
 import { formatResponse } from "@core/prompts/responses"
 import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { TerminalHangStage, TerminalUserInterventionAction, telemetryService } from "@services/telemetry"
-import { DiracTempManager } from "@services/temp"
+import { IsaacTempManager } from "@services/temp"
 import { COMMAND_CANCEL_TOKEN } from "@shared/ExtensionMessage"
 import * as fs from "fs"
 import { Logger } from "@/shared/services/Logger"
@@ -97,10 +97,10 @@ export async function orchestrateCommandExecution(
 		callbacks.updateBackgroundCommandState(false)
 
 		// Mark the command message as completed
-		const diracMessages = callbacks.getDiracMessages()
+		const diracMessages = callbacks.getIsaacMessages()
 		const lastCommandIndex = findLastIndex(diracMessages, (m) => m.ask === "command" || m.say === "command")
 		if (lastCommandIndex !== -1) {
-			await callbacks.updateDiracMessage(lastCommandIndex, {
+			await callbacks.updateIsaacMessage(lastCommandIndex, {
 				commandCompleted: true,
 			})
 		}
@@ -286,8 +286,8 @@ export async function orchestrateCommandExecution(
 			chunkTimer = null
 		}
 
-		// Set up file logging using DiracTempManager for proper cleanup
-		largeOutputLogPath = DiracTempManager.createTempFilePath("large-output")
+		// Set up file logging using IsaacTempManager for proper cleanup
+		largeOutputLogPath = IsaacTempManager.createTempFilePath("large-output")
 		largeOutputLogStream = fs.createWriteStream(largeOutputLogPath, { flags: "a" })
 
 		// Write all existing lines to file in a single batch to reduce I/O overhead

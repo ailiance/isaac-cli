@@ -5,7 +5,7 @@ import { telemetryService } from "@/services/telemetry"
 import { Session } from "@/shared/services/Session"
 import { shutdownEvent } from "../vscode-shim"
 import { showTaskWithId } from "@/core/controller/task/showTaskWithId"
-import { StringRequest } from "@shared/proto/dirac/common"
+import { StringRequest } from "@shared/proto/isaac/common"
 import { waitFor } from "../utils/timeout"
 import { setTerminalTitle } from "../utils/display"
 

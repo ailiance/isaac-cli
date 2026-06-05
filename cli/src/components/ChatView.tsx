@@ -41,10 +41,10 @@
  */
 
 import type { ApiProvider, ModelInfo } from "@shared/api"
-import type { DiracAsk, DiracMessage } from "@shared/ExtensionMessage"
+import type { IsaacAsk, IsaacMessage } from "@shared/ExtensionMessage"
 import { getApiMetrics, getLastApiReqTotalTokens } from "@shared/getApiMetrics"
-import { EmptyRequest } from "@shared/proto/dirac/common"
-import type { SlashCommandInfo } from "@shared/proto/dirac/slash"
+import { EmptyRequest } from "@shared/proto/isaac/common"
+import type { SlashCommandInfo } from "@shared/proto/isaac/slash"
 import { CLI_ONLY_COMMANDS } from "@shared/slashCommands"
 import { getProviderDefaultModelId, getProviderModelIdKey } from "@shared/storage"
 import { getRandomQuote } from "@/shared/quotes"
@@ -461,7 +461,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
 	const lastMessage = (taskState.diracMessages || [])[(taskState.diracMessages || []).length - 1]
 	const pendingAsk =
 		lastMessage?.type === "ask" && !lastMessage.partial && respondedToAsk !== lastMessage.ts ? lastMessage : null
-	const askType = pendingAsk ? getAskPromptType(pendingAsk.ask as DiracAsk, pendingAsk.text || "") : "none"
+	const askType = pendingAsk ? getAskPromptType(pendingAsk.ask as IsaacAsk, pendingAsk.text || "") : "none"
 	const askOptions = pendingAsk && askType === "options" ? parseAskOptions(pendingAsk.text || "") : []
 
 	const sendAskResponse = useCallback(
@@ -487,7 +487,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
 	const buttonConfig = useMemo(() => {
 		const lastMsg = (taskState.diracMessages || [])[(taskState.diracMessages || []).length - 1] as
-			| DiracMessage
+			| IsaacMessage
 			| undefined
 		return getButtonConfig(lastMsg, isSpinnerActive)
 	}, [taskState.diracMessages, isSpinnerActive])
@@ -559,7 +559,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
 	const handleAskShortcuts = useCallback(
 		(input: string, key: any, currentTextInput: string) => {
 			if (!pendingAsk || currentTextInput !== "" || isSpinnerActive || isProcessing) return false
-			const askType = pendingAsk.ask as DiracAsk
+			const askType = pendingAsk.ask as IsaacAsk
 			if (
 				askType === "command" ||
 				askType === "tool" ||
@@ -608,7 +608,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
 			if (pendingAsk) {
 				const prompt = text.trim()
 				const normalized = prompt.toLowerCase()
-				const askType = pendingAsk.ask as DiracAsk
+				const askType = pendingAsk.ask as IsaacAsk
 				if (askType === "resume_task" || askType === "resume_completed_task" || askType === "completion_result") {
 					if (normalized === "q" || normalized === "quit" || normalized === "exit") {
 						handleExit()
@@ -816,7 +816,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
 					</Box>
 				)}
 
-				{pendingAsk && !isYoloSuppressed(yolo, pendingAsk.ask as DiracAsk) && !isSpinnerActive && (
+				{pendingAsk && !isYoloSuppressed(yolo, pendingAsk.ask as IsaacAsk) && !isSpinnerActive && (
 					<Box paddingX={1}>
 						<AskPrompt />
 					</Box>

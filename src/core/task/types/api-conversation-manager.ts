@@ -1,4 +1,4 @@
-import { DiracContent } from "@shared/messages/content"
+import { IsaacContent } from "@shared/messages/content"
 import { SkillMetadata } from "@shared/skills"
 import { ApiHandler, ApiProviderInfo } from "../../../core/api"
 import { DiffViewProvider } from "../../../integrations/editor/DiffViewProvider"
@@ -28,10 +28,10 @@ export interface ApiConversationManagerDependencies {
 	streamHandler: StreamResponseHandler
 	withStateLock: <T>(fn: () => T | Promise<T>) => Promise<T>
 	loadContext: (
-		userContent: DiracContent[],
+		userContent: IsaacContent[],
 		includeFileDetails?: boolean,
 		useCompactPrompt?: boolean
-	) => Promise<[DiracContent[], string, boolean, SkillMetadata[], boolean, string?]>
+	) => Promise<[IsaacContent[], string, boolean, SkillMetadata[], boolean, string?]>
 	getCurrentProviderInfo: () => ApiProviderInfo
 	getEnvironmentDetails: (includeFileDetails?: boolean) => Promise<string>
 	writePromptMetadataArtifacts: (params: {

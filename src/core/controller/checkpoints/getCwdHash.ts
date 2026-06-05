@@ -1,5 +1,5 @@
-import { PathHashMap } from "@shared/proto/dirac/checkpoints"
-import { StringArrayRequest } from "@shared/proto/dirac/common"
+import { PathHashMap } from "@shared/proto/isaac/checkpoints"
+import { StringArrayRequest } from "@shared/proto/isaac/common"
 import { hashWorkingDir } from "@/integrations/checkpoints/CheckpointUtils"
 import { Controller } from ".."
 

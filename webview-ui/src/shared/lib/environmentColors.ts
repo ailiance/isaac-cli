@@ -28,7 +28,7 @@ export const getEnvironmentColor = (environment: Environment | undefined, type: 
 			: "var(--vscode-foreground)" // Default for production
 }
 
-export function getDiracEnvironmentClassname(environment: Environment | undefined, type = "text") {
+export function getIsaacEnvironmentClassname(environment: Environment | undefined, type = "text") {
 	if (type === "border") {
 		switch (environment) {
 			case "local":

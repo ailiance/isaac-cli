@@ -12,7 +12,7 @@ export async function showChangedFilesDiff(
 	seeNewChangesSinceLastTaskCompletion: boolean,
 ) {
 	Logger.log("presentMultifileDiff", messageTs)
-	const diracMessages = messageStateHandler.getDiracMessages()
+	const diracMessages = messageStateHandler.getIsaacMessages()
 	const messageIndex = diracMessages.findIndex((m) => m.ts === messageTs)
 	const message = diracMessages[messageIndex]
 	if (!message) {
@@ -96,13 +96,13 @@ async function getChangesSinceLastTaskCompletion(
 ): Promise<ChangedFile[]> {
 	// Get last task completed
 	const lastTaskCompletedMessageCheckpointHash = findLast(
-		messageStateHandler.getDiracMessages().slice(0, messageIndex),
+		messageStateHandler.getIsaacMessages().slice(0, messageIndex),
 		(m) => m.say === "completion_result",
 	)?.lastCheckpointHash // ask is only used to relinquish control, its the last say we care about
 
 	// This value *should* always exist
 	const firstCheckpointMessageCheckpointHash = messageStateHandler
-		.getDiracMessages()
+		.getIsaacMessages()
 		.find((m) => m.say === "checkpoint_created")?.lastCheckpointHash
 
 	// either use the diff between the first checkpoint and the task completion, or the diff

@@ -1,18 +1,18 @@
 import { resolveWorkspacePath } from "@core/workspace"
 import { isMultiRootEnabled } from "@core/workspace/multi-root-utils"
-import { DiracDefaultTool } from "@shared/tools"
+import { IsaacDefaultTool } from "@shared/tools"
 import { CommandPermissionController } from "@/core/permissions/CommandPermissionController"
 import { StateManager } from "@/core/storage/StateManager"
 import { HostProvider } from "@/hosts/host-provider"
 import { getCwd, getDesktopDir, isLocatedInPath, isLocatedInWorkspace } from "@/utils/path"
 
 
-const WRITE_TOOLS: DiracDefaultTool[] = [
-	DiracDefaultTool.FILE_NEW,
-	DiracDefaultTool.EDIT_FILE,
-	DiracDefaultTool.REPLACE_SYMBOL,
-	DiracDefaultTool.RENAME_SYMBOL,
-	DiracDefaultTool.NEW_RULE,
+const WRITE_TOOLS: IsaacDefaultTool[] = [
+	IsaacDefaultTool.FILE_NEW,
+	IsaacDefaultTool.EDIT_FILE,
+	IsaacDefaultTool.REPLACE_SYMBOL,
+	IsaacDefaultTool.RENAME_SYMBOL,
+	IsaacDefaultTool.NEW_RULE,
 ]
 
 export class AutoApprove {
@@ -51,49 +51,49 @@ export class AutoApprove {
 
 		// Check if the tool should be auto-approved based on the settings
 	// Returns bool for most tools, and tuple for tools with nested settings
-	shouldAutoApproveTool(toolName: DiracDefaultTool): boolean | [boolean, boolean] {
+	shouldAutoApproveTool(toolName: IsaacDefaultTool): boolean | [boolean, boolean] {
 		if (this.stateManager.getGlobalSettingsKey("yoloModeToggled")) {
 			switch (toolName) {
-				case DiracDefaultTool.FILE_READ:
-				case DiracDefaultTool.GET_FUNCTION:
-				case DiracDefaultTool.GET_FILE_SKELETON:
-				case DiracDefaultTool.FIND_SYMBOL_REFERENCES:
-				case DiracDefaultTool.DIAGNOSTICS_SCAN:
-				case DiracDefaultTool.LIST_FILES:
-				case DiracDefaultTool.SEARCH:
-				case DiracDefaultTool.NEW_RULE:
-				case DiracDefaultTool.FILE_NEW:
-				case DiracDefaultTool.EDIT_FILE:
-				case DiracDefaultTool.REPLACE_SYMBOL:
-				case DiracDefaultTool.USE_SUBAGENTS:
-				case DiracDefaultTool.USE_SKILL:
+				case IsaacDefaultTool.FILE_READ:
+				case IsaacDefaultTool.GET_FUNCTION:
+				case IsaacDefaultTool.GET_FILE_SKELETON:
+				case IsaacDefaultTool.FIND_SYMBOL_REFERENCES:
+				case IsaacDefaultTool.DIAGNOSTICS_SCAN:
+				case IsaacDefaultTool.LIST_FILES:
+				case IsaacDefaultTool.SEARCH:
+				case IsaacDefaultTool.NEW_RULE:
+				case IsaacDefaultTool.FILE_NEW:
+				case IsaacDefaultTool.EDIT_FILE:
+				case IsaacDefaultTool.REPLACE_SYMBOL:
+				case IsaacDefaultTool.USE_SUBAGENTS:
+				case IsaacDefaultTool.USE_SKILL:
 					return [true, true]
 
-				case DiracDefaultTool.BASH:
-				case DiracDefaultTool.BROWSER:
+				case IsaacDefaultTool.BASH:
+				case IsaacDefaultTool.BROWSER:
 					return true
 			}
 		}
 
 		if (this.stateManager.getGlobalSettingsKey("autoApproveAllToggled")) {
 			switch (toolName) {
-				case DiracDefaultTool.FILE_READ:
-				case DiracDefaultTool.GET_FUNCTION:
-				case DiracDefaultTool.GET_FILE_SKELETON:
-				case DiracDefaultTool.FIND_SYMBOL_REFERENCES:
-				case DiracDefaultTool.DIAGNOSTICS_SCAN:
-				case DiracDefaultTool.LIST_FILES:
-				case DiracDefaultTool.SEARCH:
-				case DiracDefaultTool.NEW_RULE:
-				case DiracDefaultTool.FILE_NEW:
-				case DiracDefaultTool.EDIT_FILE:
-				case DiracDefaultTool.REPLACE_SYMBOL:
-				case DiracDefaultTool.USE_SUBAGENTS:
-				case DiracDefaultTool.USE_SKILL:
+				case IsaacDefaultTool.FILE_READ:
+				case IsaacDefaultTool.GET_FUNCTION:
+				case IsaacDefaultTool.GET_FILE_SKELETON:
+				case IsaacDefaultTool.FIND_SYMBOL_REFERENCES:
+				case IsaacDefaultTool.DIAGNOSTICS_SCAN:
+				case IsaacDefaultTool.LIST_FILES:
+				case IsaacDefaultTool.SEARCH:
+				case IsaacDefaultTool.NEW_RULE:
+				case IsaacDefaultTool.FILE_NEW:
+				case IsaacDefaultTool.EDIT_FILE:
+				case IsaacDefaultTool.REPLACE_SYMBOL:
+				case IsaacDefaultTool.USE_SUBAGENTS:
+				case IsaacDefaultTool.USE_SKILL:
 					return [true, true]
 
-				case DiracDefaultTool.BASH:
-				case DiracDefaultTool.BROWSER:
+				case IsaacDefaultTool.BASH:
+				case IsaacDefaultTool.BROWSER:
 					return true
 			}
 		}
@@ -101,26 +101,26 @@ export class AutoApprove {
 		const autoApprovalSettings = this.stateManager.getGlobalSettingsKey("autoApprovalSettings")
 
 		switch (toolName) {
-			case DiracDefaultTool.FILE_READ:
-			case DiracDefaultTool.GET_FUNCTION:
-			case DiracDefaultTool.GET_FILE_SKELETON:
-			case DiracDefaultTool.FIND_SYMBOL_REFERENCES:
-			case DiracDefaultTool.DIAGNOSTICS_SCAN:
-			case DiracDefaultTool.LIST_FILES:
-			case DiracDefaultTool.SEARCH:
-			case DiracDefaultTool.USE_SUBAGENTS:
-			case DiracDefaultTool.USE_SKILL:
+			case IsaacDefaultTool.FILE_READ:
+			case IsaacDefaultTool.GET_FUNCTION:
+			case IsaacDefaultTool.GET_FILE_SKELETON:
+			case IsaacDefaultTool.FIND_SYMBOL_REFERENCES:
+			case IsaacDefaultTool.DIAGNOSTICS_SCAN:
+			case IsaacDefaultTool.LIST_FILES:
+			case IsaacDefaultTool.SEARCH:
+			case IsaacDefaultTool.USE_SUBAGENTS:
+			case IsaacDefaultTool.USE_SKILL:
 				return [autoApprovalSettings.actions.readFiles, autoApprovalSettings.actions.readFilesExternally ?? false]
 
-			case DiracDefaultTool.NEW_RULE:
-			case DiracDefaultTool.FILE_NEW:
-			case DiracDefaultTool.EDIT_FILE:
-			case DiracDefaultTool.REPLACE_SYMBOL:
+			case IsaacDefaultTool.NEW_RULE:
+			case IsaacDefaultTool.FILE_NEW:
+			case IsaacDefaultTool.EDIT_FILE:
+			case IsaacDefaultTool.REPLACE_SYMBOL:
 				return [autoApprovalSettings.actions.editFiles, autoApprovalSettings.actions.editFilesExternally ?? false]
 
-			case DiracDefaultTool.BASH:
+			case IsaacDefaultTool.BASH:
 				return autoApprovalSettings.actions.executeCommands ?? false
-			case DiracDefaultTool.BROWSER:
+			case IsaacDefaultTool.BROWSER:
 				return autoApprovalSettings.actions.useBrowser
 		}
 		return false
@@ -130,7 +130,7 @@ export class AutoApprove {
 	// and the path of the action. Returns true if the tool should be auto-approved
 	// based on the user's settings and the path of the action.
 	async shouldAutoApproveToolWithPath(
-		blockname: DiracDefaultTool,
+		blockname: IsaacDefaultTool,
 		autoApproveActionpath: string | undefined,
 	): Promise<boolean> {
 		// 1. Determine if the action is local or external FIRST
@@ -191,7 +191,7 @@ export class AutoApprove {
 	/**
 	 * Check if the tool should be auto-approved based on the permission rules.
 	 */
-	public shouldAutoApproveWithRules(toolName: DiracDefaultTool, path?: string): boolean {
+	public shouldAutoApproveWithRules(toolName: IsaacDefaultTool, path?: string): boolean {
 		const result = this.commandPermissionController.validateTool(toolName, path)
 		return result.allowed && result.reason === "allowed"
 	}

@@ -50,8 +50,8 @@ export interface BannerCardData {
 	 */
 	platforms?: ("windows" | "mac" | "linux")[]
 
-	/** Only show to Dirac users */
-	isDiracUserOnly?: boolean
+	/** Only show to Isaac users */
+	isIsaacUserOnly?: boolean
 }
 
 /**
@@ -110,7 +110,7 @@ export const BANNER_DATA: BannerCardData[] = [
 		id: "minimax-m2.5-free-2026-feb-18",
 		icon: "zap",
 		title: "Try MiniMax M2.5 Free",
-		description: "SOTA coding capability with lightning fast inference, free in Dirac.",
+		description: "SOTA coding capability with lightning fast inference, free in Isaac.",
 		actions: [
 			{
 				title: "Try now",
@@ -125,9 +125,9 @@ export const BANNER_DATA: BannerCardData[] = [
 	{
 		id: "chatgpt-integration-v1",
 		icon: "megaphone",
-		title: "Use ChatGPT with Dirac",
+		title: "Use ChatGPT with Isaac",
 		description:
-			"Bring your ChatGPT subscription to Dirac! Use your existing plan directly with no per token costs or API keys to manage.",
+			"Bring your ChatGPT subscription to Isaac! Use your existing plan directly with no per token costs or API keys to manage.",
 		actions: [
 			{
 				title: "Connect",
@@ -150,7 +150,7 @@ export const BANNER_DATA: BannerCardData[] = [
 	{
 		id: "cli-info-windows-v1",
 		icon: "terminal",
-		title: "Dirac CLI Info",
+		title: "Isaac CLI Info",
 		platforms: ["windows"] satisfies BannerCardData["platforms"],
 		description:
 			"Available for macOS and Linux. Coming soon to other platforms. [Learn more](https://dirac.run/docs/dirac-cli/overview)",
@@ -160,8 +160,8 @@ export const BANNER_DATA: BannerCardData[] = [
 	{
 		id: "info-banner-v1",
 		icon: "lightbulb",
-		title: "Use Dirac in Right Sidebar",
+		title: "Use Isaac in Right Sidebar",
 		description:
-			"For the best experience, drag the Dirac icon to your right sidebar. This keeps your file explorer and editor visible while you chat with Dirac, making it easier to navigate your codebase and see changes in real-time. [See how →](https://dirac.run/docs/features/customization/opening-dirac-in-sidebar)",
+			"For the best experience, drag the Isaac icon to your right sidebar. This keeps your file explorer and editor visible while you chat with Isaac, making it easier to navigate your codebase and see changes in real-time. [See how →](https://dirac.run/docs/features/customization/opening-dirac-in-sidebar)",
 	},
 ]

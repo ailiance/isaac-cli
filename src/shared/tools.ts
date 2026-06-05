@@ -2,10 +2,10 @@ import { Tool as AnthropicTool } from "@anthropic-ai/sdk/resources/index"
 import { FunctionDeclaration as GoogleTool } from "@google/genai"
 import { ChatCompletionTool as OpenAITool } from "openai/resources/chat/completions"
 
-export type DiracTool = OpenAITool | AnthropicTool | GoogleTool
+export type IsaacTool = OpenAITool | AnthropicTool | GoogleTool
 
 // Define available tool ids
-export enum DiracDefaultTool {
+export enum IsaacDefaultTool {
 	ASK = "ask_followup_question",
 	ATTEMPT = "attempt_completion",
 	BASH = "execute_command",
@@ -42,7 +42,7 @@ export enum DiracDefaultTool {
 
 // Array of all tool names for compatibility
 // Automatically generated from the enum values
-export const toolUseNames = Object.values(DiracDefaultTool) as DiracDefaultTool[]
+export const toolUseNames = Object.values(IsaacDefaultTool) as IsaacDefaultTool[]
 
 const dynamicToolUseNamesByNamespace = new Map<string, Set<string>>()
 
@@ -59,20 +59,20 @@ export function getToolUseNames(): string[] {
 // Tools that are safe to run in parallel with the initial checkpoint commit
 // These are tools that do not modify the workspace state
 export const READ_ONLY_TOOLS = [
-	DiracDefaultTool.LIST_FILES,
-	DiracDefaultTool.FILE_READ,
-	DiracDefaultTool.SEARCH,
-	DiracDefaultTool.BROWSER,
-	DiracDefaultTool.ASK,
-	DiracDefaultTool.GET_FUNCTION,
-	DiracDefaultTool.GET_FILE_SKELETON,
-	DiracDefaultTool.FIND_SYMBOL_REFERENCES,
-	DiracDefaultTool.DIAGNOSTICS_SCAN,
+	IsaacDefaultTool.LIST_FILES,
+	IsaacDefaultTool.FILE_READ,
+	IsaacDefaultTool.SEARCH,
+	IsaacDefaultTool.BROWSER,
+	IsaacDefaultTool.ASK,
+	IsaacDefaultTool.GET_FUNCTION,
+	IsaacDefaultTool.GET_FILE_SKELETON,
+	IsaacDefaultTool.FIND_SYMBOL_REFERENCES,
+	IsaacDefaultTool.DIAGNOSTICS_SCAN,
 
-	DiracDefaultTool.USE_SKILL,
-	DiracDefaultTool.LIST_SKILLS,
-	DiracDefaultTool.USE_SUBAGENTS,
+	IsaacDefaultTool.USE_SKILL,
+	IsaacDefaultTool.LIST_SKILLS,
+	IsaacDefaultTool.USE_SUBAGENTS,
 
 	// Sprint 2 — get_tool_result is a metadata-only lookup, never mutates.
-	DiracDefaultTool.GET_TOOL_RESULT,
+	IsaacDefaultTool.GET_TOOL_RESULT,
 ] as const

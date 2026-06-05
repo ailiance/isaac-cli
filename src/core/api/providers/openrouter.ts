@@ -8,7 +8,7 @@ import type { ChatCompletionTool as OpenAITool } from "openai/resources/chat/com
 import { getLocalRouter } from "@/services/local-router/instance"
 import type { LocalRouter } from "@/services/local-router/LocalRouter"
 import type { ChatTool, WorkerEndpoint } from "@/services/local-router/types"
-import { DiracStorageMessage } from "@/shared/messages/content"
+import { IsaacStorageMessage } from "@/shared/messages/content"
 import { createOpenAIClient, getAxiosSettings } from "@/shared/net"
 import { Logger } from "@/shared/services/Logger"
 import { ApiHandler, CommonApiHandlerOptions } from "../"
@@ -56,7 +56,7 @@ export class OpenRouterHandler implements ApiHandler {
 					apiKey: this.options.openRouterApiKey,
 					defaultHeaders: {
 						"HTTP-Referer": "https://dirac.run",
-						"X-OpenRouter-Title": "Dirac",
+						"X-OpenRouter-Title": "Isaac",
 						"X-OpenRouter-Categories": "cli-agent,ide-extension",
 					},
 				})
@@ -68,7 +68,7 @@ export class OpenRouterHandler implements ApiHandler {
 	}
 
 	@withRetry()
-	async *createMessage(systemPrompt: string, messages: DiracStorageMessage[], tools?: OpenAITool[]): ApiStream {
+	async *createMessage(systemPrompt: string, messages: IsaacStorageMessage[], tools?: OpenAITool[]): ApiStream {
 		// Try LocalRouter first when enabled and messages are text-only.
 		// LocalRouter supports tools natively (supportsTools:true) or via
 		// emulation (supportsTools:false — injects into system prompt).

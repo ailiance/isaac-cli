@@ -1,6 +1,6 @@
 import { synchronizeRuleToggles } from "@core/context/instructions/user-instructions/rule-helpers"
 import { ensureWorkflowsDirectoryExists, GlobalFileNames } from "@core/storage/disk"
-import { DiracRulesToggles } from "@shared/dirac-rules"
+import { IsaacRulesToggles } from "@shared/dirac-rules"
 import path from "path"
 import { Controller } from "@/core/controller"
 
@@ -11,13 +11,13 @@ export async function refreshWorkflowToggles(
 	controller: Controller,
 	workingDirectory: string,
 ): Promise<{
-	globalWorkflowToggles: DiracRulesToggles
-	localWorkflowToggles: DiracRulesToggles
+	globalWorkflowToggles: IsaacRulesToggles
+	localWorkflowToggles: IsaacRulesToggles
 }> {
 	// Global workflows
 	const globalWorkflowToggles = controller.stateManager.getGlobalSettingsKey("globalWorkflowToggles")
-	const globalDiracWorkflowsFilePath = await ensureWorkflowsDirectoryExists()
-	const updatedGlobalWorkflowToggles = await synchronizeRuleToggles(globalDiracWorkflowsFilePath, globalWorkflowToggles)
+	const globalIsaacWorkflowsFilePath = await ensureWorkflowsDirectoryExists()
+	const updatedGlobalWorkflowToggles = await synchronizeRuleToggles(globalIsaacWorkflowsFilePath, globalWorkflowToggles)
 	controller.stateManager.setGlobalState("globalWorkflowToggles", updatedGlobalWorkflowToggles)
 
 	const workflowRulesToggles = controller.stateManager.getWorkspaceStateKey("workflowToggles")

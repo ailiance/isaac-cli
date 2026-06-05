@@ -1,4 +1,4 @@
-import { BooleanRequest, EmptyRequest } from "@shared/proto/dirac/common"
+import { BooleanRequest, EmptyRequest } from "@shared/proto/isaac/common"
 import { AlertCircle, CheckCircle2, Loader2, RefreshCw, XCircle } from "lucide-react"
 import { useState } from "react"
 import { StackServiceClient } from "@/shared/api/grpc-client"

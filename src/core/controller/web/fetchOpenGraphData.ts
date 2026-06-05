@@ -1,5 +1,5 @@
-import { StringRequest } from "@shared/proto/dirac/common"
-import { OpenGraphData } from "@shared/proto/dirac/web"
+import { StringRequest } from "@shared/proto/isaac/common"
+import { OpenGraphData } from "@shared/proto/isaac/web"
 import { Logger } from "@/shared/services/Logger"
 import { fetchOpenGraphData as fetchOGData } from "../../../integrations/misc/link-preview"
 import { convertDomainOpenGraphDataToProto } from "../../../shared/proto-conversions/web/open-graph-conversion"

@@ -1,13 +1,13 @@
-import { DiracEndpoint } from "@/config"
+import { IsaacEndpoint } from "@/config"
 import {
-	isDiracTelemetryConfigValid,
-	DiracTelemetryClientConfig,
+	isIsaacTelemetryConfigValid,
+	IsaacTelemetryClientConfig,
 	diracTelemetryConfig,
 } from "@/shared/services/config/dirac-telemetry-config"
 import { Logger } from "@/shared/services/Logger"
-import { DiracError } from "./DiracError"
+import { IsaacError } from "./IsaacError"
 import { IErrorProvider } from "./providers/IErrorProvider"
-import { DiracErrorProvider } from "./providers/DiracErrorProvider"
+import { IsaacErrorProvider } from "./providers/IsaacErrorProvider"
 
 /**
  * Supported error provider types
@@ -19,7 +19,7 @@ export type ErrorProviderType = "dirac" | "no-op"
  */
 export interface ErrorProviderConfig {
 	type: ErrorProviderType
-	config: DiracTelemetryClientConfig
+	config: IsaacTelemetryClientConfig
 }
 
 /**
@@ -35,10 +35,10 @@ export class ErrorProviderFactory {
 	public static async createProvider(config: ErrorProviderConfig): Promise<IErrorProvider> {
 		switch (config.type) {
 			case "dirac": {
-				const hasValidDiracConfig = isDiracTelemetryConfigValid(config.config)
+				const hasValidIsaacConfig = isIsaacTelemetryConfigValid(config.config)
 				const errorTrackingApiKey = config.config.errorTrackingApiKey
-				return hasValidDiracConfig && errorTrackingApiKey
-					? await new DiracErrorProvider({
+				return hasValidIsaacConfig && errorTrackingApiKey
+					? await new IsaacErrorProvider({
 							apiKey: errorTrackingApiKey,
 							errorTrackingApiKey: errorTrackingApiKey,
 							host: config.config.host,
@@ -54,11 +54,11 @@ export class ErrorProviderFactory {
 
 	/**
 	 * Gets the default error provider configuration
-	 * @returns Default configuration using Dirac, or no-op for self-hosted mode
+	 * @returns Default configuration using Isaac, or no-op for self-hosted mode
 	 */
 	public static getDefaultConfig(): ErrorProviderConfig {
 		// Use no-op provider in self-hosted mode to avoid external network calls
-		if (DiracEndpoint.isSelfHosted()) {
+		if (IsaacEndpoint.isSelfHosted()) {
 			return {
 				type: "no-op",
 				config: diracTelemetryConfig,
@@ -76,11 +76,11 @@ export class ErrorProviderFactory {
  * or for testing purposes
  */
 class NoOpErrorProvider implements IErrorProvider {
-	async captureException(error: Error | DiracError, properties?: Record<string, unknown>): Promise<void> {
+	async captureException(error: Error | IsaacError, properties?: Record<string, unknown>): Promise<void> {
 		Logger.error("[NoOpErrorProvider] captureException called", { error: error.message || String(error), properties })
 	}
 
-	public logException(error: Error | DiracError, _properties?: Record<string, unknown>): void {
+	public logException(error: Error | IsaacError, _properties?: Record<string, unknown>): void {
 		// Use Logger.error directly to avoid potential infinite recursion through Logger
 		Logger.error("[NoOpErrorProvider]", error.message || String(error))
 	}

@@ -2,8 +2,8 @@ import { expect } from "@playwright/test"
 import { e2e } from "./utils/helpers"
 
 // FIXME(ailiance): rewrite against current UI.
-// The onboarding flow this test exercised ("Login to Dirac" button →
-// "Bring my own API key" → provider selector → "Sign Up with Dirac" →
+// The onboarding flow this test exercised ("Login to Isaac" button →
+// "Bring my own API key" → provider selector → "Sign Up with Isaac" →
 // OpenRouter API key input → "What's New" dismiss) was removed when the
 // webview was redesigned to be chat-first with no welcome view; the
 // current UX puts API-key setup inside Settings reached via the gear icon.
@@ -11,7 +11,7 @@ import { e2e } from "./utils/helpers"
 e2e.skip("Views - can set up API keys and navigate to Settings from Chat", async ({ sidebar }) => {
 	// Use the page object to interact with editor outside the sidebar
 	// Verify initial state
-	await expect(sidebar.getByRole("button", { name: "Login to Dirac" })).toBeVisible()
+	await expect(sidebar.getByRole("button", { name: "Login to Isaac" })).toBeVisible()
 	await expect(sidebar.getByText("Bring my own API key")).toBeVisible()
 
 	// Navigate to API key setup
@@ -23,12 +23,12 @@ e2e.skip("Views - can set up API keys and navigate to Settings from Chat", async
 	// Verify provider selector is visible
 	await expect(providerSelectorInput).toBeVisible()
 
-	// Test Dirac provider option
+	// Test Isaac provider option
 	await providerSelectorInput.click({ delay: 100 })
-	// Wait for dropdown to appear and find Dirac option
+	// Wait for dropdown to appear and find Isaac option
 	await expect(sidebar.getByTestId("provider-option-dirac")).toBeVisible()
 	await sidebar.getByTestId("provider-option-dirac").click({ delay: 100 })
-	await expect(sidebar.getByRole("button", { name: "Sign Up with Dirac" })).toBeVisible()
+	await expect(sidebar.getByRole("button", { name: "Sign Up with Isaac" })).toBeVisible()
 
 	// Switch to OpenRouter and complete setup
 	await providerSelectorInput.click({ delay: 100 })
@@ -42,7 +42,7 @@ e2e.skip("Views - can set up API keys and navigate to Settings from Chat", async
 	await apiKeyInput.click({ delay: 100 })
 	await sidebar.getByRole("button", { name: "Continue" }).click()
 
-	await expect(sidebar.getByRole("button", { name: "Login to Dirac" })).not.toBeVisible()
+	await expect(sidebar.getByRole("button", { name: "Login to Isaac" })).not.toBeVisible()
 
 	// Verify start up page is no longer visible
 	await expect(apiKeyInput).not.toBeVisible()

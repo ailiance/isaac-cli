@@ -1,7 +1,7 @@
-import { Empty } from "@shared/proto/dirac/common"
-import { AskResponseRequest } from "@shared/proto/dirac/task"
+import { Empty } from "@shared/proto/isaac/common"
+import { AskResponseRequest } from "@shared/proto/isaac/task"
 import { Logger } from "@/shared/services/Logger"
-import { DiracAskResponse } from "../../../shared/WebviewMessage"
+import { IsaacAskResponse } from "../../../shared/WebviewMessage"
 import { Controller } from ".."
 
 /**
@@ -18,8 +18,8 @@ export async function askResponse(controller: Controller, request: AskResponseRe
 			return Empty.create()
 		}
 
-		// Map the string responseType to the DiracAskResponse enum
-		let responseType: DiracAskResponse
+		// Map the string responseType to the IsaacAskResponse enum
+		let responseType: IsaacAskResponse
 		switch (request.responseType) {
 			case "yesButtonClicked":
 				responseType = "yesButtonClicked"

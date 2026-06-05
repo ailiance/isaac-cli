@@ -104,7 +104,7 @@ export function setupSignalHandlers() {
 	process.on("SIGTERM", () => shutdown("SIGTERM"))
 
 	// Suppress known abort errors from unhandled rejections
-	// These occur when task is cancelled and async operations throw "Dirac instance aborted"
+	// These occur when task is cancelled and async operations throw "Isaac instance aborted"
 	process.on("unhandledRejection", async (reason: unknown) => {
 		const message = reason instanceof Error ? reason.message : String(reason)
 		// Silently ignore abort-related errors - they're expected during task cancellation

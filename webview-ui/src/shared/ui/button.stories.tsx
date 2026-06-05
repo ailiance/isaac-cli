@@ -9,7 +9,7 @@ const meta: Meta<typeof Button> = {
 		docs: {
 			description: {
 				component:
-					"Displays different types of error messages in the chat interface, including API errors, credit limit errors, diff errors, and diracignore errors. Handles special error parsing for Dirac provider errors and provides appropriate user actions.",
+					"Displays different types of error messages in the chat interface, including API errors, credit limit errors, diff errors, and diracignore errors. Handles special error parsing for Isaac provider errors and provides appropriate user actions.",
 			},
 		},
 	},

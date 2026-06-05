@@ -1,4 +1,4 @@
-import type { DiracMessage } from "@shared/ExtensionMessage"
+import type { IsaacMessage } from "@shared/ExtensionMessage"
 import { render } from "ink-testing-library"
 import React from "react"
 import { describe, expect, it, vi } from "vitest"
@@ -14,7 +14,7 @@ vi.mock("../hooks/useTerminalSize", () => ({
 
 describe("ChatMessage subagent rendering", () => {
 	it("renders subagent approval prompts as a tree", () => {
-		const message: DiracMessage = {
+		const message: IsaacMessage = {
 			ts: Date.now(),
 			type: "ask",
 			ask: "use_subagents",
@@ -37,7 +37,7 @@ describe("ChatMessage subagent rendering", () => {
 	})
 
 	it("renders subagent progress rows with compact token stats and completion checks", () => {
-		const message: DiracMessage = {
+		const message: IsaacMessage = {
 			ts: Date.now(),
 			type: "say",
 			say: "subagent",
@@ -107,7 +107,7 @@ describe("ChatMessage subagent rendering", () => {
 
 describe("ChatMessage reasoning rendering", () => {
 	it("renders the reasoning (chain-of-thought) text instead of hiding it", () => {
-		const message: DiracMessage = {
+		const message: IsaacMessage = {
 			ts: Date.now(),
 			type: "say",
 			say: "reasoning",
@@ -119,7 +119,7 @@ describe("ChatMessage reasoning rendering", () => {
 	})
 
 	it("renders streaming reasoning while partial", () => {
-		const message: DiracMessage = {
+		const message: IsaacMessage = {
 			ts: Date.now(),
 			type: "say",
 			say: "reasoning",
@@ -131,7 +131,7 @@ describe("ChatMessage reasoning rendering", () => {
 	})
 
 	it("renders nothing for empty reasoning", () => {
-		const message: DiracMessage = { ts: Date.now(), type: "say", say: "reasoning", text: "   " }
+		const message: IsaacMessage = { ts: Date.now(), type: "say", say: "reasoning", text: "   " }
 		const { lastFrame } = render(React.createElement(ChatMessage, { message, mode: "act" }))
 		expect((lastFrame() || "").trim()).toBe("")
 	})
@@ -145,19 +145,19 @@ describe("ChatMessage activity journal", () => {
 			say: "api_req_started",
 			text: "{}",
 			modelInfo: { modelId: "ailiance-reasoning-r1" },
-		} as unknown as DiracMessage
+		} as unknown as IsaacMessage
 		const { lastFrame } = render(React.createElement(ChatMessage, { message, mode: "act" }))
 		expect(lastFrame() || "").toContain("querying ailiance-reasoning-r1")
 	})
 
 	it("shows a checkpoint marker", () => {
-		const message: DiracMessage = { ts: Date.now(), type: "say", say: "checkpoint_created" }
+		const message: IsaacMessage = { ts: Date.now(), type: "say", say: "checkpoint_created" }
 		const { lastFrame } = render(React.createElement(ChatMessage, { message, mode: "act" }))
 		expect(lastFrame() || "").toContain("checkpoint saved")
 	})
 
 	it("shows a retry marker", () => {
-		const message: DiracMessage = { ts: Date.now(), type: "say", say: "api_req_retried" }
+		const message: IsaacMessage = { ts: Date.now(), type: "say", say: "api_req_retried" }
 		const { lastFrame } = render(React.createElement(ChatMessage, { message, mode: "act" }))
 		expect(lastFrame() || "").toContain("retrying")
 	})

@@ -107,7 +107,7 @@ export const StaticRobotFrame: React.FC<{ hasDarkBackground?: boolean }> = () =>
 };
 
 /**
- * AsciiMotionCli - Now a static version of the Dirac logo.
+ * AsciiMotionCli - Now a static version of the Isaac logo.
  * Maintained for compatibility with existing views, but with all animation logic removed.
  */
 export const AsciiMotionCli: React.FC<AsciiMotionCliProps> = ({ onReady, onInteraction }) => {

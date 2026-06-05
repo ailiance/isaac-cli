@@ -1,5 +1,5 @@
-import { Empty } from "@shared/proto/dirac/common"
-import { UpdateApiConfigurationRequest } from "@shared/proto/dirac/models"
+import { Empty } from "@shared/proto/isaac/common"
+import { UpdateApiConfigurationRequest } from "@shared/proto/isaac/models"
 import { convertProtoToApiProvider } from "@shared/proto-conversions/models/api-configuration-conversion"
 import {
 	fromProtobufLiteLLMModelInfo,

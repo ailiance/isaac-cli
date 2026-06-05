@@ -5,7 +5,7 @@ import { stripHashes } from "@utils/line-hashing"
 import { getReadablePath, isLocatedInWorkspace } from "@utils/path"
 import { formatResponse } from "@/core/prompts/responses"
 import { telemetryService } from "@/services/telemetry"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import { showNotificationForApproval } from "../../utils"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
@@ -16,7 +16,7 @@ import { ToolResultUtils } from "../utils/ToolResultUtils"
 import { coerceFirstStringArray } from "../utils/coerceArray"
 
 export class GetFileSkeletonToolHandler implements IFullyManagedTool {
-	readonly name = DiracDefaultTool.GET_FILE_SKELETON
+	readonly name = IsaacDefaultTool.GET_FILE_SKELETON
 
 	constructor(private validator: ToolValidator) {}
 
@@ -144,7 +144,7 @@ export class GetFileSkeletonToolHandler implements IFullyManagedTool {
 				block.isNativeToolCall,
 			)
 		} else {
-			const notificationMessage = `Dirac wants to extract file skeleton from ${relPaths.length} file(s)`
+			const notificationMessage = `Isaac wants to extract file skeleton from ${relPaths.length} file(s)`
 			showNotificationForApproval(notificationMessage, config.autoApprovalSettings.enableNotifications)
 
 			await config.callbacks.removeLastPartialMessageIfExistsWithType("say", "tool")

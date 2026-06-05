@@ -1,5 +1,5 @@
-import { DiracApiReqInfo, DiracMessage, DiracSayTool } from "@shared/ExtensionMessage"
-import { StringRequest } from "@shared/proto/dirac/common"
+import { IsaacApiReqInfo, IsaacMessage, IsaacSayTool } from "@shared/ExtensionMessage"
+import { StringRequest } from "@shared/proto/isaac/common"
 import { memo, useCallback, useMemo, useState } from "react"
 import { cn } from "@/lib/utils"
 import { FileServiceClient } from "@/shared/api/grpc-client"
@@ -11,12 +11,12 @@ import { DisplayUnit } from "../../../ChatRow/types"
 import { RequestStartRow } from "../../../RequestStartRow"
 
 interface ToolGroupRendererProps {
-	messages: DiracMessage[]
-	allMessages: DiracMessage[]
+	messages: IsaacMessage[]
+	allMessages: IsaacMessage[]
 	isLastGroup: boolean
 }
 
-const getCurrentActivities = (allMessages: DiracMessage[]): DiracMessage[] => {
+const getCurrentActivities = (allMessages: IsaacMessage[]): IsaacMessage[] => {
 	let currentApiReqIndex = -1
 	let lastFinishedApiReqIndex = -1
 	for (let i = allMessages.length - 1; i >= 0; i--) {
@@ -45,7 +45,7 @@ const getCurrentActivities = (allMessages: DiracMessage[]): DiracMessage[] => {
 		return []
 	}
 
-	const activities: DiracMessage[] = []
+	const activities: IsaacMessage[] = []
 	for (let i = startIndex + 1; i < allMessages.length; i++) {
 		const msg = allMessages[i]
 		if (msg.say !== "tool" && msg.ask !== "tool") {
@@ -68,7 +68,7 @@ export const ToolGroupRenderer = memo(({ messages, allMessages, isLastGroup }: T
 	const apiReqInfo = useMemo(() => {
 		if (!apiReqMessage?.text) return undefined
 		try {
-			return JSON.parse(apiReqMessage.text) as DiracApiReqInfo
+			return JSON.parse(apiReqMessage.text) as IsaacApiReqInfo
 		} catch {
 			return undefined
 		}
@@ -82,7 +82,7 @@ export const ToolGroupRenderer = memo(({ messages, allMessages, isLastGroup }: T
 	}, [allMessages, isLastGroup])
 
 	const displayUnits = useMemo(() => {
-		const units: (DisplayUnit & { tool: DiracSayTool; message: DiracMessage })[] = []
+		const units: (DisplayUnit & { tool: IsaacSayTool; message: IsaacMessage })[] = []
 
 		// Add completed tools
 		filteredMessages.forEach((msg) => {

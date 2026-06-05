@@ -45,7 +45,7 @@ export function clearAilianceGatewayCache(): void {
  * Probe the configured gateway and cache its model list.
  *
  * Reads the resolved baseUrl from StateManager (set earlier by
- * applyEuKikiDefault) and issues a GET /v1/models with a tight
+ * applyAilianceDefault) and issues a GET /v1/models with a tight
  * timeout. Result is stored in the StateManager session cache under
  * PREWARM_CACHE_KEY so command handlers can read the model list
  * without a second round-trip.
@@ -69,7 +69,7 @@ export async function prewarmAilianceGateway(stateManager: StateManager): Promis
 		return {
 			ok: false,
 			gatewayUrl: "",
-			error: "no baseUrl configured (applyEuKikiDefault must run first)",
+			error: "no baseUrl configured (applyAilianceDefault must run first)",
 			durationMs: Date.now() - start,
 		}
 	}

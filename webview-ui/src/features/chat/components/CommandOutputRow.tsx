@@ -1,5 +1,5 @@
-import { DiracMessage, COMMAND_OUTPUT_STRING, COMMAND_REQ_APP_STRING } from "@shared/ExtensionMessage"
-import { StringRequest } from "@shared/proto/dirac/common"
+import { IsaacMessage, COMMAND_OUTPUT_STRING, COMMAND_REQ_APP_STRING } from "@shared/ExtensionMessage"
+import { StringRequest } from "@shared/proto/isaac/common"
 import { memo, useState, useCallback, useEffect } from "react"
 import { ApprovalBox } from "./ChatRow/ApprovalBox"
 import { useMessageHandlers } from "./ChatView/hooks/useMessageHandlers"
@@ -112,7 +112,7 @@ export const CommandOutputRow = memo(
 		isOutputFullyExpanded,
 		setIsOutputFullyExpanded,
 	}: {
-		message: DiracMessage
+		message: IsaacMessage
 		isCommandExecuting?: boolean
 		isCommandPending?: boolean
 		isCommandCompleted?: boolean

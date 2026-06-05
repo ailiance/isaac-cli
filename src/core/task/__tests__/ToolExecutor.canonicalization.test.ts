@@ -1,5 +1,5 @@
 import { strict as assert } from "node:assert"
-import { DiracDefaultTool } from "@shared/tools"
+import { IsaacDefaultTool } from "@shared/tools"
 import { describe, it } from "mocha"
 import type { ToolUse } from "../../assistant-message"
 import { canonicalizeAttemptCompletionParams } from "../ToolExecutor"
@@ -8,7 +8,7 @@ describe("ToolExecutor canonicalization", () => {
 	it("canonicalizes attempt_completion response into result", () => {
 		const block: ToolUse = {
 			type: "tool_use",
-			name: DiracDefaultTool.ATTEMPT,
+			name: IsaacDefaultTool.ATTEMPT,
 			params: {
 				response: "final answer from response field",
 			},
@@ -25,7 +25,7 @@ describe("ToolExecutor canonicalization", () => {
 	it("does not canonicalize when attempt_completion already has result", () => {
 		const block: ToolUse = {
 			type: "tool_use",
-			name: DiracDefaultTool.ATTEMPT,
+			name: IsaacDefaultTool.ATTEMPT,
 			params: {
 				result: "already canonical",
 				response: "extra text",

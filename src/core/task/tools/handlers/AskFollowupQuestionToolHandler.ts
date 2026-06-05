@@ -1,8 +1,8 @@
 import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { showSystemNotification } from "@integrations/notifications"
 import { findLast, parsePartialArrayString } from "@shared/array"
-import { DiracAsk, DiracAskQuestion } from "@shared/ExtensionMessage"
-import { DiracDefaultTool } from "@shared/tools"
+import { IsaacAsk, IsaacAskQuestion } from "@shared/ExtensionMessage"
+import { IsaacDefaultTool } from "@shared/tools"
 import { telemetryService } from "@/services/telemetry"
 import { ToolUse } from "../../../assistant-message"
 import { formatResponse } from "../../../prompts/responses"
@@ -12,7 +12,7 @@ import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 
 export class AskFollowupQuestionToolHandler implements IToolHandler, IPartialBlockHandler {
-	readonly name = DiracDefaultTool.ASK
+	readonly name = IsaacDefaultTool.ASK
 
 	getDescription(block: ToolUse): string {
 		return `[${block.name} for '${block.params.question}']`
@@ -29,9 +29,9 @@ export class AskFollowupQuestionToolHandler implements IToolHandler, IPartialBlo
 		const sharedMessage = {
 			question: uiHelpers.removeClosingTag(block, "question", question || ""),
 			options: parsePartialArrayString(uiHelpers.removeClosingTag(block, "options", optionsRaw || "[]")),
-		} satisfies DiracAskQuestion
+		} satisfies IsaacAskQuestion
 
-		await uiHelpers.ask("followup" as DiracAsk, JSON.stringify(sharedMessage), block.partial).catch(() => {})
+		await uiHelpers.ask("followup" as IsaacAsk, JSON.stringify(sharedMessage), block.partial).catch(() => {})
 	}
 
 		async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
@@ -61,7 +61,7 @@ export class AskFollowupQuestionToolHandler implements IToolHandler, IPartialBlo
 		// Show notification if enabled
 		if (config.autoApprovalSettings.enableNotifications) {
 			showSystemNotification({
-				subtitle: "Dirac has a question...",
+				subtitle: "Isaac has a question...",
 				message: question.replace(/\n/g, " "),
 			})
 		}
@@ -69,7 +69,7 @@ export class AskFollowupQuestionToolHandler implements IToolHandler, IPartialBlo
 		const sharedMessage = {
 			question: question,
 			options: parsePartialArrayString(optionsRaw || "[]"),
-		} satisfies DiracAskQuestion
+		} satisfies IsaacAskQuestion
 
 		const options = parsePartialArrayString(optionsRaw || "[]")
 
@@ -86,14 +86,14 @@ export class AskFollowupQuestionToolHandler implements IToolHandler, IPartialBlo
 			telemetryService.captureOptionSelected(config.ulid, options.length, "act")
 
 			// Valid option selected, update last followup message with selected option
-			const diracMessages = config.messageState.getDiracMessages()
+			const diracMessages = config.messageState.getIsaacMessages()
 			const lastFollowupMessage = findLast(diracMessages, (m: any) => m.ask === "followup")
 			if (lastFollowupMessage) {
 				lastFollowupMessage.text = JSON.stringify({
 					...sharedMessage,
 					selected: text,
-				} satisfies DiracAskQuestion)
-				await config.messageState.saveDiracMessagesAndUpdateHistory()
+				} satisfies IsaacAskQuestion)
+				await config.messageState.saveIsaacMessagesAndUpdateHistory()
 			}
 		} else {
 			// Option not selected, send user feedback

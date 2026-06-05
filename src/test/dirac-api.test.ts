@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, it } from "mocha"
 import * as should from "should"
 import * as sinon from "sinon"
-import { createDiracAPI } from "@/exports"
+import { createIsaacAPI } from "@/exports"
 import { Logger } from "@/shared/services/Logger"
-import type { DiracAPI } from "../exports/dirac"
+import type { IsaacAPI } from "../exports/dirac"
 import { setVscodeHostProviderMock } from "./host-provider-test-utils"
 
-describe("DiracAPI Core Functionality", () => {
-	let api: DiracAPI
+describe("IsaacAPI Core Functionality", () => {
+	let api: IsaacAPI
 	let mockController: any
 	let mockLoggerError: sinon.SinonStub
 	let sandbox: sinon.SinonSandbox
@@ -20,7 +20,7 @@ describe("DiracAPI Core Functionality", () => {
 		mockLoggerError = sandbox.stub(Logger, "error")
 		setVscodeHostProviderMock({})
 
-		// Create a mock controller that matches what the real createDiracAPI expects
+		// Create a mock controller that matches what the real createIsaacAPI expects
 		// We don't import the real Controller to avoid the webview dependencies
 		mockController = {
 			id: "test-controller-id",
@@ -47,7 +47,7 @@ describe("DiracAPI Core Functionality", () => {
 		}
 
 		// Create API instance
-		api = createDiracAPI(mockController)
+		api = createIsaacAPI(mockController)
 	})
 
 	afterEach(() => {

@@ -1,4 +1,4 @@
-import { UpdateSettingsRequest } from "@shared/proto/dirac/state"
+import { UpdateSettingsRequest } from "@shared/proto/isaac/state"
 import { StateServiceClient } from "@/shared/api/grpc-client"
 
 /**

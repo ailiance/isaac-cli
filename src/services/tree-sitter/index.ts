@@ -1,4 +1,4 @@
-import { DiracIgnoreController } from "@core/ignore/DiracIgnoreController"
+import { IsaacIgnoreController } from "@core/ignore/IsaacIgnoreController"
 import * as fs from "fs/promises"
 import * as path from "path"
 import Parser from "web-tree-sitter"
@@ -16,7 +16,7 @@ export interface ParsedDefinition {
 export async function parseFile(
 	filePath: string,
 	languageParsers: LanguageParser,
-	diracIgnoreController?: DiracIgnoreController,
+	diracIgnoreController?: IsaacIgnoreController,
 	options?: { showCallGraph?: boolean },
 ): Promise<ParsedDefinition[] | null> {
 	if (diracIgnoreController && !diracIgnoreController.validateAccess(filePath)) {

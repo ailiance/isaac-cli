@@ -7,7 +7,7 @@ import {
 import { formatResponse } from "@core/prompts/responses"
 import { GlobalFileNames } from "@core/storage/disk"
 import { listFiles } from "@services/glob/list-files"
-import { DiracRulesToggles } from "@shared/dirac-rules"
+import { IsaacRulesToggles } from "@shared/dirac-rules"
 import { fileExistsAtPath, isDirectory } from "@utils/fs"
 import fs from "fs/promises"
 import path from "path"
@@ -21,9 +21,9 @@ export async function refreshExternalRulesToggles(
 	controller: Controller,
 	workingDirectory: string,
 ): Promise<{
-	windsurfLocalToggles: DiracRulesToggles
-	cursorLocalToggles: DiracRulesToggles
-	agentsLocalToggles: DiracRulesToggles
+	windsurfLocalToggles: IsaacRulesToggles
+	cursorLocalToggles: IsaacRulesToggles
+	agentsLocalToggles: IsaacRulesToggles
 }> {
 	// local windsurf toggles
 	const localWindsurfRulesToggles = controller.stateManager.getWorkspaceStateKey("localWindsurfRulesToggles")
@@ -61,7 +61,7 @@ export async function refreshExternalRulesToggles(
 /**
  * Gather formatted windsurf rules
  */
-export const getLocalWindsurfRules = async (cwd: string, toggles: DiracRulesToggles) => {
+export const getLocalWindsurfRules = async (cwd: string, toggles: IsaacRulesToggles) => {
 	const windsurfRulesFilePath = path.resolve(cwd, GlobalFileNames.windsurfRules)
 
 	let windsurfRulesFileInstructions: string | undefined
@@ -87,7 +87,7 @@ export const getLocalWindsurfRules = async (cwd: string, toggles: DiracRulesTogg
 /**
  * Gather formatted cursor rules, which can come from two sources
  */
-export const getLocalCursorRules = async (cwd: string, toggles: DiracRulesToggles) => {
+export const getLocalCursorRules = async (cwd: string, toggles: IsaacRulesToggles) => {
 	// we first check for the .cursorrules file
 	const cursorRulesFilePath = path.resolve(cwd, GlobalFileNames.cursorRulesFile)
 	let cursorRulesFileInstructions: string | undefined
@@ -159,7 +159,7 @@ async function findAgentsMdFiles(cwd: string): Promise<string[]> {
 /**
  * Gather formatted agents rules - searches recursively and combines all agents.md files
  */
-export const getLocalAgentsRules = async (cwd: string, toggles: DiracRulesToggles) => {
+export const getLocalAgentsRules = async (cwd: string, toggles: IsaacRulesToggles) => {
 	const agentsRulesFilePath = path.resolve(cwd, GlobalFileNames.agentsRulesFile)
 
 	// Check if the top-level agents.md file is enabled

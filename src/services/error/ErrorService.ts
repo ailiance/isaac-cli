@@ -1,10 +1,10 @@
 import { Logger } from "@/shared/services/Logger"
-import { DiracError } from "./DiracError"
+import { IsaacError } from "./IsaacError"
 import { ErrorProviderFactory } from "./ErrorProviderFactory"
 import { IErrorProvider } from "./providers/IErrorProvider"
 
 /**
- * ErrorService handles error logging and tracking for the Dirac extension
+ * ErrorService handles error logging and tracking for the Isaac extension
  * Uses an abstracted error provider to support multiple error tracking backends
  * Respects user privacy settings and VSCode's global telemetry configuration
  */
@@ -40,11 +40,11 @@ export class ErrorService {
 		this.provider = provider
 	}
 
-	captureException(error: Error | DiracError, properties?: Record<string, unknown>) {
+	captureException(error: Error | IsaacError, properties?: Record<string, unknown>) {
 		return this.provider.captureException(error, properties)
 	}
 
-	public logException(error: Error | DiracError, properties?: Record<string, unknown>): void {
+	public logException(error: Error | IsaacError, properties?: Record<string, unknown>): void {
 		this.provider.logException(error, properties)
 		Logger.error("[ErrorService] Logging exception", JSON.stringify(error))
 	}
@@ -57,8 +57,8 @@ export class ErrorService {
 		this.provider.logMessage(message, level, properties)
 	}
 
-	public toDiracError(rawError: unknown, modelId?: string, providerId?: string): DiracError {
-		const transformed = DiracError.transform(rawError, modelId, providerId)
+	public toIsaacError(rawError: unknown, modelId?: string, providerId?: string): IsaacError {
+		const transformed = IsaacError.transform(rawError, modelId, providerId)
 		this.logException(transformed, { modelId, providerId })
 		return transformed
 	}

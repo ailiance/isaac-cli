@@ -732,7 +732,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ controller, onComplete, onEr
 
 	return (
 		<Box flexDirection="column" paddingLeft={1} paddingRight={1} width="100%">
-			{/* Dirac robot - centered */}
+			{/* Isaac robot - centered */}
 			<StaticRobotFrame />
 
 

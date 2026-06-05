@@ -1,7 +1,7 @@
 import CheckpointTracker from "@integrations/checkpoints/CheckpointTracker"
 import { findLast } from "@shared/array"
-import { Empty } from "@shared/proto/dirac/common"
-import { ExplainChangesRequest } from "@shared/proto/dirac/task"
+import { Empty } from "@shared/proto/isaac/common"
+import { ExplainChangesRequest } from "@shared/proto/isaac/task"
 import { HostProvider } from "@/hosts/host-provider"
 import { ShowMessageType } from "@/shared/proto/index.host"
 import { Logger } from "@/shared/services/Logger"
@@ -72,7 +72,7 @@ export async function explainChanges(controller: Controller, request: ExplainCha
 		}
 
 		// Find the message
-		const diracMessages = messageStateHandler.getDiracMessages()
+		const diracMessages = messageStateHandler.getIsaacMessages()
 		const messageIndex = diracMessages.findIndex((m: any) => m.ts === request.messageTs)
 		const message = diracMessages[messageIndex]
 

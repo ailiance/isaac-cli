@@ -18,7 +18,7 @@ describe("Provider key mapping", () => {
 		expect(getProviderModelIdKey("openrouter", "plan")).to.equal("planModeOpenRouterModelId")
 	})
 
-	it("uses provider-specific model key behavior for Dirac", () => {
+	it("uses provider-specific model key behavior for Isaac", () => {
 		expect(getProviderModelIdKey("dirac", "act")).to.equal("actModeDiracModelId")
 		expect(getProviderModelIdKey("dirac", "plan")).to.equal("planModeDiracModelId")
 	})

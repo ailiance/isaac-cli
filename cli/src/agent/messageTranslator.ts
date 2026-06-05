@@ -1,26 +1,26 @@
 /**
- * Message translator for converting Dirac messages to ACP session updates.
+ * Message translator for converting Isaac messages to ACP session updates.
  *
- * This module handles the translation between Dirac's internal message format
- * (DiracMessage) and the ACP protocol's session update format. A single Dirac
+ * This module handles the translation between Isaac's internal message format
+ * (IsaacMessage) and the ACP protocol's session update format. A single Isaac
  * message may produce multiple ACP updates.
  *
  * @module acp/messageTranslator
  */
 
 import type * as acp from "@agentclientprotocol/sdk"
-import type { DiracMessage, DiracSayBrowserAction, DiracSayTool } from "@shared/ExtensionMessage"
+import type { IsaacMessage, IsaacSayBrowserAction, IsaacSayTool } from "@shared/ExtensionMessage"
 import type { AcpSessionState, TranslatedMessage } from "./types.js"
 import { AcpSessionStatus } from "./types.js"
 
 /**
- * Maps Dirac tool types to ACP ToolKind values.
+ * Maps Isaac tool types to ACP ToolKind values.
  */
 const TOOL_KIND_MAP: Record<string, acp.ToolKind> = {
 	// File operations
 	editFile: "edit",
 	replaceSymbol: "edit",
-	write_to_file: "edit", // Keep for backward compatibility if needed, but DiracSayTool uses camelCase
+	write_to_file: "edit", // Keep for backward compatibility if needed, but IsaacSayTool uses camelCase
 	newFileCreated: "edit",
 	editedExistingFile: "edit",
 	fileDeleted: "delete",
@@ -166,15 +166,15 @@ export interface TranslateMessageOptions {
 }
 
 /**
- * Translate a single Dirac message to ACP session updates.
+ * Translate a single Isaac message to ACP session updates.
  *
- * @param message - The Dirac message to translate
+ * @param message - The Isaac message to translate
  * @param sessionState - The current session state for tracking tool calls
  * @param options - Optional translation options (e.g., existing toolCallId for updates)
  * @returns The translated message with ACP updates and permission requirements
  */
 export function translateMessage(
-	message: DiracMessage,
+	message: IsaacMessage,
 	sessionState: AcpSessionState,
 	options?: TranslateMessageOptions,
 ): TranslatedMessage {
@@ -204,10 +204,10 @@ export function translateMessage(
 }
 
 /**
- * Translate a "say" type Dirac message to ACP updates.
+ * Translate a "say" type Isaac message to ACP updates.
  */
 function translateSayMessage(
-	message: DiracMessage,
+	message: IsaacMessage,
 	sessionState: AcpSessionState,
 	options?: TranslateMessageOptions,
 ): TranslatedMessage {
@@ -402,7 +402,7 @@ function translateSayMessage(
 
 function translateWebSearchMarkerMessage(
 	query: string,
-	message: DiracMessage,
+	message: IsaacMessage,
 	sessionState: AcpSessionState,
 	updates: acp.SessionUpdate[],
 ): string {
@@ -444,11 +444,11 @@ function translateWebSearchMarkerMessage(
 }
 
 /**
- * Translate a "ask" type Dirac message to ACP updates.
+ * Translate a "ask" type Isaac message to ACP updates.
  * Ask messages typically require permission from the client.
  */
 function translateAskMessage(
-	message: DiracMessage,
+	message: IsaacMessage,
 	sessionState: AcpSessionState,
 	options?: TranslateMessageOptions,
 ): TranslatedMessage {
@@ -671,7 +671,7 @@ function translateAskMessage(
  * Translate a tool message to ACP tool_call updates.
  */
 function translateToolMessage(
-	message: DiracMessage,
+	message: IsaacMessage,
 	sessionState: AcpSessionState,
 	clientCapabilities?: acp.ClientCapabilities,
 ): acp.SessionUpdate[] {
@@ -680,7 +680,7 @@ function translateToolMessage(
 	if (!message.text) return updates
 
 	try {
-		const toolInfo = JSON.parse(message.text) as DiracSayTool
+		const toolInfo = JSON.parse(message.text) as IsaacSayTool
 		const toolCallId = sessionState.currentToolCallId || generateToolCallId()
 
 		// Determine tool kind
@@ -773,7 +773,7 @@ function translateToolMessage(
 }
 
 function translatePlainCommandToolMessage(
-	message: DiracMessage,
+	message: IsaacMessage,
 	sessionState: AcpSessionState,
 	clientCapabilities?: acp.ClientCapabilities,
 ): acp.ToolCallUpdate & { sessionUpdate: "tool_call_update" } | undefined {
@@ -816,7 +816,7 @@ function translatePlainCommandToolMessage(
  * Translate a command message to ACP tool_call.
  */
 function translateCommandMessage(
-	message: DiracMessage,
+	message: IsaacMessage,
 	sessionState: AcpSessionState,
 	clientCapabilities?: acp.ClientCapabilities,
 ): acp.SessionUpdate[] {
@@ -860,7 +860,7 @@ function translateCommandMessage(
  * Translate command output to ACP tool_call_update.
  */
 function translateCommandOutputMessage(
-	message: DiracMessage,
+	message: IsaacMessage,
 	sessionState: AcpSessionState,
 	clientCapabilities?: acp.ClientCapabilities,
 ): acp.SessionUpdate[] {
@@ -948,11 +948,11 @@ function formatCommandOutputContent(output: string): string {
 /**
  * Translate browser action to ACP tool_call.
  */
-function translateBrowserActionMessage(message: DiracMessage, sessionState: AcpSessionState): acp.SessionUpdate[] {
+function translateBrowserActionMessage(message: IsaacMessage, sessionState: AcpSessionState): acp.SessionUpdate[] {
 	const updates: acp.SessionUpdate[] = []
 
 	try {
-		const action = message.text ? (JSON.parse(message.text) as DiracSayBrowserAction) : null
+		const action = message.text ? (JSON.parse(message.text) as IsaacSayBrowserAction) : null
 		const toolCallId = sessionState.currentToolCallId || generateToolCallId()
 
 		if (!sessionState.currentToolCallId) {
@@ -996,7 +996,7 @@ function translateBrowserActionMessage(message: DiracMessage, sessionState: AcpS
 /**
  * Build a human-readable title for a tool operation.
  */
-function buildToolTitle(toolInfo: DiracSayTool): string {
+function buildToolTitle(toolInfo: IsaacSayTool): string {
 	const suffix = getToolTitleSuffix(toolInfo)
 	const verb = getToolDisplayVerb(toolInfo.tool)
 	return suffix ? `${verb} ${suffix}` : verb
@@ -1044,7 +1044,7 @@ function getToolDisplayVerb(toolName: string): string {
 	}
 }
 
-function getToolTitleSuffix(toolInfo: DiracSayTool): string {
+function getToolTitleSuffix(toolInfo: IsaacSayTool): string {
 	if (toolInfo.tool === "searchFiles") {
 		const searchCandidate = (toolInfo as any).regex || (toolInfo as any).query || (toolInfo as any).pattern
 		return typeof searchCandidate === "string" ? searchCandidate : ""
@@ -1089,7 +1089,7 @@ function extractCommandFromText(text?: string): string {
  */
 function parseToolInfo(text: string): { title: string; kind: acp.ToolKind; path?: string; input?: unknown } | null {
 	try {
-		const info = JSON.parse(text) as DiracSayTool
+		const info = JSON.parse(text) as IsaacSayTool
 		return {
 			title: buildToolTitle(info),
 			kind: TOOL_KIND_MAP[info.tool] || "other",
@@ -1102,14 +1102,14 @@ function parseToolInfo(text: string): { title: string; kind: acp.ToolKind; path?
 }
 
 /**
- * Translate multiple Dirac messages to ACP session updates.
+ * Translate multiple Isaac messages to ACP session updates.
  *
- * @param messages - Array of Dirac messages to translate
+ * @param messages - Array of Isaac messages to translate
  * @param sessionState - The current session state
  * @returns Combined array of ACP session updates
  */
 export function translateMessages(
-	messages: DiracMessage[],
+	messages: IsaacMessage[],
 	sessionState: AcpSessionState,
 	options?: TranslateMessageOptions,
 ): acp.SessionUpdate[] {

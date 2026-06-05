@@ -18,7 +18,7 @@ import {
 	TaskResumeData,
 	TaskStartData,
 	UserPromptSubmitData,
-} from "../../shared/proto/dirac/hooks"
+} from "../../shared/proto/isaac/hooks"
 import type { LoadPluginHooksResult, PluginHookCommand } from "../plugins/PluginHookLoader"
 import { getAllHooksDirs } from "../storage/disk"
 import { StateManager } from "../storage/StateManager"
@@ -185,11 +185,11 @@ export abstract class HookRunner<Name extends HookName> {
 	 *
 	 * This method enriches the hook-specific input (like preToolUse or postToolUse data)
 	 * with standard information that all hooks receive:
-	 * - diracVersion: Current Dirac extension version
+	 * - diracVersion: Current Isaac extension version
 	 * - hookName: The type of hook being executed (e.g., "PreToolUse")
 	 * - timestamp: Execution time in milliseconds since epoch
 	 * - workspaceRoots: Array of workspace folder paths
-	 * - userId: Dirac user ID, machine ID, or generated UUID
+	 * - userId: Isaac user ID, machine ID, or generated UUID
 	 *
 	 * This separation allows hook scripts to receive consistent metadata without
 	 * requiring callers to manually provide it each time.
@@ -213,7 +213,7 @@ export abstract class HookRunner<Name extends HookName> {
 			hookName: this.hookName,
 			timestamp: Date.now().toString(),
 			workspaceRoots,
-			userId: getDistinctId(), // Always available: Dirac User ID, machine ID, or generated UUID
+			userId: getDistinctId(), // Always available: Isaac User ID, machine ID, or generated UUID
 			...params,
 			model,
 		}
@@ -635,7 +635,7 @@ class StdioHookRunner<Name extends HookName> extends HookRunner<Name> {
 /**
  * Combines multiple hook runners and executes them in parallel.
  *
- * Used in multi-root workspaces where both global hooks (from ~/Documents/Dirac/Hooks/)
+ * Used in multi-root workspaces where both global hooks (from ~/Documents/Isaac/Hooks/)
  * and workspace-specific hooks (from each workspace's .diracrules/hooks/) exist for the
  * same hook type.
  *
@@ -998,7 +998,7 @@ export class HookFactory {
 
 	/**
 	 * Checks if a hooks directory is a global hooks directory.
-	 * Global hooks are located in paths containing "Dirac/Hooks" or "dirac/hooks".
+	 * Global hooks are located in paths containing "Isaac/Hooks" or "dirac/hooks".
 	 */
 	private static isGlobalHooksDir(dir: string): boolean {
 		return /[/\\][Cc]line[/\\][Hh]ooks/i.test(dir)
@@ -1018,7 +1018,7 @@ export class HookFactory {
 	/**
 	 * Determines the working directory for a hook script based on its location.
 	 *
-	 * - Global hooks (from ~/Documents/Dirac/Hooks/): run from the primary workspace root
+	 * - Global hooks (from ~/Documents/Isaac/Hooks/): run from the primary workspace root
 	 * - Workspace hooks (from workspaceRoot/.diracrules/hooks/): run from that specific workspace root
 	 *
 	 * This ensures workspace-specific hooks can use relative paths that are meaningful
@@ -1059,7 +1059,7 @@ export class HookFactory {
 
 	/**
 	 * Categorizes hook scripts by their location (global vs workspace).
-	 * Global hooks are located in ~/Documents/Dirac/Hooks/
+	 * Global hooks are located in ~/Documents/Isaac/Hooks/
 	 * Workspace hooks are located in workspace .diracrules/hooks/ directories
 	 *
 	 * @param scripts Array of hook script paths
@@ -1088,7 +1088,7 @@ export class HookFactory {
 
 	/**
 	 * @returns A list of paths to scripts for the given hook name.
-	 * Includes both global hooks (from ~/Documents/Dirac/Hooks/) and workspace hooks
+	 * Includes both global hooks (from ~/Documents/Isaac/Hooks/) and workspace hooks
 	 * (from .diracrules/hooks/ in each workspace root).
 	 */
 	private static async findHookScripts(hookName: HookName): Promise<string[]> {

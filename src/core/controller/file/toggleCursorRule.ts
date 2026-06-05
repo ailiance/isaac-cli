@@ -1,5 +1,5 @@
-import type { ToggleCursorRuleRequest } from "@shared/proto/dirac/file"
-import { DiracRulesToggles } from "@shared/proto/dirac/file"
+import type { ToggleCursorRuleRequest } from "@shared/proto/isaac/file"
+import { IsaacRulesToggles } from "@shared/proto/isaac/file"
 import { Logger } from "@/shared/services/Logger"
 import type { Controller } from "../index"
 
@@ -9,7 +9,7 @@ import type { Controller } from "../index"
  * @param request The toggle request
  * @returns The updated Cursor rule toggles
  */
-export async function toggleCursorRule(controller: Controller, request: ToggleCursorRuleRequest): Promise<DiracRulesToggles> {
+export async function toggleCursorRule(controller: Controller, request: ToggleCursorRuleRequest): Promise<IsaacRulesToggles> {
 	const { rulePath, enabled } = request
 
 	if (!rulePath || typeof enabled !== "boolean") {
@@ -28,7 +28,7 @@ export async function toggleCursorRule(controller: Controller, request: ToggleCu
 	// Get the current state to return in the response
 	const cursorToggles = controller.stateManager.getWorkspaceStateKey("localCursorRulesToggles")
 
-	return DiracRulesToggles.create({
+	return IsaacRulesToggles.create({
 		toggles: cursorToggles,
 	})
 }

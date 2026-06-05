@@ -1,8 +1,8 @@
-import { DiracMessage } from "@shared/ExtensionMessage"
+import { IsaacMessage } from "@shared/ExtensionMessage"
 import { BaseToolOutputProps } from "./shared"
 
 interface SystemOutputProps extends BaseToolOutputProps {
-	message: DiracMessage
+	message: IsaacMessage
 }
 
 export const SystemOutput = ({ tool, isExpanded, onToggleExpand, message }: SystemOutputProps) => {

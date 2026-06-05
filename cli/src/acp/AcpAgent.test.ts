@@ -23,14 +23,14 @@ const mocks = vi.hoisted(() => {
 	return {
 		callOrder,
 		diracAgentInstance,
-		DiracAgent: vi.fn(function DiracAgent() {
+		IsaacAgent: vi.fn(function IsaacAgent() {
 			return diracAgentInstance
 		}),
 	}
 })
 
-vi.mock("../agent/DiracAgent.js", () => ({
-	DiracAgent: mocks.DiracAgent,
+vi.mock("../agent/IsaacAgent.js", () => ({
+	IsaacAgent: mocks.IsaacAgent,
 }))
 
 describe("AcpAgent", () => {
@@ -94,10 +94,10 @@ describe("AcpAgent", () => {
 		expect(mocks.diracAgentInstance.publishSessionSetupUpdates).toHaveBeenCalledTimes(1)
 	})
 
-	it("passes config and cwd through to DiracAgent", () => {
+	it("passes config and cwd through to IsaacAgent", () => {
 		new AcpAgent(connection, { diracDir: "/tmp/dirac-config", cwd: "/tmp/workspace", hooksDir: "/tmp/hooks" })
 
-		expect(mocks.DiracAgent).toHaveBeenCalledWith({
+		expect(mocks.IsaacAgent).toHaveBeenCalledWith({
 			diracDir: "/tmp/dirac-config",
 			cwd: "/tmp/workspace",
 			hooksDir: "/tmp/hooks",

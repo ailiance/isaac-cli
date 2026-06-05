@@ -150,7 +150,7 @@ describe("mcpToolToSpec", () => {
 describe("initializeMcpForTask", () => {
 	let loadFromPluginsStub: sinon.SinonStub
 	let listAllToolsStub: sinon.SinonStub
-	// Noop registerSpec: prevents polluting the shared DiracToolSet singleton
+	// Noop registerSpec: prevents polluting the shared IsaacToolSet singleton
 	const noopRegisterSpec = sinon.stub()
 
 	beforeEach(() => {

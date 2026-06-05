@@ -1,5 +1,5 @@
 import type { ExtensionMessage } from "@shared/ExtensionMessage"
-import { ResetStateRequest } from "@shared/proto/dirac/state"
+import { ResetStateRequest } from "@shared/proto/isaac/state"
 import {
     CheckCheck,
     FlaskConical,
@@ -83,7 +83,7 @@ export const SETTINGS_TABS: SettingsTab[] = [
 	{
 		id: "about",
 		name: "About",
-		tooltipText: "About Dirac",
+		tooltipText: "About Isaac",
 		headerText: "About",
 		icon: Info,
 	},

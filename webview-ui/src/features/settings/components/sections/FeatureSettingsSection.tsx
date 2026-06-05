@@ -1,4 +1,4 @@
-import { UpdateSettingsRequest } from "@shared/proto/dirac/state"
+import { UpdateSettingsRequest } from "@shared/proto/isaac/state"
 import { memo, type ReactNode, useCallback } from "react"
 import { useSettingsStore } from "@/features/settings/store/settingsStore"
 import { Switch } from "@/shared/ui/switch"
@@ -34,7 +34,7 @@ const agentFeatures: FeatureToggle[] = [
 	{
 		id: "subagents",
 		label: "Subagents",
-		description: "Let Dirac run focused subagents in parallel to explore the codebase for you.",
+		description: "Let Isaac run focused subagents in parallel to explore the codebase for you.",
 		stateKey: "subagentsEnabled",
 		settingKey: "subagentsEnabled",
 	},
@@ -78,7 +78,7 @@ const editorFeatures: FeatureToggle[] = [
 	},
 	{
 		id: "dirac-web-tools",
-		label: "Dirac Web Tools",
+		label: "Isaac Web Tools",
 		description: "Access web browsing and search capabilities",
 		stateKey: "diracWebToolsEnabled",
 		settingKey: "diracWebToolsEnabled",
@@ -86,7 +86,7 @@ const editorFeatures: FeatureToggle[] = [
 	{
 		id: "worktrees",
 		label: "Worktrees",
-		description: "Enables git worktree management for running parallel Dirac tasks.",
+		description: "Enables git worktree management for running parallel Isaac tasks.",
 		stateKey: "worktreesEnabled",
 		settingKey: "worktreesEnabled",
 	},

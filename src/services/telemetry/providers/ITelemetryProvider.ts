@@ -1,6 +1,6 @@
 /**
  * Interface for telemetry providers
- * Allows switching between different analytics providers (Dirac, etc.)
+ * Allows switching between different analytics providers (Isaac, etc.)
  */
 
 /**

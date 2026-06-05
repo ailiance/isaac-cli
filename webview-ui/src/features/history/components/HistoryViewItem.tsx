@@ -1,5 +1,5 @@
 import { HistoryItem } from "@shared/HistoryItem"
-import { StringRequest } from "@shared/proto/dirac/common"
+import { StringRequest } from "@shared/proto/isaac/common"
 import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 import {
     ArrowDownIcon,

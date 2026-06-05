@@ -319,7 +319,7 @@ async function fetchAndCacheModels(controller: Controller): Promise<Record<strin
 	}
 
 	// Append stealth models if any
-	const finalModels = appendDiracStealthModels(models)
+	const finalModels = appendIsaacStealthModels(models)
 
 	// Store in StateManager's in-memory cache
 	StateManager.get().setModelsCache("openRouter", finalModels)
@@ -343,7 +343,7 @@ const CLINE_STEALTH_MODELS: Record<string, ModelInfo> = {
 	},
 }
 
-export function appendDiracStealthModels(currentModels: Record<string, ModelInfo>): Record<string, ModelInfo> {
+export function appendIsaacStealthModels(currentModels: Record<string, ModelInfo>): Record<string, ModelInfo> {
 	// Create a shallow clone of the current models to avoid mutating the original object
 	const cloned = { ...currentModels }
 	for (const [modelId, modelInfo] of Object.entries(CLINE_STEALTH_MODELS)) {

@@ -1,4 +1,4 @@
-import { SwitchWorktreeRequest, WorktreeResult } from "@shared/proto/dirac/worktree"
+import { SwitchWorktreeRequest, WorktreeResult } from "@shared/proto/isaac/worktree"
 import { HostProvider } from "@/hosts/host-provider"
 import { Logger } from "@/shared/services/Logger"
 import { Controller } from ".."
@@ -11,7 +11,7 @@ import { Controller } from ".."
  */
 export async function switchWorktree(controller: Controller, request: SwitchWorktreeRequest): Promise<WorktreeResult> {
 	try {
-		// Set state so Dirac auto-opens when the worktree folder loads
+		// Set state so Isaac auto-opens when the worktree folder loads
 		controller.stateManager.setGlobalState("worktreeAutoOpenPath", request.path)
 
 		// When opening in current window, the window reloads immediately and StateManager's

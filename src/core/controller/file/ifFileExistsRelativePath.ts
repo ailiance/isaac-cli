@@ -1,5 +1,5 @@
 import { workspaceResolver } from "@core/workspace"
-import { BooleanResponse, StringRequest } from "@shared/proto/dirac/common"
+import { BooleanResponse, StringRequest } from "@shared/proto/isaac/common"
 import { getWorkspacePath } from "@utils/path"
 import * as fs from "fs"
 import { Controller } from ".."

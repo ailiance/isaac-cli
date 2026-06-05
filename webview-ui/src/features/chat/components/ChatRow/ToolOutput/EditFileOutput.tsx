@@ -1,8 +1,8 @@
-import { DiracMessage } from "@shared/ExtensionMessage"
+import { IsaacMessage } from "@shared/ExtensionMessage"
 import { DiffEditRow } from "../../DiffEditRow"
 import { BaseToolOutputProps } from "./shared"
 import { FileServiceClient } from "@/shared/api/grpc-client"
-import { StringRequest } from "@shared/proto/dirac/common"
+import { StringRequest } from "@shared/proto/isaac/common"
 
 const handlePathClick = (path: string) => {
 	FileServiceClient.openFileRelativePath(StringRequest.create({ value: path })).catch((err: any) =>
@@ -11,7 +11,7 @@ const handlePathClick = (path: string) => {
 }
 
 interface EditFileOutputProps extends BaseToolOutputProps {
-	message: DiracMessage
+	message: IsaacMessage
 	backgroundEditEnabled?: boolean
 }
 

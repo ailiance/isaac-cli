@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test"
-import { addSelectedCodeToDiracWebview, openTab, toggleNotifications } from "./utils/common"
+import { addSelectedCodeToIsaacWebview, openTab, toggleNotifications } from "./utils/common"
 import { E2E_WORKSPACE_TYPES, e2e } from "./utils/helpers"
 
 // FIXME(ailiance): depends on signin → chat round-trip. The signin step
@@ -22,8 +22,8 @@ e2e.describe.skip("Code Actions and Editor Panel", () => {
 			await page.getByRole("treeitem", { name: "index.html" }).locator("a").click()
 			await expect(sidebarInput).not.toBeFocused()
 
-			// Sidebar should be opened and visible after adding code to Dirac
-			await addSelectedCodeToDiracWebview(page)
+			// Sidebar should be opened and visible after adding code to Isaac
+			await addSelectedCodeToIsaacWebview(page)
 			await expect(sidebarInput).not.toBeEmpty()
 			await expect(sidebarInput).toBeFocused()
 		})

@@ -1,6 +1,6 @@
 import { findLastIndex } from "@shared/array"
-import type { DiracMessage } from "@shared/ExtensionMessage"
-import type { DiracStorageMessage } from "@shared/messages/content"
+import type { IsaacMessage } from "@shared/ExtensionMessage"
+import type { IsaacStorageMessage } from "@shared/messages/content"
 import { Logger } from "@/shared/services/Logger"
 import type { ContextManager } from "../context/context-management/ContextManager"
 import type { MessageStateHandler } from "../task/message-state"
@@ -46,7 +46,7 @@ export interface TokenUsage {
  * @param message The API request message to parse
  * @returns Token usage information, or zeros if parsing fails
  */
-export function extractTokenUsageFromMessage(message: DiracMessage | undefined): TokenUsage {
+export function extractTokenUsageFromMessage(message: IsaacMessage | undefined): TokenUsage {
 	const defaultUsage: TokenUsage = {
 		tokensIn: 0,
 		tokensOut: 0,
@@ -89,7 +89,7 @@ export interface PreCompactContextFiles {
  */
 export async function writePreCompactContextFiles(
 	taskId: string,
-	currentContext: DiracStorageMessage[],
+	currentContext: IsaacStorageMessage[],
 ): Promise<PreCompactContextFiles> {
 	const { writeConversationHistoryJson, writeConversationHistoryText } = await import("../storage/disk")
 
@@ -125,11 +125,11 @@ export interface PreCompactHookParams {
 
 	// Conversation state
 	/** API conversation history */
-	apiConversationHistory: DiracStorageMessage[]
+	apiConversationHistory: IsaacStorageMessage[]
 	/** Current deleted range (if any) */
 	conversationHistoryDeletedRange?: [number, number]
-	/** Dirac messages for extracting token usage */
-	diracMessages: DiracMessage[]
+	/** Isaac messages for extracting token usage */
+	diracMessages: IsaacMessage[]
 
 	// Services
 	/** Context manager for getting truncated messages */
@@ -256,7 +256,7 @@ export async function executePreCompactHookWithCleanup(params: PreCompactHookPar
 			// Internalized cancellation state management (replaces handleCancellation callback)
 			// Always save state before cancelling, regardless of cancellation source
 			params.taskState.didFinishAbortingStream = true
-			await params.messageStateHandler.saveDiracMessagesAndUpdateHistory()
+			await params.messageStateHandler.saveIsaacMessagesAndUpdateHistory()
 			await params.messageStateHandler.overwriteApiConversationHistory(
 				params.messageStateHandler.getApiConversationHistory(),
 			)

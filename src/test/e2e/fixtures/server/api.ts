@@ -76,7 +76,7 @@ I'll replace "john" with "dirac" in the test.ts file.
 </edit_file>`
 
 export const E2E_MOCK_API_RESPONSES = {
-	DEFAULT: "Hello! I'm a mock Dirac API response.",
+	DEFAULT: "Hello! I'm a mock Isaac API response.",
 	REPLACE_REQUEST: edit_file_response,
 	EDIT_REQUEST: edit_request,
 }

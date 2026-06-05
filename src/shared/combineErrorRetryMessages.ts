@@ -1,4 +1,4 @@
-import { DiracMessage } from "./ExtensionMessage"
+import { IsaacMessage } from "./ExtensionMessage"
 
 /**
  * Consolidates error_retry messages in a retry sequence, keeping only the latest one,
@@ -11,12 +11,12 @@ import { DiracMessage } from "./ExtensionMessage"
  * 2. Removes error_retry messages entirely when followed by a successful api_req_started
  *    (indicating the retry succeeded)
  *
- * @param messages - An array of DiracMessage objects to process.
- * @returns A new array of DiracMessage objects with error_retry sequences consolidated.
+ * @param messages - An array of IsaacMessage objects to process.
+ * @returns A new array of IsaacMessage objects with error_retry sequences consolidated.
  *
  * @example
  * // During retry sequence - shows only latest attempt:
- * const messages: DiracMessage[] = [
+ * const messages: IsaacMessage[] = [
  *   { type: 'say', say: 'error_retry', text: '{"attempt":1,"maxAttempts":3}', ts: 1000 },
  *   { type: 'say', say: 'api_req_retried', ts: 1001 },
  *   { type: 'say', say: 'error_retry', text: '{"attempt":2,"maxAttempts":3}', ts: 1002 },
@@ -28,7 +28,7 @@ import { DiracMessage } from "./ExtensionMessage"
  *
  * @example
  * // After successful retry - removes error_retry entirely:
- * const messages: DiracMessage[] = [
+ * const messages: IsaacMessage[] = [
  *   { type: 'say', say: 'error_retry', text: '{"attempt":1,"maxAttempts":3}', ts: 1000 },
  *   { type: 'say', say: 'api_req_retried', ts: 1001 },
  *   { type: 'say', say: 'api_req_started', text: '{}', ts: 1002 },
@@ -36,8 +36,8 @@ import { DiracMessage } from "./ExtensionMessage"
  * const result = combineErrorRetryMessages(messages);
  * // Result: [{ type: 'say', say: 'api_req_started', text: '{}', ts: 1002 }]
  */
-export function combineErrorRetryMessages(messages: DiracMessage[]): DiracMessage[] {
-	const result: DiracMessage[] = []
+export function combineErrorRetryMessages(messages: IsaacMessage[]): IsaacMessage[] {
+	const result: IsaacMessage[] = []
 
 	for (let i = 0; i < messages.length; i++) {
 		const message = messages[i]

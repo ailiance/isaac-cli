@@ -1,4 +1,4 @@
-import type { OnboardingModel } from "../proto/dirac/state"
+import type { OnboardingModel } from "../proto/isaac/state"
 
 /**
  * The list of models available to new users during the onboarding flow.

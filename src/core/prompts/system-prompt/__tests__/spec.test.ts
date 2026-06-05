@@ -1,7 +1,7 @@
 import { expect } from "chai"
 import { describe, it } from "mocha"
-import { DiracDefaultTool } from "@/shared/tools"
-import type { DiracToolSpec } from "../spec"
+import { IsaacDefaultTool } from "@/shared/tools"
+import type { IsaacToolSpec } from "../spec"
 import { toolSpecFunctionDeclarations, toolSpecFunctionDefinition, toolSpecInputSchema } from "../spec"
 import type { SystemPromptContext } from "../types"
 
@@ -15,8 +15,8 @@ const mockContext: SystemPromptContext = {
 	isTesting: true,
 }
 
-const makeTool = (overrides?: Partial<DiracToolSpec>): DiracToolSpec => ({
-	id: DiracDefaultTool.FILE_READ,
+const makeTool = (overrides?: Partial<IsaacToolSpec>): IsaacToolSpec => ({
+	id: IsaacDefaultTool.FILE_READ,
 	name: "read_file",
 	description: "Read a file",
 	parameters: [
@@ -127,8 +127,8 @@ describe("native tool placeholder replacement", () => {
 
 
 describe("tools without parameters", () => {
-	const noParamTool: DiracToolSpec = {
-		id: DiracDefaultTool.LIST_SKILLS,
+	const noParamTool: IsaacToolSpec = {
+		id: IsaacDefaultTool.LIST_SKILLS,
 		name: "list_skills",
 		description: "List skills",
 	}

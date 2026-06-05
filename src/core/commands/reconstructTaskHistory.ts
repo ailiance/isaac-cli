@@ -1,6 +1,6 @@
-import { getSavedDiracMessages, getTaskMetadata, readTaskHistoryFromState, writeTaskHistoryToState } from "@core/storage/disk"
+import { getSavedIsaacMessages, getTaskMetadata, readTaskHistoryFromState, writeTaskHistoryToState } from "@core/storage/disk"
 import { HostProvider } from "@hosts/host-provider"
-import { DiracMessage } from "@shared/ExtensionMessage"
+import { IsaacMessage } from "@shared/ExtensionMessage"
 import { HistoryItem } from "@shared/HistoryItem"
 import { ShowMessageType } from "@shared/proto/host/window"
 import { fileExistsAtPath } from "@utils/fs"
@@ -165,7 +165,7 @@ async function scanTaskDirectories(tasksDir: string): Promise<string[]> {
 async function reconstructTaskHistoryItem(taskId: string): Promise<HistoryItem | null> {
 	try {
 		// Load UI messages to extract task info
-		const diracMessages = await getSavedDiracMessages(taskId)
+		const diracMessages = await getSavedIsaacMessages(taskId)
 		if (diracMessages.length === 0) {
 			return null // Skip empty tasks
 		}
@@ -212,7 +212,7 @@ interface TaskInfo {
 	conversationHistoryDeletedRange?: [number, number]
 }
 
-function extractTaskInformation(diracMessages: DiracMessage[], metadata: any): TaskInfo {
+function extractTaskInformation(diracMessages: IsaacMessage[], metadata: any): TaskInfo {
 	// Find the first user message (task description)
 	const firstUserMessage = diracMessages.find((msg) => msg.type === "say" && msg.say === "text" && msg.text)
 

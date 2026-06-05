@@ -1,4 +1,4 @@
-import type { DiracAsk } from "@shared/ExtensionMessage"
+import type { IsaacAsk } from "@shared/ExtensionMessage"
 import { jsonParseSafe } from "./parser"
 
 /**
@@ -11,7 +11,7 @@ import { jsonParseSafe } from "./parser"
  * hidden, input blocked), which is the correct behavior for tool/browser approvals
  * since core auto-approves those before they even reach the UI.
  */
-export const YOLO_INTERACTIVE_ASKS = new Set<DiracAsk>([
+export const YOLO_INTERACTIVE_ASKS = new Set<IsaacAsk>([
 	"completion_result",
 	// In yolo mode, ExecuteCommandToolHandler auto-approves commands via say() (not ask()) at line 176,
 	// so command asks never reach the UI for regular tool use. The only command ask that reaches the UI
@@ -25,14 +25,14 @@ export const YOLO_INTERACTIVE_ASKS = new Set<DiracAsk>([
 	"new_task",
 ])
 
-export function isYoloSuppressed(yolo: boolean, ask: DiracAsk | undefined): boolean {
+export function isYoloSuppressed(yolo: boolean, ask: IsaacAsk | undefined): boolean {
 	return yolo && (!ask || !YOLO_INTERACTIVE_ASKS.has(ask))
 }
 
 /**
  * Get the type of prompt needed for an ask message
  */
-export function getAskPromptType(ask: DiracAsk, text: string): "confirmation" | "text" | "options" | "none" {
+export function getAskPromptType(ask: IsaacAsk, text: string): "confirmation" | "text" | "options" | "none" {
 	switch (ask) {
 		case "followup":
 		case "plan_mode_respond": {

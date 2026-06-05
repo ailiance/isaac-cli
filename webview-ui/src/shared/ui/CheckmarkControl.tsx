@@ -1,7 +1,7 @@
 import { flip, offset, shift, useFloating } from "@floating-ui/react"
-import { CheckpointRestoreRequest } from "@shared/proto/dirac/checkpoints"
-import { Int64Request } from "@shared/proto/dirac/common"
-import { DiracCheckpointRestore } from "@shared/WebviewMessage"
+import { CheckpointRestoreRequest } from "@shared/proto/isaac/checkpoints"
+import { Int64Request } from "@shared/proto/isaac/common"
+import { IsaacCheckpointRestore } from "@shared/WebviewMessage"
 import { BookmarkIcon } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
@@ -102,7 +102,7 @@ export const CheckmarkControl = ({ messageTs, isCheckpointCheckedOut }: Checkmar
 	const handleRestoreTask = async () => {
 		setRestoreTaskDisabled(true)
 		try {
-			const restoreType: DiracCheckpointRestore = "task"
+			const restoreType: IsaacCheckpointRestore = "task"
 			await CheckpointsServiceClient.checkpointRestore(
 				CheckpointRestoreRequest.create({
 					number: messageTs,
@@ -119,7 +119,7 @@ export const CheckmarkControl = ({ messageTs, isCheckpointCheckedOut }: Checkmar
 	const handleRestoreWorkspace = async () => {
 		setRestoreWorkspaceDisabled(true)
 		try {
-			const restoreType: DiracCheckpointRestore = "workspace"
+			const restoreType: IsaacCheckpointRestore = "workspace"
 			await CheckpointsServiceClient.checkpointRestore(
 				CheckpointRestoreRequest.create({
 					number: messageTs,
@@ -136,7 +136,7 @@ export const CheckmarkControl = ({ messageTs, isCheckpointCheckedOut }: Checkmar
 	const handleRestoreBoth = async () => {
 		setRestoreBothDisabled(true)
 		try {
-			const restoreType: DiracCheckpointRestore = "taskAndWorkspace"
+			const restoreType: IsaacCheckpointRestore = "taskAndWorkspace"
 			await CheckpointsServiceClient.checkpointRestore(
 				CheckpointRestoreRequest.create({
 					number: messageTs,

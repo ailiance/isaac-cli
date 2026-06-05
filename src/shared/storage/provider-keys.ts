@@ -5,7 +5,7 @@ import { ApiProvider, liteLlmDefaultModelId, openRouterDefaultModelId } from "..
 
 const ProviderKeyMap: Partial<Record<ApiProvider, string>> = {
 	openrouter: "OpenRouterModelId",
-	dirac: "DiracModelId",
+	dirac: "IsaacModelId",
 	openai: "OpenAiModelId",
 	lmstudio: "LmStudioModelId",
 	litellm: "LiteLlmModelId",

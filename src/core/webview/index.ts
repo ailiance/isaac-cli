@@ -1,1 +1,1 @@
-export { DiracWebviewProvider } from "./WebviewProvider"
+export { IsaacWebviewProvider } from "./WebviewProvider"

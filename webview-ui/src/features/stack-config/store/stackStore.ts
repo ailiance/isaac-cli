@@ -1,4 +1,4 @@
-import type { StackSnapshot } from "@shared/proto/dirac/stack"
+import type { StackSnapshot } from "@shared/proto/isaac/stack"
 import { create } from "zustand"
 
 interface StackState {

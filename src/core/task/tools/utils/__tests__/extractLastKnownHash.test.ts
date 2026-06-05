@@ -1,13 +1,13 @@
 import { expect } from "chai"
-import type { DiracStorageMessage } from "@/shared/messages"
-import { DiracDefaultTool } from "@/shared/tools"
+import type { IsaacStorageMessage } from "@/shared/messages"
+import { IsaacDefaultTool } from "@/shared/tools"
 import { extractLastKnownHashFromHistory } from "../extractLastKnownHash"
 
 /**
  * Builds a minimal assistant/user message pair representing a `read_file`
  * tool call against `targetPath` whose result carries `[File Hash: ...]`.
  */
-function readFilePair(toolUseId: string, targetPath: string, resultText: string): DiracStorageMessage[] {
+function readFilePair(toolUseId: string, targetPath: string, resultText: string): IsaacStorageMessage[] {
 	return [
 		{
 			role: "assistant",
@@ -15,11 +15,11 @@ function readFilePair(toolUseId: string, targetPath: string, resultText: string)
 				{
 					type: "tool_use",
 					id: toolUseId,
-					name: DiracDefaultTool.FILE_READ,
+					name: IsaacDefaultTool.FILE_READ,
 					input: { path: targetPath },
 				},
 			],
-		} as unknown as DiracStorageMessage,
+		} as unknown as IsaacStorageMessage,
 		{
 			role: "user",
 			content: [
@@ -29,7 +29,7 @@ function readFilePair(toolUseId: string, targetPath: string, resultText: string)
 					content: resultText,
 				},
 			],
-		} as unknown as DiracStorageMessage,
+		} as unknown as IsaacStorageMessage,
 	]
 }
 
@@ -71,43 +71,43 @@ describe("extractLastKnownHashFromHistory — stale anchor detection", () => {
 					{
 						type: "tool_use",
 						id: "t1",
-						name: DiracDefaultTool.FILE_READ,
+						name: IsaacDefaultTool.FILE_READ,
 						input: { paths: ["src/a.ts", "src/b.ts"] },
 					},
 				],
-			} as unknown as DiracStorageMessage,
+			} as unknown as IsaacStorageMessage,
 			{
 				role: "user",
 				content: [{ type: "tool_result", tool_use_id: "t1", content: multiResult }],
-			} as unknown as DiracStorageMessage,
+			} as unknown as IsaacStorageMessage,
 		]
 		expect(extractLastKnownHashFromHistory(history, "src/b.ts")).to.equal("222bbb")
 	})
 
 	it("ignores a result block whose tool_use_id does not match", () => {
-		const history: DiracStorageMessage[] = [
+		const history: IsaacStorageMessage[] = [
 			{
 				role: "assistant",
-				content: [{ type: "tool_use", id: "t1", name: DiracDefaultTool.FILE_READ, input: { path: "src/a.ts" } }],
-			} as unknown as DiracStorageMessage,
+				content: [{ type: "tool_use", id: "t1", name: IsaacDefaultTool.FILE_READ, input: { path: "src/a.ts" } }],
+			} as unknown as IsaacStorageMessage,
 			{
 				role: "user",
 				content: [{ type: "tool_result", tool_use_id: "MISMATCH", content: "[File Hash: zzzzzz]" }],
-			} as unknown as DiracStorageMessage,
+			} as unknown as IsaacStorageMessage,
 		]
 		expect(extractLastKnownHashFromHistory(history, "src/a.ts")).to.equal(undefined)
 	})
 
 	it("ignores tool calls whose name is not read_file", () => {
-		const history: DiracStorageMessage[] = [
+		const history: IsaacStorageMessage[] = [
 			{
 				role: "assistant",
-				content: [{ type: "tool_use", id: "t1", name: DiracDefaultTool.EDIT_FILE, input: { path: "src/a.ts" } }],
-			} as unknown as DiracStorageMessage,
+				content: [{ type: "tool_use", id: "t1", name: IsaacDefaultTool.EDIT_FILE, input: { path: "src/a.ts" } }],
+			} as unknown as IsaacStorageMessage,
 			{
 				role: "user",
 				content: [{ type: "tool_result", tool_use_id: "t1", content: "[File Hash: 999999]" }],
-			} as unknown as DiracStorageMessage,
+			} as unknown as IsaacStorageMessage,
 		]
 		expect(extractLastKnownHashFromHistory(history, "src/a.ts")).to.equal(undefined)
 	})

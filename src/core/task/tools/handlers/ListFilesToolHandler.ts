@@ -6,7 +6,7 @@ import { type FileInfo, listFiles } from "@services/glob/list-files"
 import { arePathsEqual, getReadablePath, isLocatedInWorkspace } from "@utils/path"
 import { telemetryService } from "@/services/telemetry"
 import { Logger } from "@/shared/services/Logger"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import { notifyAsyncTool } from "../../AsyncToolNotifier"
 import type { ToolResponse } from "../../index"
 import type { TaskMessenger } from "../../TaskMessenger"
@@ -35,7 +35,7 @@ interface PerPathListing {
 
 export class ListFilesToolHandler implements IFullyManagedTool {
 	private static readonly MAX_FILES_LIMIT = 200
-	readonly name = DiracDefaultTool.LIST_FILES
+	readonly name = IsaacDefaultTool.LIST_FILES
 
 	constructor(private validator: ToolValidator) {}
 
@@ -98,7 +98,7 @@ export class ListFilesToolHandler implements IFullyManagedTool {
 			}
 
 			// Check diracignore access before performing any IO.
-			const accessValidation = this.validator.checkDiracIgnorePath(relDirPath)
+			const accessValidation = this.validator.checkIsaacIgnorePath(relDirPath)
 			if (!accessValidation.ok) {
 				out.push({
 					relDirPath,
@@ -190,7 +190,7 @@ export class ListFilesToolHandler implements IFullyManagedTool {
 			if (validation.paramName) {
 				return await config.callbacks.sayAndCreateMissingParamError(this.name, validation.paramName as any)
 			}
-			await config.callbacks.say("error", `Dirac tried to use ${this.name} without providing any paths. Retrying...`)
+			await config.callbacks.say("error", `Isaac tried to use ${this.name} without providing any paths. Retrying...`)
 			return formatResponse.toolError(validation.error!)
 		}
 
@@ -333,8 +333,8 @@ export class ListFilesToolHandler implements IFullyManagedTool {
 			} else {
 				const notificationMessage =
 					relPaths.length > 1
-						? `Dirac wants to view ${relPaths.length} directories`
-						: `Dirac wants to view directory ${relPaths[0]}/`
+						? `Isaac wants to view ${relPaths.length} directories`
+						: `Isaac wants to view directory ${relPaths[0]}/`
 				showNotificationForApproval(notificationMessage, config.autoApprovalSettings.enableNotifications)
 				await config.callbacks.removeLastPartialMessageIfExistsWithType("say", "tool")
 				const { didApprove } = await ToolResultUtils.askApprovalAndPushFeedback("tool", placeholderMessage, config)
@@ -462,8 +462,8 @@ export class ListFilesToolHandler implements IFullyManagedTool {
 		} else {
 			const notificationMessage =
 				relPaths.length > 1
-					? `Dirac wants to view ${relPaths.length} directories`
-					: `Dirac wants to view directory ${getWorkspaceBasename(absolutePaths[0], "ListFilesToolHandler.notification")}/`
+					? `Isaac wants to view ${relPaths.length} directories`
+					: `Isaac wants to view directory ${getWorkspaceBasename(absolutePaths[0], "ListFilesToolHandler.notification")}/`
 
 			showNotificationForApproval(notificationMessage, config.autoApprovalSettings.enableNotifications)
 

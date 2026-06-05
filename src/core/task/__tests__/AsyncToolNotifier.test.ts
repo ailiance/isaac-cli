@@ -1,4 +1,4 @@
-import { DiracSayTool } from "@shared/ExtensionMessage"
+import { IsaacSayTool } from "@shared/ExtensionMessage"
 import { strict as assert } from "assert"
 import { describe, it } from "mocha"
 import { notifyAsyncTool } from "../AsyncToolNotifier"
@@ -27,7 +27,7 @@ function makeMessengerStub(): { messenger: TaskMessenger; sayCalls: CapturedSay[
 	return { messenger, sayCalls }
 }
 
-const initialPayload: DiracSayTool = {
+const initialPayload: IsaacSayTool = {
 	tool: "execute_command",
 	command: "sleep 1",
 }
@@ -43,7 +43,7 @@ describe("AsyncToolNotifier", () => {
 		assert.equal(sayCalls.length, 1)
 		assert.equal(sayCalls[0].type, "tool")
 		assert.equal(sayCalls[0].partial, true)
-		const parsed = JSON.parse(sayCalls[0].text!) as DiracSayTool
+		const parsed = JSON.parse(sayCalls[0].text!) as IsaacSayTool
 		assert.equal(parsed.tool, "execute_command")
 		assert.equal(parsed.asyncStatus, "running")
 		assert.equal(parsed.asyncTaskId, entry.taskId)
@@ -63,7 +63,7 @@ describe("AsyncToolNotifier", () => {
 
 		assert.equal(sayCalls.length, 2)
 		assert.equal(sayCalls[1].partial, false)
-		const parsed = JSON.parse(sayCalls[1].text!) as DiracSayTool
+		const parsed = JSON.parse(sayCalls[1].text!) as IsaacSayTool
 		assert.equal(parsed.asyncStatus, "completed")
 		assert.equal(parsed.asyncResult, "ok")
 		assert.ok(parsed.asyncFinishedAt && parsed.asyncFinishedAt >= parsed.asyncStartedAt!)
@@ -81,7 +81,7 @@ describe("AsyncToolNotifier", () => {
 		await new Promise((r) => setImmediate(r))
 
 		assert.equal(sayCalls.length, 2)
-		const parsed = JSON.parse(sayCalls[1].text!) as DiracSayTool
+		const parsed = JSON.parse(sayCalls[1].text!) as IsaacSayTool
 		assert.equal(parsed.asyncStatus, "cancelled")
 	})
 
@@ -95,7 +95,7 @@ describe("AsyncToolNotifier", () => {
 
 		await new Promise((r) => setImmediate(r))
 
-		const parsed = JSON.parse(sayCalls[1].text!) as DiracSayTool
+		const parsed = JSON.parse(sayCalls[1].text!) as IsaacSayTool
 		assert.equal(parsed.asyncStatus, "failed")
 		assert.equal(parsed.asyncError, "boom")
 	})

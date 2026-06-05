@@ -170,7 +170,7 @@ interface ModelInfoViewProps {
 	selectedModelId: string
 	modelInfo: ModelInfo
 	isPopup?: boolean
-	// Provider routing props (optional - only shown for Dirac provider)
+	// Provider routing props (optional - only shown for Isaac provider)
 	providerSorting?: string
 	onProviderSortingChange?: (value: string) => void
 	showProviderRouting?: boolean

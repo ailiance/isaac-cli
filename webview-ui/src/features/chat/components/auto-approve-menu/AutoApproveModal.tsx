@@ -73,7 +73,7 @@ const AutoApproveModal: React.FC<AutoApproveModalProps> = ({ isVisible, setIsVis
 					maxHeight: "60vh",
 				}}>
 				<div className="mb-2.5 text-muted-foreground text-xs cursor-pointer" onClick={() => setIsVisible(false)}>
-					Let Dirac take these actions without asking for approval.{" "}
+					Let Isaac take these actions without asking for approval.{" "}
 					<a
 						className="text-link hover:text-link-hover"
 						href="https://dirac.run/docs/features/auto-approve#auto-approve"

@@ -46,7 +46,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ isWelcomeState, quote, o
 			)}
 			<Text> </Text>
 			<Text bold color="white">
-				{centerText(`ISAAC v${CLI_VERSION} — EU-sovereign coding agent (fork of Dirac/Cline)`)}
+				{centerText(`ISAAC v${CLI_VERSION} — EU-sovereign coding agent (fork of Isaac/Cline)`)}
 			</Text>
 			{webuiUrl && (
 				<Box marginTop={0}>

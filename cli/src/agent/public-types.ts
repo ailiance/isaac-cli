@@ -1,5 +1,5 @@
 /**
- * Public types for the Dirac library API.
+ * Public types for the Isaac library API.
  *
  * This file contains types that are safe to export to library consumers.
  * It must NOT import any internal types (Controller, StateManager, etc.)
@@ -55,7 +55,7 @@ export type PermissionHandler = (
  * Maps ACP SessionUpdate types to their event listener signatures.
  * Uses the sessionUpdate discriminator to derive event names and payload types.
  */
-export type DiracSessionEvents = {
+export type IsaacSessionEvents = {
 	[K in SessionUpdateType]: (payload: SessionUpdatePayload<K>) => void
 } & {
 	/** Error event for session-level errors (not part of ACP SessionUpdate) */
@@ -63,16 +63,16 @@ export type DiracSessionEvents = {
 }
 
 // ============================================================
-// DiracAgent Options
+// IsaacAgent Options
 // ============================================================
 
 /**
- * Options for creating a DiracAgent instance.
+ * Options for creating a IsaacAgent instance.
  */
-export interface DiracAgentOptions {
+export interface IsaacAgentOptions {
 	/** Whether debug logging is enabled */
 	debug?: boolean
-	/** Dirac Config Directory (defaults to ~/.dirac) */
+	/** Isaac Config Directory (defaults to ~/.dirac) */
 	diracDir?: string
 	/** Workspace directory for CLI context initialization */
 	cwd?: string
@@ -86,7 +86,7 @@ export interface DiracAgentOptions {
 export interface AcpAgentOptions {
 	/** Whether debug logging is enabled */
 	debug?: boolean
-	/** Dirac Config Directory (defaults to ~/.dirac) */
+	/** Isaac Config Directory (defaults to ~/.dirac) */
 	diracDir?: string
 	/** Workspace directory for CLI context initialization */
 	cwd?: string
@@ -100,9 +100,9 @@ export interface AcpAgentOptions {
 export type SessionID = string
 
 /**
- * Extended session data stored by Dirac for ACP sessions.
+ * Extended session data stored by Isaac for ACP sessions.
  */
-export interface DiracAcpSession {
+export interface IsaacAcpSession {
 	/** Unique session ID */
 	sessionId: SessionID
 	/** Working directory for the session */
@@ -138,7 +138,7 @@ export enum AcpSessionStatus {
 }
 
 /**
- * State tracking for an active ACP session within Dirac.
+ * State tracking for an active ACP session within Isaac.
  */
 export interface AcpSessionState {
 	/** Session ID */
@@ -156,9 +156,9 @@ export interface AcpSessionState {
 // ============================================================
 
 /**
- * Dirac-specific agent capabilities extending the ACP base capabilities.
+ * Isaac-specific agent capabilities extending the ACP base capabilities.
  */
-export interface DiracAgentCapabilities {
+export interface IsaacAgentCapabilities {
 	/** Support for loading sessions from disk */
 	loadSession: boolean
 	/** Prompt capabilities for the agent */
@@ -173,11 +173,11 @@ export interface DiracAgentCapabilities {
 }
 
 /**
- * Dirac agent info for ACP initialization response.
+ * Isaac agent info for ACP initialization response.
  */
-export interface DiracAgentInfo {
+export interface IsaacAgentInfo {
 	name: "dirac"
-	title: "Dirac"
+	title: "Isaac"
 	version: string
 }
 
@@ -188,7 +188,7 @@ export interface DiracAgentInfo {
 /**
  * Permission option as presented to the ACP client.
  */
-export interface DiracPermissionOption {
+export interface IsaacPermissionOption {
 	kind: acp.PermissionOptionKind
 	name: string
 	optionId: string
@@ -199,8 +199,8 @@ export interface DiracPermissionOption {
 // ============================================================
 
 /**
- * Result of translating a Dirac message to ACP session update(s).
- * A single Dirac message may produce multiple ACP updates.
+ * Result of translating a Isaac message to ACP session update(s).
+ * A single Isaac message may produce multiple ACP updates.
  */
 export interface TranslatedMessage {
 	/** The session updates to send */

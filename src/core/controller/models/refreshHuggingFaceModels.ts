@@ -1,6 +1,6 @@
 import { huggingFaceModels } from "@shared/api"
-import { EmptyRequest } from "@shared/proto/dirac/common"
-import { OpenRouterCompatibleModelInfo, OpenRouterModelInfo } from "@shared/proto/dirac/models"
+import { EmptyRequest } from "@shared/proto/isaac/common"
+import { OpenRouterCompatibleModelInfo, OpenRouterModelInfo } from "@shared/proto/isaac/models"
 import { fileExistsAtPath } from "@utils/fs"
 import axios from "axios"
 import fs from "fs/promises"

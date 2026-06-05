@@ -1,7 +1,7 @@
 import { buildApiHandler } from "@core/api"
-import { DiracToolSet } from "@core/prompts/system-prompt/registry/DiracToolSet"
+import { IsaacToolSet } from "@core/prompts/system-prompt/registry/IsaacToolSet"
 import type { SystemPromptContext } from "@core/prompts/system-prompt/types"
-import { DiracDefaultTool } from "@shared/tools"
+import { IsaacDefaultTool } from "@shared/tools"
 import { ApiProvider } from "@/shared/api"
 import { getProviderModelIdKey } from "@/shared/storage/provider-keys"
 import type { TaskConfig } from "../types/TaskConfig"
@@ -10,8 +10,8 @@ import { AgentConfigLoader } from "./AgentConfigLoader"
 
 export type AgentConfig = Partial<AgentBaseConfig>
 
-export const SUBAGENT_DEFAULT_ALLOWED_TOOLS: DiracDefaultTool[] = Object.values(DiracDefaultTool).filter(
-	(tool) => tool !== DiracDefaultTool.USE_SUBAGENTS
+export const SUBAGENT_DEFAULT_ALLOWED_TOOLS: IsaacDefaultTool[] = Object.values(IsaacDefaultTool).filter(
+	(tool) => tool !== IsaacDefaultTool.USE_SUBAGENTS
 )
 
 export const SUBAGENT_SYSTEM_SUFFIX = `\n\n# Subagent Execution Mode
@@ -22,7 +22,7 @@ Call attempt_completion when finished or if you realize the task is not making a
 
 export class SubagentBuilder {
 	private readonly agentConfig: AgentConfig = {}
-	private readonly allowedTools: DiracDefaultTool[]
+	private readonly allowedTools: IsaacDefaultTool[]
 	private readonly apiHandler: ReturnType<typeof buildApiHandler>
 
 	constructor(
@@ -47,7 +47,7 @@ export class SubagentBuilder {
 		return this.apiHandler
 	}
 
-	getAllowedTools(): DiracDefaultTool[] {
+	getAllowedTools(): IsaacDefaultTool[] {
 		return this.allowedTools
 	}
 
@@ -62,16 +62,16 @@ export class SubagentBuilder {
 	}
 
 	buildNativeTools(context: SystemPromptContext) {
-		const toolSpecs = DiracToolSet.getEnabledToolSpecs(context)
+		const toolSpecs = IsaacToolSet.getEnabledToolSpecs(context)
 		const filteredToolSpecs = toolSpecs
 
-		const converter = DiracToolSet.getNativeConverter(context.providerInfo.providerId, context.providerInfo.model.id)
+		const converter = IsaacToolSet.getNativeConverter(context.providerInfo.providerId, context.providerInfo.model.id)
 		return filteredToolSpecs.map((tool) => converter(tool, context))
 	}
 
-	private resolveAllowedTools(configuredTools?: DiracDefaultTool[]): DiracDefaultTool[] {
+	private resolveAllowedTools(configuredTools?: IsaacDefaultTool[]): IsaacDefaultTool[] {
 		const sourceTools = configuredTools && configuredTools.length > 0 ? configuredTools : SUBAGENT_DEFAULT_ALLOWED_TOOLS
-		return Array.from(new Set([...sourceTools, DiracDefaultTool.ATTEMPT]))
+		return Array.from(new Set([...sourceTools, IsaacDefaultTool.ATTEMPT]))
 	}
 
 	private buildAgentIdentitySystemPrefix(): string {

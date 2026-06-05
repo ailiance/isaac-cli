@@ -3,7 +3,7 @@ import "should"
 import type { ToolUse } from "@core/assistant-message"
 import * as HookExecutor from "@core/hooks/hook-executor"
 import { TaskState } from "@core/task/TaskState"
-import { DiracDefaultTool } from "@shared/tools"
+import { IsaacDefaultTool } from "@shared/tools"
 import * as sinon from "sinon"
 import { ToolHookUtils } from "../ToolHookUtils"
 
@@ -28,7 +28,7 @@ describe("ToolHookUtils", () => {
 
 			const block: ToolUse = {
 				type: "tool_use",
-				name: DiracDefaultTool.FILE_READ,
+				name: IsaacDefaultTool.FILE_READ,
 				params: { path: "src/index.ts" },
 				partial: false,
 			}
@@ -74,7 +74,7 @@ describe("ToolHookUtils", () => {
 
 			const block: ToolUse = {
 				type: "tool_use",
-				name: DiracDefaultTool.BASH,
+				name: IsaacDefaultTool.BASH,
 				params: { command: "echo hello" },
 				partial: false,
 			}

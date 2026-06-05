@@ -1,4 +1,4 @@
-import { StringArrayRequest } from "@shared/proto/dirac/common"
+import { StringArrayRequest } from "@shared/proto/isaac/common"
 import { TrashIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { TaskServiceClient } from "@/shared/api/grpc-client"

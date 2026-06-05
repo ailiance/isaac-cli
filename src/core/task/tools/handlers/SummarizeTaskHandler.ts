@@ -7,10 +7,10 @@ import { formatResponse } from "@core/prompts/responses"
 import { StateManager } from "@core/storage/StateManager"
 import { resolveWorkspacePath } from "@core/workspace"
 import { extractFileContent } from "@integrations/misc/extract-file-content"
-import { DiracSayTool } from "@shared/ExtensionMessage"
+import { IsaacSayTool } from "@shared/ExtensionMessage"
 import { telemetryService } from "@/services/telemetry"
 import { Logger } from "@/shared/services/Logger"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IPartialBlockHandler, IToolHandler } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
@@ -18,7 +18,7 @@ import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 
 export class SummarizeTaskHandler implements IToolHandler, IPartialBlockHandler {
-	readonly name = DiracDefaultTool.SUMMARIZE_TASK
+	readonly name = IsaacDefaultTool.SUMMARIZE_TASK
 
 	constructor(private validator: ToolValidator) {}
 
@@ -59,7 +59,7 @@ export class SummarizeTaskHandler implements IToolHandler, IPartialBlockHandler 
 						apiConversationHistory: apiHistory,
 						conversationHistoryDeletedRange: config.taskState.conversationHistoryDeletedRange,
 						contextManager: config.services.contextManager,
-						diracMessages: config.messageState.getDiracMessages(),
+						diracMessages: config.messageState.getIsaacMessages(),
 						messageStateHandler: config.messageState,
 						compactionStrategy: strategy,
 						say: config.callbacks.say,
@@ -106,7 +106,7 @@ export class SummarizeTaskHandler implements IToolHandler, IPartialBlockHandler 
 			const completeMessage = JSON.stringify({
 				tool: "summarizeTask",
 				content: context,
-			} satisfies DiracSayTool)
+			} satisfies IsaacSayTool)
 
 			await config.callbacks.removeLastPartialMessageIfExistsWithType("say", "tool")
 			await config.callbacks.say("tool", completeMessage, undefined, undefined, false)
@@ -160,13 +160,13 @@ export class SummarizeTaskHandler implements IToolHandler, IPartialBlockHandler 
 					}
 
 					// Check .diracignore first and skip ignored files
-					const accessValidation = this.validator.checkDiracIgnorePath(relPath)
+					const accessValidation = this.validator.checkIsaacIgnorePath(relPath)
 					if (!accessValidation.ok) {
 						continue
 					}
 
 					// Only process if auto-approved (respects workspace/outside-workspace settings)
-					if (await config.callbacks.shouldAutoApproveToolWithPath(DiracDefaultTool.FILE_READ, relPath)) {
+					if (await config.callbacks.shouldAutoApproveToolWithPath(IsaacDefaultTool.FILE_READ, relPath)) {
 						try {
 							// Resolve path (handles multi-root workspaces)
 							const pathResult = resolveWorkspacePath(config, relPath, "SummarizeTaskHandler")
@@ -233,14 +233,14 @@ export class SummarizeTaskHandler implements IToolHandler, IPartialBlockHandler 
 				config.taskState.conversationHistoryDeletedRange,
 				keepStrategy,
 			)
-			await config.messageState.saveDiracMessagesAndUpdateHistory()
+			await config.messageState.saveIsaacMessagesAndUpdateHistory()
 
 			// Set summarizing state
 			config.taskState.currentlySummarizing = true
 
 			// Capture telemetry after main business logic is complete
 			const telemetryData = config.services.contextManager.getContextTelemetryData(
-				config.messageState.getDiracMessages(),
+				config.messageState.getIsaacMessages(),
 				config.api,
 				config.taskState.lastAutoCompactTriggerIndex,
 			)
@@ -288,7 +288,7 @@ export class SummarizeTaskHandler implements IToolHandler, IPartialBlockHandler 
 		const partialMessage = JSON.stringify({
 			tool: "summarizeTask",
 			content: uiHelpers.removeClosingTag(block, "context", context),
-		} satisfies DiracSayTool)
+		} satisfies IsaacSayTool)
 
 		await uiHelpers.say("tool", partialMessage, undefined, undefined, block.partial)
 	}

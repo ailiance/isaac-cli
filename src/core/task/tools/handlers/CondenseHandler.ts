@@ -4,15 +4,15 @@ import { telemetryService } from "@/services/telemetry"
 import { formatResponse } from "@core/prompts/responses"
 import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { showSystemNotification } from "@integrations/notifications"
-import { DiracAsk } from "@shared/ExtensionMessage"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacAsk } from "@shared/ExtensionMessage"
+import { IsaacDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IPartialBlockHandler, IToolHandler } from "../ToolExecutorCoordinator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 
 export class CondenseHandler implements IToolHandler, IPartialBlockHandler {
-	readonly name = DiracDefaultTool.CONDENSE
+	readonly name = IsaacDefaultTool.CONDENSE
 
 	constructor() {}
 
@@ -34,8 +34,8 @@ export class CondenseHandler implements IToolHandler, IPartialBlockHandler {
 		// Show notification if enabled
 		if (config.autoApprovalSettings.enableNotifications) {
 			showSystemNotification({
-				subtitle: "Dirac wants to condense the conversation...",
-				message: `Dirac is suggesting to condense your conversation with: ${context}`,
+				subtitle: "Isaac wants to condense the conversation...",
+				message: `Isaac is suggesting to condense your conversation with: ${context}`,
 			})
 		}
 
@@ -85,7 +85,7 @@ export class CondenseHandler implements IToolHandler, IPartialBlockHandler {
 			config.taskState.conversationHistoryDeletedRange,
 			keepStrategy,
 		)
-		await config.messageState.saveDiracMessagesAndUpdateHistory()
+		await config.messageState.saveIsaacMessagesAndUpdateHistory()
 
 		const apiConfig = config.services.stateManager.getApiConfiguration()
 		const provider = (config.mode === "plan" ? apiConfig.planModeApiProvider : apiConfig.actModeApiProvider) as string
@@ -113,6 +113,6 @@ export class CondenseHandler implements IToolHandler, IPartialBlockHandler {
 			return
 		}
 
-		await uiHelpers.ask("condense" as DiracAsk, cleanedContext, block.partial).catch(() => {})
+		await uiHelpers.ask("condense" as IsaacAsk, cleanedContext, block.partial).catch(() => {})
 	}
 }

@@ -8,7 +8,7 @@ import type {
 	StackModel,
 	StackPluginInfo,
 	StackSnapshot,
-} from "@shared/proto/dirac/stack"
+} from "@shared/proto/isaac/stack"
 import { loadMcpConfigsFromPlugins } from "@/core/mcp/McpServerConfigLoader"
 import { pluginDiscoveryService } from "@/core/plugins/PluginDiscoveryService"
 import { jinaRouterManager } from "../jina-router/JinaRouterManager"

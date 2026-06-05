@@ -1,5 +1,5 @@
-import type { McpServerInfo } from "@shared/proto/dirac/stack"
-import { StringArrayRequest } from "@shared/proto/dirac/common"
+import type { McpServerInfo } from "@shared/proto/isaac/stack"
+import { StringArrayRequest } from "@shared/proto/isaac/common"
 import { useState } from "react"
 import { StackServiceClient } from "@/shared/api/grpc-client"
 import { Switch } from "@/shared/ui/switch"

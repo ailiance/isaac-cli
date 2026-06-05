@@ -10,8 +10,8 @@ export const SYSTEM_PROMPT = (context: SystemPromptContext) => {
 		providerInfo,
 		preferredLanguageInstructions,
 		diracIgnoreInstructions,
-		globalDiracRulesFileInstructions,
-		localDiracRulesFileInstructions,
+		globalIsaacRulesFileInstructions,
+		localIsaacRulesFileInstructions,
 		localCursorRulesFileInstructions,
 		localCursorRulesDirInstructions,
 		localWindsurfRulesFileInstructions,
@@ -23,7 +23,7 @@ export const SYSTEM_PROMPT = (context: SystemPromptContext) => {
 
 	const currentCwd = cwd || process.cwd()
 
-	return `You are Dirac, an exceptionally skilled AI agent at solving problems with extensive knowledge in many programming languages, frameworks, design patterns, and best practices. 
+	return `You are Isaac, an exceptionally skilled AI agent at solving problems with extensive knowledge in many programming languages, frameworks, design patterns, and best practices. 
 
 PRIME DIRECTIVES
 
@@ -125,8 +125,8 @@ ${
 	userInstructions ||
 	diracRules ||
 	preferredLanguageInstructions ||
-	globalDiracRulesFileInstructions ||
-	localDiracRulesFileInstructions ||
+	globalIsaacRulesFileInstructions ||
+	localIsaacRulesFileInstructions ||
 	localCursorRulesFileInstructions ||
 	localCursorRulesDirInstructions ||
 	localWindsurfRulesFileInstructions ||
@@ -135,8 +135,8 @@ ${
 				userInstructions ? `\n${userInstructions}` : ""
 			}${diracRules ? `\n${diracRules}` : ""}${preferredLanguageInstructions ? `\n${preferredLanguageInstructions}` : ""}${
 				diracIgnoreInstructions ? `\n${diracIgnoreInstructions}` : ""
-			}${globalDiracRulesFileInstructions ? `\n${globalDiracRulesFileInstructions}` : ""}${
-				localDiracRulesFileInstructions ? `\n${localDiracRulesFileInstructions}` : ""
+			}${globalIsaacRulesFileInstructions ? `\n${globalIsaacRulesFileInstructions}` : ""}${
+				localIsaacRulesFileInstructions ? `\n${localIsaacRulesFileInstructions}` : ""
 			}${localCursorRulesFileInstructions ? `\n${localCursorRulesFileInstructions}` : ""}${
 				localCursorRulesDirInstructions ? `\n${localCursorRulesDirInstructions}` : ""
 			}${localWindsurfRulesFileInstructions ? `\n${localWindsurfRulesFileInstructions}` : ""}${

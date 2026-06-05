@@ -4,7 +4,7 @@ import { ExecuteCommandToolHandler } from "../ExecuteCommandToolHandler"
 import { ToolValidator } from "../../ToolValidator"
 import { TaskState } from "../../../TaskState"
 import type { TaskConfig } from "../../types/TaskConfig"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import sinon from "sinon"
 
 function createConfig() {
@@ -15,8 +15,8 @@ function createConfig() {
 		sayAndCreateMissingParamError: sinon.stub().resolves("missing"),
 		removeLastPartialMessageIfExistsWithType: sinon.stub().resolves(),
 		executeCommandTool: sinon.stub().resolves([false, "ok"]),
-		getDiracMessages: sinon.stub().returns([]),
-		updateDiracMessage: sinon.stub().resolves(),
+		getIsaacMessages: sinon.stub().returns([]),
+		updateIsaacMessage: sinon.stub().resolves(),
 	}
 
 	const config = {
@@ -67,7 +67,7 @@ describe("ExecuteCommandToolHandler", () => {
 		const result = await handler.execute(config, {
 			type: "tool_use",
 			call_id: "t1",
-			name: DiracDefaultTool.BASH,
+			name: IsaacDefaultTool.BASH,
 			params: { commands: [`cat ${longPath}`] },
 			partial: false,
 		})
@@ -85,7 +85,7 @@ describe("ExecuteCommandToolHandler", () => {
 		const result = await handler.execute(config, {
 			type: "tool_use",
 			call_id: "t1",
-			name: DiracDefaultTool.BASH,
+			name: IsaacDefaultTool.BASH,
 			params: { commands: [`cat ${normalPath}`] },
 			partial: false,
 		})
@@ -104,7 +104,7 @@ describe("ExecuteCommandToolHandler", () => {
 		const result = await handler.execute(config, {
 			type: "tool_use",
 			call_id: "t1",
-			name: DiracDefaultTool.BASH,
+			name: IsaacDefaultTool.BASH,
 			params: { commands: [`ls ${longPath}`] },
 			partial: false,
 		})
@@ -121,7 +121,7 @@ describe("ExecuteCommandToolHandler", () => {
 		const result = await handler.execute(config, {
 			type: "tool_use",
 			call_id: "t1",
-			name: DiracDefaultTool.BASH,
+			name: IsaacDefaultTool.BASH,
 			params: { commands: [longCommand] },
 			partial: false,
 		})

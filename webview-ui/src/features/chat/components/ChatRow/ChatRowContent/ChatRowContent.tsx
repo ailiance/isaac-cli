@@ -1,4 +1,4 @@
-import { DiracApiReqInfo, DiracSayTool, COMMAND_OUTPUT_STRING } from "@shared/ExtensionMessage"
+import { IsaacApiReqInfo, IsaacSayTool, COMMAND_OUTPUT_STRING } from "@shared/ExtensionMessage"
 import { memo, useEffect, useMemo, useRef, useState } from "react"
 import SubagentStatusRow from "@/features/chat/components/SubagentStatusRow"
 import { useChatStore } from "@/features/chat/store/chatStore"
@@ -74,7 +74,7 @@ export const ChatRowContent = memo(
 		const [cost, apiReqCancelReason, apiReqStreamingFailedMessage] = useMemo(() => {
 			if (message.text != null && message.say === "api_req_started") {
 				try {
-					const info: DiracApiReqInfo = JSON.parse(message.text)
+					const info: IsaacApiReqInfo = JSON.parse(message.text)
 					return [info.cost, info.cancelReason, info.streamingFailedMessage]
 				} catch (e) {
 					console.error("Error parsing api_req_started message:", e)
@@ -132,7 +132,7 @@ export const ChatRowContent = memo(
 		const tool = useMemo(() => {
 			if (message.ask === "tool" || message.say === "tool") {
 				try {
-					return JSON.parse(message.text || "{}") as DiracSayTool
+					return JSON.parse(message.text || "{}") as IsaacSayTool
 				} catch (e) {
 					console.error("Error parsing tool message:", e)
 					return null

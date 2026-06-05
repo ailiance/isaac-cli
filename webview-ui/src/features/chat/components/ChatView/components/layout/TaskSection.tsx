@@ -1,11 +1,11 @@
-import { DiracApiReqInfo, DiracMessage } from "@shared/ExtensionMessage"
+import { IsaacApiReqInfo, IsaacMessage } from "@shared/ExtensionMessage"
 import React from "react"
 import TaskHeader from "@/features/chat/components/TaskHeader/TaskHeader"
 import { MessageHandlers } from "../../types/chatTypes"
 
 interface TaskSectionProps {
-	task: DiracMessage
-	lastApiReqInfo?: DiracApiReqInfo
+	task: IsaacMessage
+	lastApiReqInfo?: IsaacApiReqInfo
 	apiMetrics: {
 		totalCost: number
 	}

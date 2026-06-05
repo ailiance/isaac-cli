@@ -2,25 +2,25 @@ import { Tool as AnthropicTool } from "@anthropic-ai/sdk/resources/index"
 import { FunctionDeclaration as GoogleTool, Type as GoogleToolParamType } from "@google/genai"
 import { ChatCompletionTool as OpenAITool } from "openai/resources/chat/completions"
 import { FunctionTool as OpenAIResponseFunctionTool, Tool as OpenAIResponseTool } from "openai/resources/responses/responses"
-import type { DiracDefaultTool } from "@/shared/tools"
+import type { IsaacDefaultTool } from "@/shared/tools"
 import { MULTI_ROOT_HINT } from "./constants"
 import type { SystemPromptContext } from "./types"
 
-export interface DiracToolSpec {
-	id: DiracDefaultTool
+export interface IsaacToolSpec {
+	id: IsaacDefaultTool
 	name: string
 	description: string
 	instruction?: string
 	contextRequirements?: (context: SystemPromptContext) => boolean
-	parameters?: Array<DiracToolSpecParameter>
+	parameters?: Array<IsaacToolSpecParameter>
 }
 
-interface DiracToolSpecParameter {
+interface IsaacToolSpecParameter {
 	name: string
 	required: boolean
 	instruction: string | ((context: SystemPromptContext) => string)
 	usage?: string
-	dependencies?: DiracDefaultTool[]
+	dependencies?: IsaacDefaultTool[]
 	description?: string
 	contextRequirements?: (context: SystemPromptContext) => boolean
 	// TODO: Confirm if "integer" is actually supported across providers
@@ -44,10 +44,10 @@ interface DiracToolSpecParameter {
 }
 
 /**
- * Converts a DiracToolSpec into an OpenAI ChatCompletionTool definition
+ * Converts a IsaacToolSpec into an OpenAI ChatCompletionTool definition
  * Docs: https://openrouter.ai/docs/features/tool-calling#step-1-inference-request-with-tools
  */
-export function toolSpecFunctionDefinition(tool: DiracToolSpec, context: SystemPromptContext, strict = false): OpenAITool {
+export function toolSpecFunctionDefinition(tool: IsaacToolSpec, context: SystemPromptContext, strict = false): OpenAITool {
 	// Check if the tool should be included based on context requirements
 	if (tool.contextRequirements && !tool.contextRequirements(context)) {
 		throw new Error(`Tool ${tool.name} does not meet context requirements`)
@@ -191,9 +191,9 @@ export function toolSpecFunctionDefinition(tool: DiracToolSpec, context: SystemP
 }
 
 /**
- * Converts a DiracToolSpec into an Anthropic Tool definition
+ * Converts a IsaacToolSpec into an Anthropic Tool definition
  */
-export function toolSpecInputSchema(tool: DiracToolSpec, context: SystemPromptContext): AnthropicTool {
+export function toolSpecInputSchema(tool: IsaacToolSpec, context: SystemPromptContext): AnthropicTool {
 	// Check if the tool should be included based on context requirements
 	if (tool.contextRequirements && !tool.contextRequirements(context)) {
 		throw new Error(`Tool ${tool.name} does not meet context requirements`)
@@ -286,10 +286,10 @@ const GOOGLE_TOOL_PARAM_MAP: Record<string, string> = {
 }
 
 /**
- * Converts a DiracToolSpec into a Google Gemini function.
+ * Converts a IsaacToolSpec into a Google Gemini function.
  * Docs: https://ai.google.dev/gemini-api/docs/function-calling
  */
-export function toolSpecFunctionDeclarations(tool: DiracToolSpec, context: SystemPromptContext): GoogleTool {
+export function toolSpecFunctionDeclarations(tool: IsaacToolSpec, context: SystemPromptContext): GoogleTool {
 	// Check if the tool should be included based on context requirements
 	if (tool.contextRequirements && !tool.contextRequirements(context)) {
 		throw new Error(`Tool ${tool.name} does not meet context requirements`)

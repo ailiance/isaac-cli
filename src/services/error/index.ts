@@ -1,10 +1,10 @@
 import { ErrorSettings } from "./providers/IErrorProvider"
 
-export { DiracError, DiracErrorType } from "./DiracError"
+export { IsaacError, IsaacErrorType } from "./IsaacError"
 export { type ErrorProviderConfig, ErrorProviderFactory, type ErrorProviderType } from "./ErrorProviderFactory"
 export { ErrorService } from "./ErrorService"
 export type { ErrorSettings, IErrorProvider } from "./providers/IErrorProvider"
-export { DiracErrorProvider } from "./providers/DiracErrorProvider"
+export { IsaacErrorProvider } from "./providers/IsaacErrorProvider"
 
 export function getErrorLevelFromString(level: string | undefined): ErrorSettings["level"] {
 	switch (level) {

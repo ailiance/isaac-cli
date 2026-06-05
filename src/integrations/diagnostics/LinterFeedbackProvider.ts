@@ -1,6 +1,6 @@
 import pTimeout from "p-timeout"
 import { HostProvider } from "@/hosts/host-provider"
-import { DiagnosticSeverity, FileDiagnostics } from "@/shared/proto/index.dirac"
+import { DiagnosticSeverity, FileDiagnostics } from "@/shared/proto/index.isaac"
 import { arePathsEqual } from "@/utils/path"
 import { DiagnosticsFeedbackResult, IDiagnosticsProvider } from "./IDiagnosticsProvider"
 import { diagnosticsToProblemsString, getNewDiagnostics, pollForNewDiagnostics } from "./index"

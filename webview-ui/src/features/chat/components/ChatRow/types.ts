@@ -1,11 +1,11 @@
-import { DiracMessage, Mode } from "@shared/ExtensionMessage"
+import { IsaacMessage, Mode } from "@shared/ExtensionMessage"
 import type { DiffStructure } from "@shared/utils/diff/DiffStructure"
 
 export interface ChatRowProps {
-	message: DiracMessage
+	message: IsaacMessage
 	isExpanded: boolean
 	onToggleExpand: (ts: number) => void
-	lastModifiedMessage?: DiracMessage
+	lastModifiedMessage?: IsaacMessage
 	isLast: boolean
 	onHeightChange: (isTaller: boolean) => void
 	inputValue?: string

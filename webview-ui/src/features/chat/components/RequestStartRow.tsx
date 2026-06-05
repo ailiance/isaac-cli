@@ -1,14 +1,14 @@
-import type { DiracMessage, Mode } from "@shared/ExtensionMessage"
+import type { IsaacMessage, Mode } from "@shared/ExtensionMessage"
 import type { LucideIcon } from "lucide-react"
 import type React from "react"
 import { useMemo } from "react"
 import ErrorRow from "./ErrorRow"
 import { ThinkingRow } from "./ThinkingRow"
-import { DiracApiReqInfo } from "@shared/ExtensionMessage"
+import { IsaacApiReqInfo } from "@shared/ExtensionMessage"
 import { TypewriterText } from "./TypewriterText"
 
 interface RequestStartRowProps {
-	message: DiracMessage
+	message: IsaacMessage
 	apiRequestFailedMessage?: string
 	apiReqStreamingFailedMessage?: string
 	cost?: number
@@ -44,7 +44,7 @@ export const RequestStartRow: React.FC<RequestStartRowProps> = ({
 	const apiReqInfo = useMemo(() => {
 		if (!message.text) return undefined
 		try {
-			return JSON.parse(message.text) as DiracApiReqInfo
+			return JSON.parse(message.text) as IsaacApiReqInfo
 		} catch {
 			return undefined
 		}

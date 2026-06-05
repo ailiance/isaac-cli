@@ -1,5 +1,5 @@
-import { EmptyRequest } from "@shared/proto/dirac/common"
-import type { StackSnapshot } from "@shared/proto/dirac/stack"
+import { EmptyRequest } from "@shared/proto/isaac/common"
+import type { StackSnapshot } from "@shared/proto/isaac/stack"
 import { ChevronDown, ChevronRight, Loader2, RefreshCw, Server } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { StackServiceClient } from "@/shared/api/grpc-client"

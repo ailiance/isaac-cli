@@ -431,7 +431,7 @@ describe("State Keys Type Safety", () => {
 			expect(combined.preferredLanguage).to.equal("English")
 		})
 
-		it("should have LocalState keys map to DiracRulesToggles", () => {
+		it("should have LocalState keys map to IsaacRulesToggles", () => {
 			const localState: Partial<LocalState> = {
 				localDiracRulesToggles: {},
 				localCursorRulesToggles: { "some-rule": true },

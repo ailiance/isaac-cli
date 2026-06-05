@@ -1,5 +1,5 @@
-import type { EmptyRequest } from "@shared/proto/dirac/common"
-import { Empty } from "@shared/proto/dirac/common"
+import type { EmptyRequest } from "@shared/proto/isaac/common"
+import { Empty } from "@shared/proto/isaac/common"
 import * as vscode from "vscode"
 import { ExtensionRegistryInfo } from "@/registry"
 import { telemetryService } from "@/services/telemetry"
@@ -7,7 +7,7 @@ import { Logger } from "@/shared/services/Logger"
 import type { Controller } from "../index"
 
 /**
- * Opens the Dirac walkthrough in VSCode
+ * Opens the Isaac walkthrough in VSCode
  * @param controller The controller instance
  * @param request Empty request
  * @returns Empty response

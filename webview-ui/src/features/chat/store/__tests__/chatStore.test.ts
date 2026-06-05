@@ -1,4 +1,4 @@
-import { DiracMessage } from "@shared/ExtensionMessage"
+import { IsaacMessage } from "@shared/ExtensionMessage"
 import { act, renderHook } from "@testing-library/react"
 import { useChatStore } from "../chatStore"
 
@@ -14,10 +14,10 @@ describe("useChatStore", () => {
 
 	it("should set messages", () => {
 		const { result } = renderHook(() => useChatStore())
-		const messages: DiracMessage[] = [{ ts: 1, type: "say", say: "text", text: "hello" }]
+		const messages: IsaacMessage[] = [{ ts: 1, type: "say", say: "text", text: "hello" }]
 
 		act(() => {
-			result.current.setDiracMessages(messages)
+			result.current.setIsaacMessages(messages)
 		})
 
 		expect(result.current.diracMessages).toEqual(messages)
@@ -25,16 +25,16 @@ describe("useChatStore", () => {
 
 	it("should update partial message", () => {
 		const { result } = renderHook(() => useChatStore())
-		const initialMessages: DiracMessage[] = [
+		const initialMessages: IsaacMessage[] = [
 			{ ts: 1, type: "say", say: "text", text: "hello" },
 			{ ts: 2, type: "say", say: "text", text: "world" },
 		]
 
 		act(() => {
-			result.current.setDiracMessages(initialMessages)
+			result.current.setIsaacMessages(initialMessages)
 		})
 
-		const updatedMessage: DiracMessage = { ts: 2, type: "say", say: "text", text: "updated world" }
+		const updatedMessage: IsaacMessage = { ts: 2, type: "say", say: "text", text: "updated world" }
 
 		act(() => {
 			result.current.updatePartialMessage(updatedMessage)
@@ -46,13 +46,13 @@ describe("useChatStore", () => {
 
 	it("should not update if message ts not found", () => {
 		const { result } = renderHook(() => useChatStore())
-		const initialMessages: DiracMessage[] = [{ ts: 1, type: "say", say: "text", text: "hello" }]
+		const initialMessages: IsaacMessage[] = [{ ts: 1, type: "say", say: "text", text: "hello" }]
 
 		act(() => {
-			result.current.setDiracMessages(initialMessages)
+			result.current.setIsaacMessages(initialMessages)
 		})
 
-		const unknownMessage: DiracMessage = { ts: 99, type: "say", say: "text", text: "unknown" }
+		const unknownMessage: IsaacMessage = { ts: 99, type: "say", say: "text", text: "unknown" }
 
 		act(() => {
 			result.current.updatePartialMessage(unknownMessage)

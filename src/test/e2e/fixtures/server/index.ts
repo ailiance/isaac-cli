@@ -2,9 +2,9 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import type { Socket } from "node:net"
 import { parse } from "node:url"
 import { v4 as uuidv4 } from "uuid"
-import type { BalanceResponse, OrganizationBalanceResponse, UserResponse } from "../../../../shared/DiracAccount"
+import type { BalanceResponse, OrganizationBalanceResponse, UserResponse } from "../../../../shared/IsaacAccount"
 import { E2E_MOCK_API_RESPONSES, E2E_REGISTERED_MOCK_ENDPOINTS } from "./api"
-import { DiracDataMock } from "./data"
+import { IsaacDataMock } from "./data"
 
 const E2E_API_SERVER_PORT = 7777
 
@@ -13,12 +13,12 @@ export const MOCK_DIRAC_API_SERVER_URL = `http://localhost:${E2E_API_SERVER_PORT
 const useVerboseLogging = process.env.DIRAC_E2E_TESTS_VERBOSE === "true"
 function log(...args: unknown[]) {
 	if (useVerboseLogging) {
-		console.log("[DiracApiServerMock]", ...args)
+		console.log("[IsaacApiServerMock]", ...args)
 	}
 }
 
-export class DiracApiServerMock {
-	static globalSharedServer: DiracApiServerMock | null = null
+export class IsaacApiServerMock {
+	static globalSharedServer: IsaacApiServerMock | null = null
 	static globalSockets: Set<Socket> = new Set()
 
 	private currentUser: UserResponse | null = null
@@ -27,7 +27,7 @@ export class DiracApiServerMock {
 	private userHasOrganization = false
 	public generationCounter = 0
 
-	public readonly API_USER = new DiracDataMock("personal")
+	public readonly API_USER = new IsaacDataMock("personal")
 
 	constructor(public readonly server: Server) {}
 
@@ -112,11 +112,11 @@ export class DiracApiServerMock {
 	}
 
 	// Starts the global shared server
-	public static async startGlobalServer(): Promise<DiracApiServerMock> {
+	public static async startGlobalServer(): Promise<IsaacApiServerMock> {
 		log("=== SERVER FIXTURE CALLED ===")
-		if (DiracApiServerMock.globalSharedServer) {
+		if (IsaacApiServerMock.globalSharedServer) {
 			log("Using existing global server")
-			return DiracApiServerMock.globalSharedServer
+			return IsaacApiServerMock.globalSharedServer
 		}
 
 		log("Starting global server...")
@@ -167,11 +167,11 @@ export class DiracApiServerMock {
 			// Authenticate the token and set current user
 			if (isAuthRequired && authToken) {
 				log(`Authenticating token: ${authToken}`)
-				const user = DiracApiServerMock.globalSharedServer!.API_USER.getUserByToken(authToken)
+				const user = IsaacApiServerMock.globalSharedServer!.API_USER.getUserByToken(authToken)
 				if (!user) {
 					return sendApiError("Invalid token", 401)
 				}
-				DiracApiServerMock.globalSharedServer!.setCurrentUser(user)
+				IsaacApiServerMock.globalSharedServer!.setCurrentUser(user)
 			}
 
 			log("=== MOCK SERVER REQUEST ===")
@@ -184,14 +184,14 @@ export class DiracApiServerMock {
 			// Route handling
 			const handleRequest = async () => {
 				// Try to match the route using registered endpoints
-				const routeMatch = DiracApiServerMock.matchRoute(path, method)
+				const routeMatch = IsaacApiServerMock.matchRoute(path, method)
 
 				if (!routeMatch.matched) {
 					return sendJson({ error: "Not found" }, 404)
 				}
 
 				const { baseRoute, endpoint, params = {} } = routeMatch
-				const controller = DiracApiServerMock.globalSharedServer!
+				const controller = IsaacApiServerMock.globalSharedServer!
 
 				// Health check endpoints
 				if (baseRoute === "/health") {
@@ -310,7 +310,7 @@ export class DiracApiServerMock {
 							return sendApiError("Invalid or expired authorization code", 400)
 						}
 
-						// Return format matching DiracAuthProvider expectations
+						// Return format matching IsaacAuthProvider expectations
 						return sendApiResponse({
 							accessToken: code + "_access",
 							refreshToken: code + "_refresh",
@@ -344,7 +344,7 @@ export class DiracApiServerMock {
 							return sendApiError("Invalid or expired refresh token", 400)
 						}
 
-						// Return format matching DiracAuthProvider expectations
+						// Return format matching IsaacAuthProvider expectations
 						return sendApiResponse({
 							accessToken: originalToken + "_access_refreshed",
 							refreshToken: refreshToken, // Keep same refresh token
@@ -383,7 +383,7 @@ export class DiracApiServerMock {
 						if (body.includes("edit_request")) {
 							responseText = E2E_MOCK_API_RESPONSES.EDIT_REQUEST
 						}
-						if (body.includes("[diff.test.ts] Hello, Dirac!")) {
+						if (body.includes("[diff.test.ts] Hello, Isaac!")) {
 							// The playwright test in diff.test.ts needs the "API Request..." text
 							// to be on the screen long enough to detect it.  This worked at 100ms
 							// too, but setting to 500ms to cover slower CI boxes.
@@ -465,7 +465,7 @@ export class DiracApiServerMock {
 									index: 0,
 									message: {
 										role: "assistant",
-										content: "Hello! I'm a mock Dirac API response.",
+										content: "Hello! I'm a mock Isaac API response.",
 									},
 									finish_reason: "stop",
 								},
@@ -543,14 +543,14 @@ export class DiracApiServerMock {
 		})
 
 		// Initialize the controller after the server is created
-		const controller = new DiracApiServerMock(server)
-		DiracApiServerMock.globalSharedServer = controller
+		const controller = new IsaacApiServerMock(server)
+		IsaacApiServerMock.globalSharedServer = controller
 
 		// Track connections for proper cleanup
 		server.on("connection", (socket) => {
-			DiracApiServerMock.globalSockets.add(socket)
+			IsaacApiServerMock.globalSockets.add(socket)
 			socket.on("close", () => {
-				DiracApiServerMock.globalSockets.delete(socket)
+				IsaacApiServerMock.globalSockets.delete(socket)
 			})
 		})
 
@@ -560,7 +560,7 @@ export class DiracApiServerMock {
 					console.error(`Failed to start server on port ${E2E_API_SERVER_PORT}:`, error)
 					reject(error)
 				} else {
-					log(`DiracApiServerMock listening on port ${E2E_API_SERVER_PORT}`)
+					log(`IsaacApiServerMock listening on port ${E2E_API_SERVER_PORT}`)
 					resolve()
 				}
 			})
@@ -571,15 +571,15 @@ export class DiracApiServerMock {
 
 	// Stops the global shared server
 	public static async stopGlobalServer(): Promise<void> {
-		if (!DiracApiServerMock.globalSharedServer) {
+		if (!IsaacApiServerMock.globalSharedServer) {
 			return
 		}
 
-		const server = DiracApiServerMock.globalSharedServer.server
+		const server = IsaacApiServerMock.globalSharedServer.server
 
 		// Clean shutdown - destroy all socket connections first
-		DiracApiServerMock.globalSockets.forEach((socket) => socket.destroy())
-		DiracApiServerMock.globalSockets.clear()
+		IsaacApiServerMock.globalSockets.forEach((socket) => socket.destroy())
+		IsaacApiServerMock.globalSockets.clear()
 
 		await new Promise<void>((resolve, reject) => {
 			server.close((err) => {
@@ -592,6 +592,6 @@ export class DiracApiServerMock {
 			})
 		})
 
-		DiracApiServerMock.globalSharedServer = null
+		IsaacApiServerMock.globalSharedServer = null
 	}
 }

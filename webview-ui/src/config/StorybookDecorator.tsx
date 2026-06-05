@@ -5,7 +5,7 @@ import "../../src/index.css"
 import { cn } from "@heroui/react"
 import type { Decorator } from "@storybook/react-vite"
 import React from "react"
-import { DiracAuthContext, DiracAuthContextType, DiracAuthProvider, useDiracAuth } from "@/context/DiracAuthContext"
+import { IsaacAuthContext, IsaacAuthContextType, IsaacAuthProvider, useIsaacAuth } from "@/context/IsaacAuthContext"
 import { useSettingsStore } from "@/features/settings/store/settingsStore"
 import { StorybookThemes } from "../../.storybook/themes"
 
@@ -40,9 +40,9 @@ function StorybookDecoratorProvider(className = "relative"): Decorator {
 		return (
 			<div className={className}>
 				<>
-					<DiracAuthProvider>
+					<IsaacAuthProvider>
 						<ThemeHandler theme={parameters?.globals?.theme}>{React.createElement(story)}</ThemeHandler>
-					</DiracAuthProvider>
+					</IsaacAuthProvider>
 				</>
 			</div>
 		)
@@ -61,22 +61,22 @@ const ExtensionStateProviderWithOverrides: React.FC<{
 	return <>{children}</>
 }
 
-const DiracAuthProviderWithOverrides: React.FC<{
-	overrides?: Partial<DiracAuthContextType>
+const IsaacAuthProviderWithOverrides: React.FC<{
+	overrides?: Partial<IsaacAuthContextType>
 	children: React.ReactNode
 }> = ({ overrides, children }) => {
-	const authContext = useDiracAuth()
-	return <DiracAuthContext.Provider value={{ ...authContext, ...overrides }}>{children}</DiracAuthContext.Provider>
+	const authContext = useIsaacAuth()
+	return <IsaacAuthContext.Provider value={{ ...authContext, ...overrides }}>{children}</IsaacAuthContext.Provider>
 }
 
 export const createStorybookDecorator =
-	(overrideStates?: any, classNames?: string, authOverrides?: Partial<DiracAuthContextType>) => (Story: any) => (
+	(overrideStates?: any, classNames?: string, authOverrides?: Partial<IsaacAuthContextType>) => (Story: any) => (
 		<ExtensionStateProviderWithOverrides overrides={overrideStates}>
-			<DiracAuthProviderWithOverrides overrides={authOverrides}>
+			<IsaacAuthProviderWithOverrides overrides={authOverrides}>
 				<div className={cn("max-w-lg mx-auto", classNames)}>
 					<Story />
 				</div>
-			</DiracAuthProviderWithOverrides>
+			</IsaacAuthProviderWithOverrides>
 		</ExtensionStateProviderWithOverrides>
 	)
 

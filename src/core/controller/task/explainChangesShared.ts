@@ -3,7 +3,7 @@ import { isBinaryFile } from "isbinaryfile"
 import { HostProvider } from "@/hosts/host-provider"
 import { formatContentBlockToMarkdown } from "@/integrations/misc/export-markdown"
 import { ApiConfiguration } from "@/shared/api"
-import { DiracStorageMessage } from "@/shared/messages/content"
+import { IsaacStorageMessage } from "@/shared/messages/content"
 import { Logger } from "@/shared/services/Logger"
 
 export interface ChangedFile {
@@ -13,7 +13,7 @@ export interface ChangedFile {
 	after: string
 }
 
-const EXPLAINER_SYSTEM_PROMPT = `You are an AI coding assistant called Dirac that will be explaining code changes to a developer. Your goal is to help the user understand what changed and why.
+const EXPLAINER_SYSTEM_PROMPT = `You are an AI coding assistant called Isaac that will be explaining code changes to a developer. Your goal is to help the user understand what changed and why.
 - Use a friendly, conversational tone as if pair programming
 - When relevant, briefly explain technical concepts or patterns used
 - Focus on helping the user learn and understand the codebase
@@ -325,7 +325,7 @@ async function handleCommentReply(
 The user is asking followup questions about code change explanations you provided.
 Respond helpfully to the user's question about the code.
 Use markdown formatting where appropriate.
-If the user asks you to make changes, fix something, or do any work that requires modifying code, let them know they can click the "Add to Dirac Chat" button (the arrow icon in the top-right of the comment box) to send this conversation to the main Dirac agent, which can then make the requested changes.
+If the user asks you to make changes, fix something, or do any work that requires modifying code, let them know they can click the "Add to Isaac Chat" button (the arrow icon in the top-right of the comment box) to send this conversation to the main Isaac agent, which can then make the requested changes.
 `
 
 	const userMessage = `## Context
@@ -361,7 +361,7 @@ Please respond to the user's question about this code.`
 /**
  * Stringify conversation history into a readable summary for context
  */
-export function stringifyConversationHistory(apiConversationHistory: DiracStorageMessage[]): string {
+export function stringifyConversationHistory(apiConversationHistory: IsaacStorageMessage[]): string {
 	if (!apiConversationHistory || apiConversationHistory.length === 0) {
 		return "No prior conversation context available."
 	}

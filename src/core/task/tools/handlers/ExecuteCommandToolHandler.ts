@@ -7,7 +7,7 @@ import { MultiCommandState } from "@shared/ExtensionMessage"
 import { telemetryService } from "@/services/telemetry"
 import { truncateHeadTail } from "@/shared/content-limits"
 import { Logger } from "@/shared/services/Logger"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import { notifyAsyncTool } from "../../AsyncToolNotifier"
 import type { ToolResponse } from "../../index"
 import type { PendingToolEntry, PendingToolRegistry } from "../../PendingToolRegistry"
@@ -69,7 +69,7 @@ export function resolveCommandTimeoutSeconds(command: string, useManagedTimeout:
 }
 
 export class ExecuteCommandToolHandler implements IFullyManagedTool {
-	readonly name = DiracDefaultTool.BASH
+	readonly name = IsaacDefaultTool.BASH
 
 	constructor(private validator: ToolValidator) {}
 
@@ -170,7 +170,7 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 			}
 			await config.callbacks.say(
 				"error",
-				`Dirac tried to use ${this.name} without providing any commands or script. Retrying...`,
+				`Isaac tried to use ${this.name} without providing any commands or script. Retrying...`,
 			)
 			return formatResponse.toolError(validation.error!)
 		}
@@ -263,7 +263,7 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 
 		if (commandsRequiringApproval.length > 0) {
 			showNotificationForApproval(
-				`Dirac wants to execute ${commandsRequiringApproval.length} commands`,
+				`Isaac wants to execute ${commandsRequiringApproval.length} commands`,
 				config.autoApprovalSettings.enableNotifications,
 			)
 
@@ -287,10 +287,10 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 				}
 
 				if (messageTs !== undefined) {
-					const messages = config.callbacks.getDiracMessages()
+					const messages = config.callbacks.getIsaacMessages()
 					const index = messages.findIndex((m) => m.ts === messageTs)
 					if (index !== -1) {
-						await config.callbacks.updateDiracMessage(index, { multiCommandState: { ...multiCommandState } })
+						await config.callbacks.updateIsaacMessage(index, { multiCommandState: { ...multiCommandState } })
 					}
 				}
 
@@ -305,10 +305,10 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 			}
 
 			if (messageTs !== undefined) {
-				const messages = config.callbacks.getDiracMessages()
+				const messages = config.callbacks.getIsaacMessages()
 				const index = messages.findIndex((m) => m.ts === messageTs)
 				if (index !== -1) {
-					await config.callbacks.updateDiracMessage(index, { multiCommandState: { ...multiCommandState } })
+					await config.callbacks.updateIsaacMessage(index, { multiCommandState: { ...multiCommandState } })
 				}
 			}
 		} else {
@@ -325,10 +325,10 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 
 		const updateMessage = async () => {
 			if (messageTs === undefined) return
-			const messages = config.callbacks.getDiracMessages()
+			const messages = config.callbacks.getIsaacMessages()
 			const index = messages.findIndex((m) => m.ts === messageTs)
 			if (index !== -1) {
-				await config.callbacks.updateDiracMessage(index, {
+				await config.callbacks.updateIsaacMessage(index, {
 					multiCommandState: { ...multiCommandState },
 					commandCompleted: false,
 					partial: false,
@@ -406,14 +406,14 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 				continue
 			}
 
-			// Diracignore validation
+			// Isaacignore validation
 			const ignoredFileAttemptedToAccess = config.services.diracIgnoreController.validateCommand(actualCommand)
 			if (ignoredFileAttemptedToAccess) {
 				cmdState.status = "failed"
-				cmdState.output = `Diracignore error: ${ignoredFileAttemptedToAccess}`
+				cmdState.output = `Isaacignore error: ${ignoredFileAttemptedToAccess}`
 				await updateMessage()
 
-				results.push(`--- Output for '${displayName}' ---\nDiracignore error: ${ignoredFileAttemptedToAccess}`)
+				results.push(`--- Output for '${displayName}' ---\nIsaacignore error: ${ignoredFileAttemptedToAccess}`)
 				anyFailed = true
 				continue
 			}
@@ -692,10 +692,10 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 		}
 
 		// Mark the final message as completed
-		const messages = config.callbacks.getDiracMessages()
+		const messages = config.callbacks.getIsaacMessages()
 		const index = messages.findIndex((m) => m.ts === messageTs)
 		if (index !== -1) {
-			await config.callbacks.updateDiracMessage(index, {
+			await config.callbacks.updateIsaacMessage(index, {
 				commandCompleted: true,
 				partial: false,
 			})

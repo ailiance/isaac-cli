@@ -2,14 +2,14 @@ import type { ToolUse } from "@core/assistant-message"
 import { JSONParser } from "@streamparser/json"
 import { nanoid } from "nanoid"
 import {
-	DiracAssistantRedactedThinkingBlock,
-	DiracAssistantThinkingBlock,
-	DiracAssistantToolUseBlock,
-	DiracReasoningDetailParam,
-	DiracAssistantContent,
+	IsaacAssistantRedactedThinkingBlock,
+	IsaacAssistantThinkingBlock,
+	IsaacAssistantToolUseBlock,
+	IsaacReasoningDetailParam,
+	IsaacAssistantContent,
 } from "@/shared/messages/content"
 import { Session } from "@/shared/services/Session"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 
 export interface PendingToolUse {
 	id: string
@@ -41,8 +41,8 @@ export interface PendingReasoning {
 	id?: string
 	content: string
 	signature: string
-	redactedThinking: DiracAssistantRedactedThinkingBlock[]
-	summary: unknown[] | DiracReasoningDetailParam[]
+	redactedThinking: IsaacAssistantRedactedThinkingBlock[]
+	summary: unknown[] | IsaacReasoningDetailParam[]
 }
 
 const ESCAPE_MAP: Record<string, string> = {
@@ -114,8 +114,8 @@ export class StreamResponseHandler {
 		this.toolUseHandler.processToolUseDelta({ ...delta, id }, call_id)
 	}
 
-	public getOrderedBlocks(): DiracAssistantContent[] {
-		const blocks: DiracAssistantContent[] = []
+	public getOrderedBlocks(): IsaacAssistantContent[] {
+		const blocks: IsaacAssistantContent[] = []
 		for (const id of this.blockSequence) {
 			if (this.reasoningHandler.hasReasoning(id)) {
 				// Add redacted thinking first if any
@@ -154,7 +154,7 @@ export class StreamResponseHandler {
 }
 
 /**
- * Handles streaming native tool use blocks and converts them to DiracAssistantToolUseBlock format
+ * Handles streaming native tool use blocks and converts them to IsaacAssistantToolUseBlock format
  */
 class ToolUseHandler {
 	private pendingToolUses = new Map<string, PendingToolUse>()
@@ -187,7 +187,7 @@ class ToolUseHandler {
 		}
 	}
 
-	getFinalizedToolUse(id: string): DiracAssistantToolUseBlock | undefined {
+	getFinalizedToolUse(id: string): IsaacAssistantToolUseBlock | undefined {
 		const pending = this.pendingToolUses.get(id)
 		if (!pending?.name) {
 			return undefined
@@ -214,8 +214,8 @@ class ToolUseHandler {
 		}
 	}
 
-	getAllFinalizedToolUses(summary?: DiracAssistantToolUseBlock["reasoning_details"]): DiracAssistantToolUseBlock[] {
-		const results: DiracAssistantToolUseBlock[] = []
+	getAllFinalizedToolUses(summary?: IsaacAssistantToolUseBlock["reasoning_details"]): IsaacAssistantToolUseBlock[] {
+		const results: IsaacAssistantToolUseBlock[] = []
 		for (const id of this.pendingToolUses.keys()) {
 			const toolUse = this.getFinalizedToolUse(id)
 			if (toolUse) {
@@ -257,7 +257,7 @@ class ToolUseHandler {
 			}
 			results.push({
 				type: "tool_use",
-				name: pending.name as DiracDefaultTool,
+				name: pending.name as IsaacDefaultTool,
 				params: params as any,
 				partial: true,
 				signature: pending.signature,
@@ -325,7 +325,7 @@ class ReasoningHandler {
 		return this.lastReasoningId
 	}
 
-	public getReasoningBlock(id: string): DiracAssistantThinkingBlock | null {
+	public getReasoningBlock(id: string): IsaacAssistantThinkingBlock | null {
 		const pending = this.pendingReasonings.get(id)
 		if (pending) {
 			return this.mapToThinkingBlock(pending)
@@ -333,7 +333,7 @@ class ReasoningHandler {
 		return null
 	}
 
-	public getRedactedThinkingForId(id: string): DiracAssistantRedactedThinkingBlock[] {
+	public getRedactedThinkingForId(id: string): IsaacAssistantRedactedThinkingBlock[] {
 		const pending = this.pendingReasonings.get(id)
 		return pending?.redactedThinking || []
 	}
@@ -377,7 +377,7 @@ class ReasoningHandler {
 		}
 	}
 
-	getCurrentReasoning(): DiracAssistantThinkingBlock | null {
+	getCurrentReasoning(): IsaacAssistantThinkingBlock | null {
 		if (this.lastReasoningId) {
 			const pending = this.pendingReasonings.get(this.lastReasoningId)
 			if (pending) {
@@ -387,8 +387,8 @@ class ReasoningHandler {
 		return null
 	}
 
-	getAllReasoningBlocks(): DiracAssistantThinkingBlock[] {
-		const results: DiracAssistantThinkingBlock[] = []
+	getAllReasoningBlocks(): IsaacAssistantThinkingBlock[] {
+		const results: IsaacAssistantThinkingBlock[] = []
 		for (const pending of this.pendingReasonings.values()) {
 			const block = this.mapToThinkingBlock(pending)
 			if (block) {
@@ -398,7 +398,7 @@ class ReasoningHandler {
 		return results
 	}
 
-	private mapToThinkingBlock(pending: PendingReasoning): DiracAssistantThinkingBlock | null {
+	private mapToThinkingBlock(pending: PendingReasoning): IsaacAssistantThinkingBlock | null {
 		if (!pending.summary.length && !pending.content && pending.redactedThinking.length > 0) {
 			return null
 		}
@@ -421,8 +421,8 @@ class ReasoningHandler {
 		}
 	}
 
-	getRedactedThinking(): DiracAssistantRedactedThinkingBlock[] {
-		const results: DiracAssistantRedactedThinkingBlock[] = []
+	getRedactedThinking(): IsaacAssistantRedactedThinkingBlock[] {
+		const results: IsaacAssistantRedactedThinkingBlock[] = []
 		for (const pending of this.pendingReasonings.values()) {
 			results.push(...pending.redactedThinking)
 		}

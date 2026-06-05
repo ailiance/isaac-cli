@@ -1,5 +1,5 @@
-import { Empty } from "@shared/proto/dirac/common"
-import { PlanActMode, UpdateTaskSettingsRequest } from "@shared/proto/dirac/state"
+import { Empty } from "@shared/proto/isaac/common"
+import { PlanActMode, UpdateTaskSettingsRequest } from "@shared/proto/isaac/state"
 import { convertProtoToApiProvider } from "@shared/proto-conversions/models/api-configuration-conversion"
 import { Mode } from "@/shared/storage/types"
 import { Controller } from ".."

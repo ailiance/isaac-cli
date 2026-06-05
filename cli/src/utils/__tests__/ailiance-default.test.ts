@@ -3,15 +3,15 @@ import {
 	AILIANCE_DEFAULT_API_KEY,
 	AILIANCE_DEFAULT_GATEWAY,
 	AILIANCE_DEFAULT_MODEL,
-	applyEuKikiDefault,
-	hasNonEuKikiProviderEnv,
+	applyAilianceDefault,
+	hasNonAilianceProviderEnv,
 	needsStaleDefaultMigration,
-	resolveEuKikiGatewayUrl,
+	resolveAilianceGatewayUrl,
 } from "../ailiance-default"
 
 /**
  * Lightweight in-memory StateManager double matching the methods used by
- * applyEuKikiDefault. Avoids spinning up the full StateManager (filesystem,
+ * applyAilianceDefault. Avoids spinning up the full StateManager (filesystem,
  * VS Code shim, etc.) for a unit-level test of the decision logic.
  */
 function makeFakeStateManager() {
@@ -46,46 +46,46 @@ function makeFakeStateManager() {
 }
 
 describe("ailiance default fallback", () => {
-	it("resolveEuKikiGatewayUrl falls back to public gateway.ailiance.fr/v1", () => {
-		expect(resolveEuKikiGatewayUrl({})).toBe(AILIANCE_DEFAULT_GATEWAY)
+	it("resolveAilianceGatewayUrl falls back to public gateway.ailiance.fr/v1", () => {
+		expect(resolveAilianceGatewayUrl({})).toBe(AILIANCE_DEFAULT_GATEWAY)
 		expect(AILIANCE_DEFAULT_GATEWAY).toBe("https://gateway.ailiance.fr/v1")
 	})
 
-	it("resolveEuKikiGatewayUrl honours AILIANCE_GATEWAY", () => {
-		expect(resolveEuKikiGatewayUrl({ AILIANCE_GATEWAY: "http://example.com:9999/" })).toBe(
+	it("resolveAilianceGatewayUrl honours AILIANCE_GATEWAY", () => {
+		expect(resolveAilianceGatewayUrl({ AILIANCE_GATEWAY: "http://example.com:9999/" })).toBe(
 			"http://example.com:9999",
 		)
 	})
 
-	it("resolveEuKikiGatewayUrl honours deprecated AGENT_KIKI_GATEWAY", () => {
-		expect(resolveEuKikiGatewayUrl({ AGENT_KIKI_GATEWAY: "http://legacy:9999/" })).toBe("http://legacy:9999")
+	it("resolveAilianceGatewayUrl honours deprecated AGENT_KIKI_GATEWAY", () => {
+		expect(resolveAilianceGatewayUrl({ AGENT_KIKI_GATEWAY: "http://legacy:9999/" })).toBe("http://legacy:9999")
 	})
 
 	it("AILIANCE_GATEWAY takes precedence over AGENT_KIKI_GATEWAY", () => {
 		expect(
-			resolveEuKikiGatewayUrl({
+			resolveAilianceGatewayUrl({
 				AILIANCE_GATEWAY: "http://new:9300",
 				AGENT_KIKI_GATEWAY: "http://old:9300",
 			}),
 		).toBe("http://new:9300")
 	})
 
-	it("resolveEuKikiGatewayUrl strips /chat/completions suffix", () => {
-		expect(resolveEuKikiGatewayUrl({ AILIANCE_GATEWAY: "http://x:9300/chat/completions/" })).toBe(
+	it("resolveAilianceGatewayUrl strips /chat/completions suffix", () => {
+		expect(resolveAilianceGatewayUrl({ AILIANCE_GATEWAY: "http://x:9300/chat/completions/" })).toBe(
 			"http://x:9300",
 		)
 	})
 
-	it("hasNonEuKikiProviderEnv detects a real provider env", () => {
-		expect(hasNonEuKikiProviderEnv({ ANTHROPIC_API_KEY: "k" })).toBe(true)
-		expect(hasNonEuKikiProviderEnv({ AILIANCE_GATEWAY: "http://foo" })).toBe(false)
-		expect(hasNonEuKikiProviderEnv({ AGENT_KIKI_GATEWAY: "http://foo" })).toBe(false)
-		expect(hasNonEuKikiProviderEnv({})).toBe(false)
+	it("hasNonAilianceProviderEnv detects a real provider env", () => {
+		expect(hasNonAilianceProviderEnv({ ANTHROPIC_API_KEY: "k" })).toBe(true)
+		expect(hasNonAilianceProviderEnv({ AILIANCE_GATEWAY: "http://foo" })).toBe(false)
+		expect(hasNonAilianceProviderEnv({ AGENT_KIKI_GATEWAY: "http://foo" })).toBe(false)
+		expect(hasNonAilianceProviderEnv({})).toBe(false)
 	})
 
 	it("applies persisted defaults when nothing is configured", () => {
 		const sm = makeFakeStateManager()
-		const decision = applyEuKikiDefault(sm as any, { env: {} })
+		const decision = applyAilianceDefault(sm as any, { env: {} })
 		expect(decision.applied).toBe(true)
 		expect(decision.reason).toBe("applied-fallback")
 		expect(decision.gatewayUrl).toBe(AILIANCE_DEFAULT_GATEWAY)
@@ -99,7 +99,7 @@ describe("ailiance default fallback", () => {
 
 	it("uses session overrides (no persistence) when AGENT_KIKI_GATEWAY is set", () => {
 		const sm = makeFakeStateManager()
-		const decision = applyEuKikiDefault(sm as any, { env: { AGENT_KIKI_GATEWAY: "http://other:9300" } })
+		const decision = applyAilianceDefault(sm as any, { env: { AGENT_KIKI_GATEWAY: "http://other:9300" } })
 		expect(decision.applied).toBe(true)
 		expect(decision.reason).toBe("applied-from-env")
 		expect(decision.gatewayUrl).toBe("http://other:9300")
@@ -114,13 +114,13 @@ describe("ailiance default fallback", () => {
 	it("does not clobber an existing real openAiApiKey when overriding via env", () => {
 		const sm = makeFakeStateManager()
 		sm.secrets.openAiApiKey = "real-key"
-		applyEuKikiDefault(sm as any, { env: { AGENT_KIKI_GATEWAY: "http://x:9300" } })
+		applyAilianceDefault(sm as any, { env: { AGENT_KIKI_GATEWAY: "http://x:9300" } })
 		expect(sm.secrets.openAiApiKey).toBe("real-key")
 	})
 
 	it("skips when an upstream provider env var is set", () => {
 		const sm = makeFakeStateManager()
-		const decision = applyEuKikiDefault(sm as any, { env: { ANTHROPIC_API_KEY: "k" } })
+		const decision = applyAilianceDefault(sm as any, { env: { ANTHROPIC_API_KEY: "k" } })
 		expect(decision.applied).toBe(false)
 		expect(decision.reason).toBe("env-provider-already-set")
 		expect(sm.globalState.actModeApiProvider).toBeUndefined()
@@ -133,12 +133,12 @@ describe("ailiance default fallback", () => {
 		// (Object.is) catches both string-literal copies and accidental
 		// trimmed/reformatted variants.
 		const sm = makeFakeStateManager()
-		applyEuKikiDefault(sm as any, { env: {} })
+		applyAilianceDefault(sm as any, { env: {} })
 		expect(Object.is(sm.secrets.openAiApiKey, AILIANCE_DEFAULT_API_KEY)).toBe(true)
 		expect(Object.is(sm.secrets.openAiCompatibleCustomApiKey, AILIANCE_DEFAULT_API_KEY)).toBe(true)
 
 		const sm2 = makeFakeStateManager()
-		applyEuKikiDefault(sm2 as any, { env: { AGENT_KIKI_GATEWAY: "http://x:9300" } })
+		applyAilianceDefault(sm2 as any, { env: { AGENT_KIKI_GATEWAY: "http://x:9300" } })
 		expect(Object.is(sm2.secrets.openAiApiKey, AILIANCE_DEFAULT_API_KEY)).toBe(true)
 		expect(Object.is(sm2.secrets.openAiCompatibleCustomApiKey, AILIANCE_DEFAULT_API_KEY)).toBe(true)
 	})
@@ -147,7 +147,7 @@ describe("ailiance default fallback", () => {
 		const sm = makeFakeStateManager()
 		sm.globalState.welcomeViewCompleted = true
 		sm.globalState.actModeApiProvider = "anthropic"
-		const decision = applyEuKikiDefault(sm as any, { env: {} })
+		const decision = applyAilianceDefault(sm as any, { env: {} })
 		expect(decision.applied).toBe(false)
 		expect(decision.reason).toBe("auth-already-configured")
 	})
@@ -180,7 +180,7 @@ describe("ailiance default fallback", () => {
 			sm.globalState.welcomeViewCompleted = true
 			sm.globalState.actModeApiProvider = "openai"
 			sm.globalState.openAiBaseUrl = "http://studio:9300"
-			const decision = applyEuKikiDefault(sm as any, { env: {} })
+			const decision = applyAilianceDefault(sm as any, { env: {} })
 			expect(decision.applied).toBe(true)
 			expect(decision.reason).toBe("migrated-stale-default")
 			expect(sm.globalState.openAiBaseUrl).toBe(AILIANCE_DEFAULT_GATEWAY)
@@ -191,7 +191,7 @@ describe("ailiance default fallback", () => {
 			sm.globalState.welcomeViewCompleted = true
 			sm.globalState.actModeApiProvider = "openai"
 			sm.globalState.openAiBaseUrl = "http://electron-server:9300/v1"
-			const decision = applyEuKikiDefault(sm as any, { env: {} })
+			const decision = applyAilianceDefault(sm as any, { env: {} })
 			expect(decision.applied).toBe(true)
 			expect(decision.reason).toBe("migrated-stale-default")
 			expect(sm.globalState.openAiBaseUrl).toBe("https://gateway.ailiance.fr/v1")

@@ -15,7 +15,7 @@ interface CheckpointAddResult {
 /**
  * GitOperations Class
  *
- * Handles git-specific operations for Dirac's Checkpoints system.
+ * Handles git-specific operations for Isaac's Checkpoints system.
  *
  * Key responsibilities:
  * - Git repository initialization and configuration
@@ -91,7 +91,7 @@ export class GitOperations {
 		// Configure repo with git settings
 		await git.addConfig("core.worktree", cwd)
 		await git.addConfig("commit.gpgSign", "false")
-		await git.addConfig("user.name", "Dirac Checkpoint")
+		await git.addConfig("user.name", "Isaac Checkpoint")
 		await git.addConfig("user.email", "checkpoint@dirac.run")
 
 		// Set up LFS patterns

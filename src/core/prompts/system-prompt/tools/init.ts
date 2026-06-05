@@ -1,4 +1,4 @@
-import { DiracToolSet } from "../registry/DiracToolSet"
+import { IsaacToolSet } from "../registry/IsaacToolSet"
 import { ask_followup_question } from "./ask_followup_question"
 import { attempt_completion } from "./attempt_completion"
 import { browser_action } from "./browser_action"
@@ -24,9 +24,9 @@ import { use_skill } from "./use_skill"
 import { write_to_file } from "./write_to_file"
 
 /**
- * Registers all tools with the DiracToolSet provider.
+ * Registers all tools with the IsaacToolSet provider.
  */
-export function registerDiracToolSets(): void {
+export function registerIsaacToolSets(): void {
 	const allTools = [
 		ask_followup_question,
 		attempt_completion,
@@ -57,6 +57,6 @@ export function registerDiracToolSets(): void {
 	]
 
 	allTools.forEach((tool) => {
-		DiracToolSet.register(tool)
+		IsaacToolSet.register(tool)
 	})
 }

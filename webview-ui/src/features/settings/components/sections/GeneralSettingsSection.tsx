@@ -43,7 +43,7 @@ const GeneralSettingsSection = ({ renderSectionHeader }: GeneralSettingsSectionP
 					</Tooltip>
 
 					<p className="text-sm mt-[5px] text-description">
-						Help improve Dirac by sending usage data and error reports. No code, prompts, or personal information are
+						Help improve Isaac by sending usage data and error reports. No code, prompts, or personal information are
 						ever sent. See our{" "}
 						<VSCodeLink
 							className="text-inherit"
@@ -71,7 +71,7 @@ const GeneralSettingsSection = ({ renderSectionHeader }: GeneralSettingsSectionP
 						</VSCodeCheckbox>
 					</div>
 					<p className="text-sm text-description mb-4">
-						When enabled, Dirac will save the system prompt, tools, and conversation history to a markdown file for
+						When enabled, Isaac will save the system prompt, tools, and conversation history to a markdown file for
 						each request. This is useful for debugging and inspecting the exact prompts being sent to the AI.
 					</p>
 

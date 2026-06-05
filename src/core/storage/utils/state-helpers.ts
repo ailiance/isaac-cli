@@ -1,5 +1,5 @@
 import { ApiProvider } from "@shared/api"
-import type { DiracFileStorage } from "@shared/storage/DiracFileStorage"
+import type { IsaacFileStorage } from "@shared/storage/IsaacFileStorage"
 import {
 	applyTransform,
 	GlobalStateAndSettingKeys,
@@ -13,16 +13,16 @@ import {
 	Secrets,
 } from "@shared/storage/state-keys"
 import { Logger } from "@/shared/services/Logger"
-import { DiracMemento } from "@/shared/storage"
+import { IsaacMemento } from "@/shared/storage"
 import { readTaskHistoryFromState } from "../disk"
 import { StateManager } from "../StateManager"
 
 // ─── File-backed storage readers (used by StateManager) ────────────────────
 
 /**
- * Read secrets from a DiracFileStorage instance.
+ * Read secrets from a IsaacFileStorage instance.
  */
-export function readSecretsFromStorage(store: DiracFileStorage<string>): Secrets {
+export function readSecretsFromStorage(store: IsaacFileStorage<string>): Secrets {
 	return SecretKeys.reduce((acc, key) => {
 		acc[key] = store.get(key)
 		return acc
@@ -30,9 +30,9 @@ export function readSecretsFromStorage(store: DiracFileStorage<string>): Secrets
 }
 
 /**
- * Read workspace state from a DiracFileStorage instance.
+ * Read workspace state from a IsaacFileStorage instance.
  */
-export function readWorkspaceStateFromStorage(store: DiracFileStorage): LocalState {
+export function readWorkspaceStateFromStorage(store: IsaacFileStorage): LocalState {
 	return LocalStateKeys.reduce((acc, key) => {
 		acc[key] = store.get(key) || {}
 		return acc
@@ -40,9 +40,9 @@ export function readWorkspaceStateFromStorage(store: DiracFileStorage): LocalSta
 }
 
 /**
- * Read global state from a DiracFileStorage instance.
+ * Read global state from a IsaacFileStorage instance.
  */
-export async function readGlobalStateFromStorage(store: DiracMemento): Promise<GlobalStateAndSettings> {
+export async function readGlobalStateFromStorage(store: IsaacMemento): Promise<GlobalStateAndSettings> {
 	try {
 		// Batch read all state values in a single optimized pass
 		const stateValues = new Map<string, any>()

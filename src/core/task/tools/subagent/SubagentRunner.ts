@@ -10,14 +10,14 @@ import { formatResponse } from "@core/prompts/responses"
 import { PromptRegistry } from "@core/prompts/system-prompt"
 import type { SystemPromptContext } from "@core/prompts/system-prompt/types"
 import { StreamResponseHandler } from "@core/task/StreamResponseHandler"
-import { DiracAssistantToolUseBlock, DiracStorageMessage, DiracTextContentBlock, DiracUserContent } from "@shared/messages"
+import { IsaacAssistantToolUseBlock, IsaacStorageMessage, IsaacTextContentBlock, IsaacUserContent } from "@shared/messages"
 import { Logger } from "@shared/services/Logger"
-import { DiracDefaultTool, DiracTool } from "@shared/tools"
+import { IsaacDefaultTool, IsaacTool } from "@shared/tools"
 import { ContextManager } from "@/core/context/context-management/ContextManager"
 import { checkContextWindowExceededError } from "@/core/context/context-management/context-error-handling"
 import { getContextWindowInfo } from "@/core/context/context-management/context-window-utils"
 import { HostRegistryInfo } from "@/registry"
-import { DiracError, DiracErrorType } from "@/services/error"
+import { IsaacError, IsaacErrorType } from "@/services/error"
 import { calculateApiCostAnthropic } from "@/utils/cost"
 import { TOOL_EXAMPLES } from "../../../prompts/tool-examples"
 import { TaskState } from "../../TaskState"
@@ -181,7 +181,7 @@ function resolveToolUseId(call: { id?: string; call_id?: string; name?: string }
 	return fallbackId
 }
 
-function toAssistantToolUseBlock(call: SubagentToolCall): DiracAssistantToolUseBlock {
+function toAssistantToolUseBlock(call: SubagentToolCall): IsaacAssistantToolUseBlock {
 	return {
 		type: "tool_use",
 		id: call.toolUseId,
@@ -228,7 +228,7 @@ function pushSubagentToolResultBlock(toolResultBlocks: any[], call: SubagentTool
 export class SubagentRunner {
 	private readonly agent: SubagentBuilder
 	private readonly apiHandler: ApiHandler
-	private readonly allowedTools: DiracDefaultTool[]
+	private readonly allowedTools: IsaacDefaultTool[]
 	private activeApiAbort: (() => void) | undefined
 	private abortRequested = false
 	private abortReason?: string
@@ -307,7 +307,7 @@ export class SubagentRunner {
 		this.abortReason = undefined
 		const state = new TaskState()
 		let emptyAssistantResponseRetries = 0
-		let conversation: DiracStorageMessage[] = []
+		let conversation: IsaacStorageMessage[] = []
 		let timeoutHandle: NodeJS.Timeout | undefined
 		const contextState: SubagentContextState = {}
 		const contextManager = new ContextManager()
@@ -431,7 +431,7 @@ ${partialResult}`
 					{
 						type: "text",
 						text: prompt,
-					} as DiracTextContentBlock,
+					} as IsaacTextContentBlock,
 					// Server-side task loop checks require workspace metadata to be present in the
 					// initial user message of subagent runs.
 					...(workspaceMetadataEnvironmentBlock
@@ -439,7 +439,7 @@ ${partialResult}`
 								{
 									type: "text",
 									text: workspaceMetadataEnvironmentBlock,
-								} as DiracTextContentBlock,
+								} as IsaacTextContentBlock,
 							]
 						: []),
 				],
@@ -459,7 +459,7 @@ ${partialResult}`
 							{
 								type: "text",
 								text: "NOTE: This is your last turn. You must provide your final findings now using attempt_completion.",
-							} as DiracTextContentBlock,
+							} as IsaacTextContentBlock,
 						],
 					})
 				}
@@ -490,7 +490,7 @@ ${partialResult}`
 								{
 									type: "text",
 									text: "Timeout reached. Please provide your final findings now using attempt_completion based on what you have so far. This is your absolute last turn.",
-								} as DiracTextContentBlock,
+								} as IsaacTextContentBlock,
 							],
 						})
 
@@ -724,15 +724,15 @@ ${partialResult}`
 				}
 				emptyAssistantResponseRetries = 0
 
-				const toolResultBlocks = [] as DiracUserContent[]
+				const toolResultBlocks = [] as IsaacUserContent[]
 				for (const call of finalizedToolCalls) {
-					const toolName = call.name as DiracDefaultTool
+					const toolName = call.name as IsaacDefaultTool
 					const toolCallParams = toToolUseParams(call.input)
 
-					if (toolName === DiracDefaultTool.ATTEMPT) {
+					if (toolName === IsaacDefaultTool.ATTEMPT) {
 						const completionResult = toolCallParams.result?.trim()
 						if (!completionResult) {
-							const example = TOOL_EXAMPLES[DiracDefaultTool.ATTEMPT]
+							const example = TOOL_EXAMPLES[IsaacDefaultTool.ATTEMPT]
 							const missingResultError = formatResponse.missingToolParameterError("result", example)
 							pushSubagentToolResultBlock(toolResultBlocks, call, toolName, missingResultError)
 							continue
@@ -827,16 +827,16 @@ ${partialResult}`
 		}
 	}
 
-	private getBestEffortResult(conversation: DiracStorageMessage[]): string {
+	private getBestEffortResult(conversation: IsaacStorageMessage[]): string {
 		const assistantTexts = conversation
 			.filter((msg) => msg.role === "assistant")
 			.flatMap((msg) => {
 				if (typeof msg.content === "string") {
-					return [{ type: "text", text: msg.content } as DiracTextContentBlock]
+					return [{ type: "text", text: msg.content } as IsaacTextContentBlock]
 				}
-				return msg.content as DiracTextContentBlock[]
+				return msg.content as IsaacTextContentBlock[]
 			})
-			.filter((block): block is DiracTextContentBlock => block.type === "text")
+			.filter((block): block is IsaacTextContentBlock => block.type === "text")
 			.map((block) => block.text.trim())
 			.filter((text) => text.length > 0)
 
@@ -868,7 +868,7 @@ ${partialResult}`
 				say: async () => undefined,
 				sayAndCreateMissingParamError: async (_toolName, paramName) =>
 					formatResponse.toolError(
-						formatResponse.missingToolParameterError(paramName, TOOL_EXAMPLES[_toolName as DiracDefaultTool]),
+						formatResponse.missingToolParameterError(paramName, TOOL_EXAMPLES[_toolName as IsaacDefaultTool]),
 					),
 				executeCommandTool: async (command: string, timeoutSeconds: number | undefined) => {
 					this.activeCommandExecutions += 1
@@ -887,9 +887,9 @@ ${partialResult}`
 
 	private shouldRetryInitialStreamError(error: unknown, providerId: string, modelId: string): boolean {
 		// Mirror main loop behavior: do not auto-retry auth/balance failures.
-		const parsedError = DiracError.transform(error, modelId, providerId)
-		const isAuthError = parsedError.isErrorType(DiracErrorType.Auth)
-		const isBalanceError = parsedError.isErrorType(DiracErrorType.Balance)
+		const parsedError = IsaacError.transform(error, modelId, providerId)
+		const isAuthError = parsedError.isErrorType(IsaacErrorType.Auth)
+		const isBalanceError = parsedError.isErrorType(IsaacErrorType.Balance)
 
 		if (isAuthError || isBalanceError) {
 			return false
@@ -900,7 +900,7 @@ ${partialResult}`
 
 	private compactConversationForContextWindow(
 		contextManager: ContextManager,
-		conversation: DiracStorageMessage[],
+		conversation: IsaacStorageMessage[],
 		conversationHistoryDeletedRange: [number, number] | undefined,
 	): {
 		didCompact: boolean
@@ -956,8 +956,8 @@ ${partialResult}`
 	private async *createMessageWithInitialChunkRetry(
 		api: ReturnType<typeof buildApiHandler>,
 		systemPrompt: string,
-		fullConversation: DiracStorageMessage[],
-		nativeTools: DiracTool[] | undefined,
+		fullConversation: IsaacStorageMessage[],
+		nativeTools: IsaacTool[] | undefined,
 		providerId: string,
 		modelId: string,
 		contextManager: ContextManager,
@@ -966,7 +966,7 @@ ${partialResult}`
 		for (let attempt = 1; attempt <= MAX_INITIAL_STREAM_ATTEMPTS; attempt += 1) {
 			const truncatedConversation = contextManager
 				.getTruncatedMessages(fullConversation, contextState.conversationHistoryDeletedRange)
-				.map((message) => message as DiracStorageMessage)
+				.map((message) => message as IsaacStorageMessage)
 			const stream = api.createMessage(systemPrompt, truncatedConversation, nativeTools)
 			const iterator = stream[Symbol.asyncIterator]()
 

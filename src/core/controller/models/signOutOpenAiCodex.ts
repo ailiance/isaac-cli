@@ -1,4 +1,4 @@
-import { Empty, EmptyRequest } from "@shared/proto/dirac/common"
+import { Empty, EmptyRequest } from "@shared/proto/isaac/common"
 import { openAiCodexOAuthManager } from "@/integrations/openai-codex/oauth"
 import { Logger } from "@/shared/services/Logger"
 import type { Controller } from "../index"

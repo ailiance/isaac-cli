@@ -2,23 +2,23 @@
  * Permission handling for ACP integration.
  *
  * This module handles the translation between ACP permission requests/responses
- * and Dirac's internal permission system. It maps DiracAsk types to appropriate
- * ACP permission options and translates user responses back to Dirac's format.
+ * and Isaac's internal permission system. It maps IsaacAsk types to appropriate
+ * ACP permission options and translates user responses back to Isaac's format.
  *
  * @module acp/permissionHandler
  */
 
 import type * as acp from "@agentclientprotocol/sdk"
-import type { DiracAsk } from "@shared/ExtensionMessage"
-import type { DiracAskResponse } from "@shared/WebviewMessage"
+import type { IsaacAsk } from "@shared/ExtensionMessage"
+import type { IsaacAskResponse } from "@shared/WebviewMessage"
 import { Logger } from "@/shared/services/Logger.js"
-import type { AcpSessionState, DiracPermissionOption } from "./types.js"
+import type { AcpSessionState, IsaacPermissionOption } from "./types.js"
 
 /**
  * Standard permission options for operations that support "always allow".
  * Used for commands and tools.
  */
-const STANDARD_PERMISSION_OPTIONS: DiracPermissionOption[] = [
+const STANDARD_PERMISSION_OPTIONS: IsaacPermissionOption[] = [
 	{ kind: "allow_once", optionId: "allow_once", name: "Allow Once" },
 	{ kind: "allow_always", optionId: "allow_always", name: "Always Allow" },
 	{ kind: "reject_once", optionId: "reject_once", name: "Reject" },
@@ -28,15 +28,15 @@ const STANDARD_PERMISSION_OPTIONS: DiracPermissionOption[] = [
  * Permission options for operations that don't support "always allow".
  * Used for browser actions and other one-time operations.
  */
-const RESTRICTED_PERMISSION_OPTIONS: DiracPermissionOption[] = [
+const RESTRICTED_PERMISSION_OPTIONS: IsaacPermissionOption[] = [
 	{ kind: "allow_once", optionId: "allow_once", name: "Allow Once" },
 	{ kind: "reject_once", optionId: "reject_once", name: "Reject" },
 ]
 
 /**
- * Mapping of DiracAsk types to their permission option sets.
+ * Mapping of IsaacAsk types to their permission option sets.
  */
-const ASK_TYPE_PERMISSION_MAP: Partial<Record<DiracAsk, DiracPermissionOption[]>> = {
+const ASK_TYPE_PERMISSION_MAP: Partial<Record<IsaacAsk, IsaacPermissionOption[]>> = {
 	// Commands support "always allow" for auto-approval
 	command: STANDARD_PERMISSION_OPTIONS,
 
@@ -51,17 +51,17 @@ const ASK_TYPE_PERMISSION_MAP: Partial<Record<DiracAsk, DiracPermissionOption[]>
 }
 
 /**
- * DiracAsk types that require permission handling.
+ * IsaacAsk types that require permission handling.
  * Other ask types (like followup, plan_mode_respond) don't need permission UI.
  */
-const PERMISSION_REQUIRING_ASK_TYPES: Set<DiracAsk> = new Set(["command", "tool", "browser_action_launch", "command_output"])
+const PERMISSION_REQUIRING_ASK_TYPES: Set<IsaacAsk> = new Set(["command", "tool", "browser_action_launch", "command_output"])
 
 /**
  * Result of handling a permission response.
  */
 export interface PermissionHandlerResult {
-	/** Dirac's internal response type */
-	response: DiracAskResponse
+	/** Isaac's internal response type */
+	response: IsaacAskResponse
 	/** Optional text to pass with the response */
 	text?: string
 	/** Whether "always allow" was selected (for auto-approval tracking) */
@@ -71,22 +71,22 @@ export interface PermissionHandlerResult {
 }
 
 /**
- * Check if a DiracAsk type requires permission handling.
+ * Check if a IsaacAsk type requires permission handling.
  *
- * @param askType - The DiracAsk type to check
+ * @param askType - The IsaacAsk type to check
  * @returns True if the ask type requires permission UI
  */
-export function requiresPermission(askType: DiracAsk): boolean {
+export function requiresPermission(askType: IsaacAsk): boolean {
 	return PERMISSION_REQUIRING_ASK_TYPES.has(askType)
 }
 
 /**
- * Get the appropriate permission options for a DiracAsk type.
+ * Get the appropriate permission options for a IsaacAsk type.
  *
- * @param askType - The DiracAsk type
+ * @param askType - The IsaacAsk type
  * @returns Array of permission options, or undefined if the ask type doesn't require permission
  */
-export function getPermissionOptionsForAskType(askType: DiracAsk): acp.PermissionOption[] | undefined {
+export function getPermissionOptionsForAskType(askType: IsaacAsk): acp.PermissionOption[] | undefined {
 	const options = ASK_TYPE_PERMISSION_MAP[askType]
 	if (!options) {
 		return undefined
@@ -101,13 +101,13 @@ export function getPermissionOptionsForAskType(askType: DiracAsk): acp.Permissio
 }
 
 /**
- * Handle an ACP permission response and translate it to Dirac's format.
+ * Handle an ACP permission response and translate it to Isaac's format.
  *
  * @param response - The ACP permission response from the client
- * @param askType - The original DiracAsk type that triggered the permission request
- * @returns The translated result for Dirac's handleWebviewAskResponse
+ * @param askType - The original IsaacAsk type that triggered the permission request
+ * @returns The translated result for Isaac's handleWebviewAskResponse
  */
-export function handlePermissionResponse(response: acp.RequestPermissionResponse, askType: DiracAsk): PermissionHandlerResult {
+export function handlePermissionResponse(response: acp.RequestPermissionResponse, askType: IsaacAsk): PermissionHandlerResult {
 	// Check if cancelled
 	if (response.outcome.outcome === "cancelled") {
 		return {
@@ -119,7 +119,7 @@ export function handlePermissionResponse(response: acp.RequestPermissionResponse
 	// Get the selected option ID
 	const optionId = response.outcome.optionId
 
-	// Translate the option to Dirac's response format
+	// Translate the option to Isaac's response format
 	switch (optionId) {
 		case "allow_once":
 			return {
@@ -153,12 +153,12 @@ export function handlePermissionResponse(response: acp.RequestPermissionResponse
  * Create a permission request for an ACP tool call.
  *
  * @param toolCall - The ACP tool call that needs permission
- * @param askType - The Dirac ask type
+ * @param askType - The Isaac ask type
  * @returns The permission request options, or null if no permission needed
  */
 export function createPermissionRequest(
 	toolCall: acp.ToolCall,
-	askType: DiracAsk,
+	askType: IsaacAsk,
 ): { toolCall: acp.ToolCall; options: acp.PermissionOption[] } | null {
 	const options = getPermissionOptionsForAskType(askType)
 	if (!options) {
@@ -185,10 +185,10 @@ export class AutoApprovalTracker {
 	/**
 	 * Record an "always allow" decision for a permission request.
 	 *
-	 * @param askType - The Dirac ask type that was auto-approved
+	 * @param askType - The Isaac ask type that was auto-approved
 	 * @param identifier - The identifier for the operation (command, tool name, etc.)
 	 */
-	recordAlwaysAllow(askType: DiracAsk, identifier: string): void {
+	recordAlwaysAllow(askType: IsaacAsk, identifier: string): void {
 		switch (askType) {
 			case "command": {
 				// Store the first word of the command as the key
@@ -206,11 +206,11 @@ export class AutoApprovalTracker {
 	/**
 	 * Check if an operation has been auto-approved.
 	 *
-	 * @param askType - The Dirac ask type
+	 * @param askType - The Isaac ask type
 	 * @param identifier - The identifier for the operation
 	 * @returns True if the operation was previously auto-approved
 	 */
-	isAutoApproved(askType: DiracAsk, identifier: string): boolean {
+	isAutoApproved(askType: IsaacAsk, identifier: string): boolean {
 		switch (askType) {
 			case "command": {
 				const commandPrefix = identifier.split(" ")[0]
@@ -241,12 +241,12 @@ export class AutoApprovalTracker {
  * 1. Checks if the operation is already auto-approved
  * 2. If not, requests permission from the ACP client
  * 3. Tracks "always allow" decisions
- * 4. Returns the translated result for Dirac
+ * 4. Returns the translated result for Isaac
  *
  * @param requestPermission - Function to request permission from the ACP client
  * @param sessionId - The session ID
  * @param toolCall - The tool call requiring permission
- * @param askType - The Dirac ask type
+ * @param askType - The Isaac ask type
  * @param identifier - Identifier for auto-approval tracking
  * @param autoApprovalTracker - The auto-approval tracker
  * @returns The permission handler result
@@ -259,7 +259,7 @@ export async function processPermissionRequest(
 	) => Promise<acp.RequestPermissionResponse>,
 	sessionId: string,
 	toolCall: acp.ToolCall,
-	askType: DiracAsk,
+	askType: IsaacAsk,
 	identifier: string,
 	autoApprovalTracker?: AutoApprovalTracker,
 ): Promise<PermissionHandlerResult> {
@@ -298,10 +298,10 @@ export async function processPermissionRequest(
  * Get the identifier for auto-approval tracking from a tool call.
  *
  * @param toolCall - The ACP tool call
- * @param askType - The Dirac ask type
+ * @param askType - The Isaac ask type
  * @returns The identifier string for auto-approval tracking
  */
-export function getAutoApprovalIdentifier(toolCall: acp.ToolCall, askType: DiracAsk): string {
+export function getAutoApprovalIdentifier(toolCall: acp.ToolCall, askType: IsaacAsk): string {
 	const rawInput = toolCall.rawInput as Record<string, unknown> | undefined
 
 	switch (askType) {

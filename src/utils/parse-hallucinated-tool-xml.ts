@@ -102,7 +102,7 @@ export function hasHallucinatedToolXml(text: string): boolean {
 /**
  * Canonical aliases observed in the wild. The keys are exactly what
  * Mistral-Medium-128B (and similar MLX backends) emit when they
- * hallucinate tool calls; the values are the real DiracDefaultTool
+ * hallucinate tool calls; the values are the real IsaacDefaultTool
  * enum strings. Extend this map when new hallucinations are observed
  * in production logs.
  *
@@ -133,7 +133,7 @@ const TOOL_NAME_ALIASES: Record<string, string> = {
 }
 
 /**
- * Resolve a model-emitted tool name to a canonical DiracDefaultTool
+ * Resolve a model-emitted tool name to a canonical IsaacDefaultTool
  * string. Pass the runtime enum-value set so this module stays
  * decoupled from the broader tool registry (the registry imports
  * proto-generated types; this module is parser-only).

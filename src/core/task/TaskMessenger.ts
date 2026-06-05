@@ -3,12 +3,12 @@ import { executeHook } from "@core/hooks/hook-executor"
 import { getHookModelContext } from "@core/hooks/hook-model-context"
 import { getHooksEnabledSafe } from "@core/hooks/hooks-utils"
 import { formatResponse } from "@core/prompts/responses"
-import { DiracAsk, DiracSay, MultiCommandState } from "@shared/ExtensionMessage"
-import { convertDiracMessageToProto } from "@shared/proto-conversions/dirac-message"
+import { IsaacAsk, IsaacSay, MultiCommandState } from "@shared/ExtensionMessage"
+import { convertIsaacMessageToProto } from "@shared/proto-conversions/dirac-message"
 import { Logger } from "@shared/services/Logger"
-import { DiracDefaultTool } from "@shared/tools"
+import { IsaacDefaultTool } from "@shared/tools"
 import { TOOL_EXAMPLES } from "../prompts/tool-examples"
-import { DiracAskResponse } from "@shared/WebviewMessage"
+import { IsaacAskResponse } from "@shared/WebviewMessage"
 import pWaitFor from "p-wait-for"
 import { TaskMessengerDependencies } from "./types/task-messenger"
 
@@ -16,12 +16,12 @@ export class TaskMessenger {
 	constructor(private dependencies: TaskMessengerDependencies) {}
 
 	async ask(
-		type: DiracAsk,
+		type: IsaacAsk,
 		text?: string,
 		partial?: boolean,
 		multiCommandState?: MultiCommandState,
 	): Promise<{
-		response: DiracAskResponse
+		response: IsaacAskResponse
 		text?: string
 		images?: string[]
 		files?: string[]
@@ -30,12 +30,12 @@ export class TaskMessenger {
 	}> {
 		// Allow resume asks even when aborted to enable resume button after cancellation
 		if (this.dependencies.taskState.abort && type !== "resume_task" && type !== "resume_completed_task") {
-			throw new Error("Dirac instance aborted")
+			throw new Error("Isaac instance aborted")
 		}
 
 		let askTs: number
 		if (partial !== undefined) {
-			const diracMessages = this.dependencies.messageStateHandler.getDiracMessages()
+			const diracMessages = this.dependencies.messageStateHandler.getIsaacMessages()
 			// Search backwards for the last partial message of the same type and subtype
 			let lastMessageIndex = -1
 			for (let i = diracMessages.length - 1; i >= 0; i--) {
@@ -51,13 +51,13 @@ export class TaskMessenger {
 			if (partial) {
 				if (isUpdatingPreviousPartial) {
 					// existing partial message, so update it
-					await this.dependencies.messageStateHandler.updateDiracMessage(lastMessageIndex, {
+					await this.dependencies.messageStateHandler.updateIsaacMessage(lastMessageIndex, {
 						text,
 						multiCommandState,
 						partial,
 						commandCompleted: false,
 					})
-					const protoMessage = convertDiracMessageToProto(lastMessage!)
+					const protoMessage = convertIsaacMessageToProto(lastMessage!)
 					await sendPartialMessageEvent(protoMessage)
 					await this.dependencies.postStateToWebview()
 					return {
@@ -72,7 +72,7 @@ export class TaskMessenger {
 				// this is a new partial message, so add it with partial state
 				askTs = Date.now()
 				this.dependencies.taskState.lastMessageTs = askTs
-				await this.dependencies.messageStateHandler.addToDiracMessages({
+				await this.dependencies.messageStateHandler.addToIsaacMessages({
 					ts: askTs,
 					type: "ask",
 					ask: type,
@@ -99,13 +99,13 @@ export class TaskMessenger {
 
 				askTs = lastMessage!.ts
 				this.dependencies.taskState.lastMessageTs = askTs
-				await this.dependencies.messageStateHandler.updateDiracMessage(lastMessageIndex, {
+				await this.dependencies.messageStateHandler.updateIsaacMessage(lastMessageIndex, {
 					text,
 					partial: false,
 					multiCommandState,
 					commandCompleted: false,
 				})
-				const protoMessage = convertDiracMessageToProto(lastMessage!)
+				const protoMessage = convertIsaacMessageToProto(lastMessage!)
 				await sendPartialMessageEvent(protoMessage)
 				await this.dependencies.postStateToWebview()
 			} else {
@@ -116,7 +116,7 @@ export class TaskMessenger {
 				this.dependencies.taskState.askResponseFiles = undefined
 				askTs = Date.now()
 				this.dependencies.taskState.lastMessageTs = askTs
-				await this.dependencies.messageStateHandler.addToDiracMessages({
+				await this.dependencies.messageStateHandler.addToIsaacMessages({
 					ts: askTs,
 					type: "ask",
 					ask: type,
@@ -133,7 +133,7 @@ export class TaskMessenger {
 			this.dependencies.taskState.askResponseFiles = undefined
 			askTs = Date.now()
 			this.dependencies.taskState.lastMessageTs = askTs
-			await this.dependencies.messageStateHandler.addToDiracMessages({
+			await this.dependencies.messageStateHandler.addToIsaacMessages({
 				ts: askTs,
 				type: "ask",
 				ask: type,
@@ -142,7 +142,7 @@ export class TaskMessenger {
 			await this.dependencies.postStateToWebview()
 		}
 
-		// Notification hook marks that Dirac is waiting for user input.
+		// Notification hook marks that Isaac is waiting for user input.
 		await this.runNotificationHook({
 			event: "user_attention",
 			source: type,
@@ -211,7 +211,7 @@ export class TaskMessenger {
 		}
 	}
 
-	async handleWebviewAskResponse(askResponse: DiracAskResponse, text?: string, images?: string[], files?: string[], userEdits?: Record<string, string>) {
+	async handleWebviewAskResponse(askResponse: IsaacAskResponse, text?: string, images?: string[], files?: string[], userEdits?: Record<string, string>) {
 		this.dependencies.taskState.askResponse = askResponse
 		this.dependencies.taskState.askResponseText = text
 		this.dependencies.taskState.askResponseImages = images
@@ -220,7 +220,7 @@ export class TaskMessenger {
 	}
 
 	async say(
-		type: DiracSay,
+		type: IsaacSay,
 		text?: string,
 		images?: string[],
 		files?: string[],
@@ -229,7 +229,7 @@ export class TaskMessenger {
 	): Promise<number | undefined> {
 		// Allow hook messages even when aborted to enable proper cleanup
 		if (this.dependencies.taskState.abort && type !== "hook_status" && type !== "hook_output_stream") {
-			throw new Error("Dirac instance aborted")
+			throw new Error("Isaac instance aborted")
 		}
 
 		const providerInfo = this.dependencies.getCurrentProviderInfo()
@@ -240,7 +240,7 @@ export class TaskMessenger {
 		}
 
 		if (partial !== undefined) {
-			const diracMessages = this.dependencies.messageStateHandler.getDiracMessages()
+			const diracMessages = this.dependencies.messageStateHandler.getIsaacMessages()
 			// Search backwards for the last partial message of the same type and subtype
 			let lastIndex = -1
 			for (let i = diracMessages.length - 1; i >= 0; i--) {
@@ -256,7 +256,7 @@ export class TaskMessenger {
 			if (partial) {
 				if (isUpdatingPreviousPartial) {
 					// existing partial message, so update it
-					await this.dependencies.messageStateHandler.updateDiracMessage(lastIndex, {
+					await this.dependencies.messageStateHandler.updateIsaacMessage(lastIndex, {
 						text,
 						multiCommandState,
 						images,
@@ -264,7 +264,7 @@ export class TaskMessenger {
 						partial,
 						commandCompleted: false,
 					})
-					const protoMessage = convertDiracMessageToProto(lastMessage!)
+					const protoMessage = convertIsaacMessageToProto(lastMessage!)
 					await sendPartialMessageEvent(protoMessage)
 					await this.dependencies.postStateToWebview()
 					return lastMessage!.ts
@@ -272,7 +272,7 @@ export class TaskMessenger {
 				// this is a new partial message, so add it with partial state
 				const sayTs = Date.now()
 				this.dependencies.taskState.lastMessageTs = sayTs
-				await this.dependencies.messageStateHandler.addToDiracMessages({
+				await this.dependencies.messageStateHandler.addToIsaacMessages({
 					ts: sayTs,
 					type: "say",
 					say: type,
@@ -290,7 +290,7 @@ export class TaskMessenger {
 			if (isUpdatingPreviousPartial) {
 				// this is the complete version of a previously partial message, so replace the partial with the complete version
 				this.dependencies.taskState.lastMessageTs = lastMessage!.ts
-				await this.dependencies.messageStateHandler.updateDiracMessage(lastIndex, {
+				await this.dependencies.messageStateHandler.updateIsaacMessage(lastIndex, {
 					text,
 					images,
 					files,
@@ -298,7 +298,7 @@ export class TaskMessenger {
 					multiCommandState,
 					commandCompleted: false,
 				})
-				const protoMessage = convertDiracMessageToProto(lastMessage!)
+				const protoMessage = convertIsaacMessageToProto(lastMessage!)
 				await sendPartialMessageEvent(protoMessage)
 				await this.dependencies.postStateToWebview()
 				return undefined
@@ -306,7 +306,7 @@ export class TaskMessenger {
 			// this is a new partial=false message, so add it like normal
 			const sayTs = Date.now()
 			this.dependencies.taskState.lastMessageTs = sayTs
-			await this.dependencies.messageStateHandler.addToDiracMessages({
+			await this.dependencies.messageStateHandler.addToIsaacMessages({
 				ts: sayTs,
 				type: "say",
 				say: type,
@@ -323,7 +323,7 @@ export class TaskMessenger {
 		// this is a new non-partial message, so add it like normal
 		const sayTs = Date.now()
 		this.dependencies.taskState.lastMessageTs = sayTs
-		await this.dependencies.messageStateHandler.addToDiracMessages({
+		await this.dependencies.messageStateHandler.addToIsaacMessages({
 			ts: sayTs,
 			type: "say",
 			say: type,
@@ -337,21 +337,21 @@ export class TaskMessenger {
 		return sayTs
 	}
 
-	async sayAndCreateMissingParamError(toolName: DiracDefaultTool, paramName: string, relPath?: string) {
+	async sayAndCreateMissingParamError(toolName: IsaacDefaultTool, paramName: string, relPath?: string) {
 		// Clear any partial UI state for this tool
 		await this.removeLastPartialMessageIfExistsWithType("say", "tool")
 		await this.removeLastPartialMessageIfExistsWithType("ask", "tool")
 
 		await this.say(
 			"error",
-			`Dirac tried to use ${toolName}${relPath ? ` for '${relPath.toPosix()}'` : ""} without providing a value for '${paramName}'. Retrying...`,
+			`Isaac tried to use ${toolName}${relPath ? ` for '${relPath.toPosix()}'` : ""} without providing a value for '${paramName}'. Retrying...`,
 		)
 		const example = TOOL_EXAMPLES[toolName]
 		return formatResponse.toolError(formatResponse.missingToolParameterError(paramName, example))
 	}
 
-	async removeLastPartialMessageIfExistsWithType(type: "ask" | "say", askOrSay: DiracAsk | DiracSay, onlyPartial: boolean = true) {
-		const diracMessages = this.dependencies.messageStateHandler.getDiracMessages()
+	async removeLastPartialMessageIfExistsWithType(type: "ask" | "say", askOrSay: IsaacAsk | IsaacSay, onlyPartial: boolean = true) {
+		const diracMessages = this.dependencies.messageStateHandler.getIsaacMessages()
 		// Search backwards for the last partial message of the same type and subtype
 		let indexToRemove = -1
 		for (let i = diracMessages.length - 1; i >= 0; i--) {
@@ -365,8 +365,8 @@ export class TaskMessenger {
 		if (indexToRemove !== -1) {
 			const newMessages = [...diracMessages]
 			newMessages.splice(indexToRemove, 1)
-			this.dependencies.messageStateHandler.setDiracMessages(newMessages)
-			await this.dependencies.messageStateHandler.saveDiracMessagesAndUpdateHistory()
+			this.dependencies.messageStateHandler.setIsaacMessages(newMessages)
+			await this.dependencies.messageStateHandler.saveIsaacMessagesAndUpdateHistory()
 			await this.dependencies.postStateToWebview()
 		}
 	}

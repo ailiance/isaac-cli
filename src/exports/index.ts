@@ -1,10 +1,10 @@
 import { Controller } from "@core/controller"
 import { sendChatButtonClickedEvent } from "@core/controller/ui/subscribeToChatButtonClicked"
 import { Logger } from "@/shared/services/Logger"
-import { DiracAPI } from "./dirac"
+import { IsaacAPI } from "./dirac"
 
-export function createDiracAPI(sidebarController: Controller): DiracAPI {
-	const api: DiracAPI = {
+export function createIsaacAPI(sidebarController: Controller): IsaacAPI {
+	const api: IsaacAPI = {
 		startNewTask: async (task?: string, images?: string[]) => {
 			await sidebarController.clearTask()
 			await sidebarController.postStateToWebview()

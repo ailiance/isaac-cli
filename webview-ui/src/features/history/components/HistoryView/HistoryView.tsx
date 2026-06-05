@@ -1,5 +1,5 @@
-import { BooleanRequest, EmptyRequest, StringArrayRequest } from "@shared/proto/dirac/common"
-import { GetTaskHistoryRequest, TaskFavoriteRequest } from "@shared/proto/dirac/task"
+import { BooleanRequest, EmptyRequest, StringArrayRequest } from "@shared/proto/isaac/common"
+import { GetTaskHistoryRequest, TaskFavoriteRequest } from "@shared/proto/isaac/task"
 import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import Fuse, { FuseResult } from "fuse.js"
 import { FunnelIcon } from "lucide-react"

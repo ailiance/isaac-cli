@@ -1,11 +1,11 @@
-import { DiracWebviewProvider } from "./core/webview";
+import { IsaacWebviewProvider } from "./core/webview";
 import "./utils/path"; // necessary to have access to String.prototype.toPosix
 
 import { HostProvider } from "@/hosts/host-provider";
 import { Logger } from "@/shared/services/Logger";
 import type { StorageContext } from "@/shared/storage/storage-context";
 import { FileContextTracker } from "./core/context/context-tracking/FileContextTracker";
-import { clearOnboardingModelsCache } from "./core/controller/models/getDiracOnboardingModels";
+import { clearOnboardingModelsCache } from "./core/controller/models/getIsaacOnboardingModels";
 import { HookDiscoveryCache } from "./core/hooks/HookDiscoveryCache";
 import { HookProcessRegistry } from "./core/hooks/HookProcessRegistry";
 import { StateManager } from "./core/storage/StateManager";
@@ -17,7 +17,7 @@ import { getDistinctId } from "./services/logging/distinctId";
 import { SymbolIndexService } from "./services/symbol-index/SymbolIndexService";
 import { telemetryService } from "./services/telemetry";
 // Legacy telemetry removed
-import { DiracTempManager } from "./services/temp";
+import { IsaacTempManager } from "./services/temp";
 import { cleanupTestMode } from "./services/test/TestMode";
 import { ShowMessageType } from "./shared/proto/host/window";
 import { syncWorker } from "./shared/services/worker/sync";
@@ -27,27 +27,27 @@ import { getLatestAnnouncementId } from "./utils/announcements";
 import { arePathsEqual } from "./utils/path";
 
 /**
- * Performs intialization for Dirac that is common to all platforms.
+ * Performs intialization for Isaac that is common to all platforms.
  *
  * @param context
  * @returns The webview provider
- * @throws DiracConfigurationError if endpoints.json exists but is invalid
+ * @throws IsaacConfigurationError if endpoints.json exists but is invalid
  */
-export async function initialize(storageContext: StorageContext): Promise<DiracWebviewProvider> {
+export async function initialize(storageContext: StorageContext): Promise<IsaacWebviewProvider> {
 	// Configure the shared Logging class to use HostProvider's output channels and debug logger
 	Logger.subscribe((msg: string) => HostProvider.get().logToChannel(msg)) // File system logging
 	Logger.subscribe((msg: string) => HostProvider.env.debugLog({ value: msg })) // Host debug logging
 
-	// Initialize DiracEndpoint configuration (reads bundled and ~/.dirac/endpoints.json if present)
-	// This must be done before any other code that calls DiracEnv.config()
-	// Throws DiracConfigurationError if config file exists but is invalid
-	const { DiracEndpoint } = await import("./config")
-	await DiracEndpoint.initialize(HostProvider.get().extensionFsPath)
+	// Initialize IsaacEndpoint configuration (reads bundled and ~/.dirac/endpoints.json if present)
+	// This must be done before any other code that calls IsaacEnv.config()
+	// Throws IsaacConfigurationError if config file exists but is invalid
+	const { IsaacEndpoint } = await import("./config")
+	await IsaacEndpoint.initialize(HostProvider.get().extensionFsPath)
 
 	try {
 		await StateManager.initialize(storageContext)
 	} catch (error) {
-		Logger.error("[Dirac] CRITICAL: Failed to initialize StateManager:", error)
+		Logger.error("[Isaac] CRITICAL: Failed to initialize StateManager:", error)
 		HostProvider.window.showMessage({
 			type: ShowMessageType.ERROR,
 			message: "Failed to initialize storage. Please check logs for details or try restarting the client.",
@@ -59,7 +59,7 @@ export async function initialize(storageContext: StorageContext): Promise<DiracW
 	// Legacy telemetry removed
 
 	// =============== Webview services ===============
-	const webview = HostProvider.get().createDiracWebviewProvider()
+	const webview = HostProvider.get().createIsaacWebviewProvider()
 
 	const stateManager = StateManager.get()
 	// Non-blocking announcement check and display
@@ -72,7 +72,7 @@ export async function initialize(storageContext: StorageContext): Promise<DiracW
 	const blobStoreSettings = getBlobStoreSettingsFromEnv()
 	syncWorker().init({ ...blobStoreSettings, userDistinctId: getDistinctId() })
 	// Clean up old temp files in background (non-blocking) and start periodic cleanup every 24 hours
-	DiracTempManager.startPeriodicCleanup()
+	IsaacTempManager.startPeriodicCleanup()
 	// Clean up orphaned file context warnings (startup cleanup)
 	FileContextTracker.cleanupOrphanedWarnings(stateManager)
 
@@ -89,7 +89,7 @@ export async function initialize(storageContext: StorageContext): Promise<DiracW
 				SymbolIndexService.getInstance()
 					.initialize(projectRoot)
 					.catch((error) => {
-						Logger.error("[Dirac] Failed to initialize SymbolIndexService:", error)
+						Logger.error("[Isaac] Failed to initialize SymbolIndexService:", error)
 					})
 			}
 		})
@@ -106,13 +106,13 @@ async function showVersionUpdateAnnouncement(stateManager: StateManager) {
 	// Perform post-update actions if necessary
 	try {
 		if (!previousVersion || currentVersion !== previousVersion) {
-			Logger.log(`Dirac version changed: ${previousVersion} -> ${currentVersion}. First run or update detected.`)
+			Logger.log(`Isaac version changed: ${previousVersion} -> ${currentVersion}. First run or update detected.`)
 
 			// Check if there's a new announcement to show
 			// Update version key name if needed
-			const previousDiracVersion = stateManager.getGlobalStateKey("diracVersion" as any)
-			if (previousDiracVersion && !previousVersion) {
-				// This is handled by migrateDiracToDirac but as a safety measure
+			const previousIsaacVersion = stateManager.getGlobalStateKey("diracVersion" as any)
+			if (previousIsaacVersion && !previousVersion) {
+				// This is handled by migrateIsaacToIsaac but as a safety measure
 			}
 
 			const lastShownAnnouncementId = stateManager.getGlobalStateKey("lastShownAnnouncementId")
@@ -121,8 +121,8 @@ async function showVersionUpdateAnnouncement(stateManager: StateManager) {
 			if (lastShownAnnouncementId !== latestAnnouncementId) {
 				// Show notification when there's a new announcement (major/minor updates or fresh installs)
 				const message = previousVersion
-					? `Dirac has been updated to v${currentVersion}`
-					: `Welcome to Dirac v${currentVersion}`
+					? `Isaac has been updated to v${currentVersion}`
+					: `Welcome to Isaac v${currentVersion}`
 				HostProvider.window.showMessage({
 					type: ShowMessageType.INFORMATION,
 					message,
@@ -139,7 +139,7 @@ async function showVersionUpdateAnnouncement(stateManager: StateManager) {
 
 /**
  * Checks if this workspace was opened from the worktree quick launch button.
- * If so, opens the Dirac sidebar and clears the state.
+ * If so, opens the Isaac sidebar and clears the state.
  */
 async function checkWorktreeAutoOpen(stateManager: StateManager): Promise<void> {
 	try {
@@ -162,8 +162,8 @@ async function checkWorktreeAutoOpen(stateManager: StateManager): Promise<void> 
 		if (arePathsEqual(currentPath, worktreeAutoOpenPath)) {
 			// Clear the state first to prevent re-triggering
 			stateManager.setGlobalState("worktreeAutoOpenPath", undefined)
-			// Open the Dirac sidebar
-			await HostProvider.workspace.openDiracSidebarPanel({})
+			// Open the Isaac sidebar
+			await HostProvider.workspace.openIsaacSidebarPanel({})
 		}
 	} catch (error) {
 		Logger.error("Error checking worktree auto-open", error)
@@ -171,7 +171,7 @@ async function checkWorktreeAutoOpen(stateManager: StateManager): Promise<void> 
 }
 
 /**
- * Performs cleanup when Dirac is deactivated that is common to all platforms.
+ * Performs cleanup when Isaac is deactivated that is common to all platforms.
  */
 export async function tearDown(): Promise<void> {
 	AgentConfigLoader.getInstance()?.dispose()
@@ -180,7 +180,7 @@ export async function tearDown(): Promise<void> {
 	ErrorService.get().dispose()
 	featureFlagsService.dispose()
 	// Dispose all webview instances
-	await DiracWebviewProvider.disposeAllInstances()
+	await IsaacWebviewProvider.disposeAllInstances()
 	syncWorker().dispose()
 	clearOnboardingModelsCache()
 
@@ -189,7 +189,7 @@ export async function tearDown(): Promise<void> {
 	// Clean up hook discovery cache
 	HookDiscoveryCache.getInstance().dispose()
 	// Stop periodic temp file cleanup
-	DiracTempManager.stopPeriodicCleanup()
+	IsaacTempManager.stopPeriodicCleanup()
 	SymbolIndexService.getInstance().dispose()
 
 	// Clean up test mode

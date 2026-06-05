@@ -1,15 +1,15 @@
-import type { DiracTool } from "@/shared/tools"
-import { DiracToolSet } from ".."
-import { registerDiracToolSets } from "../tools/init"
+import type { IsaacTool } from "@/shared/tools"
+import { IsaacToolSet } from ".."
+import { registerIsaacToolSets } from "../tools/init"
 import type { SystemPromptContext } from "../types"
 import { PromptBuilder } from "./PromptBuilder"
 
 export class PromptRegistry {
 	private static instance: PromptRegistry
-	public nativeTools: DiracTool[] | undefined = undefined
+	public nativeTools: IsaacTool[] | undefined = undefined
 
 	private constructor() {
-		registerDiracToolSets()
+		registerIsaacToolSets()
 	}
 
 	static getInstance(): PromptRegistry {
@@ -23,7 +23,7 @@ export class PromptRegistry {
 	 * Get unified system prompt
 	 */
 	async get(context: SystemPromptContext): Promise<string> {
-		this.nativeTools = DiracToolSet.getNativeTools(context)
+		this.nativeTools = IsaacToolSet.getNativeTools(context)
 
 		const builder = new PromptBuilder(context)
 		return await builder.build()

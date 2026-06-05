@@ -2,13 +2,13 @@
  * Entry point for ACP (Agent Client Protocol) mode.
  *
  * When the CLI is invoked with `--acp`, this module sets up the ACP connection
- * and runs Dirac as an ACP-compliant agent communicating over stdio.
+ * and runs Isaac as an ACP-compliant agent communicating over stdio.
  *
  * This module exports:
- * - `DiracAgent` - Decoupled agent for programmatic use (no stdio dependency)
- * - `AcpAgent` - Thin wrapper that bridges stdio connection to DiracAgent
- * - `DiracSessionEmitter` - Typed EventEmitter for per-session events
- * - `runAcpMode` - Function to run Dirac in stdio-based ACP mode
+ * - `IsaacAgent` - Decoupled agent for programmatic use (no stdio dependency)
+ * - `AcpAgent` - Thin wrapper that bridges stdio connection to IsaacAgent
+ * - `IsaacSessionEmitter` - Typed EventEmitter for per-session events
+ * - `runAcpMode` - Function to run Isaac in stdio-based ACP mode
  *
  * @module acp
  */
@@ -19,13 +19,13 @@ import { AcpAgent } from "./AcpAgent.js"
 import { nodeToWebReadable, nodeToWebWritable } from "./streamUtils.js"
 
 // Re-export classes for programmatic use
-export { DiracAgent } from "../agent/DiracAgent.js"
-export { DiracSessionEmitter } from "../agent/DiracSessionEmitter.js"
+export { IsaacAgent } from "../agent/IsaacAgent.js"
+export { IsaacSessionEmitter } from "../agent/IsaacSessionEmitter.js"
 export type {
 	AcpAgentOptions,
 	AcpSessionState,
-	DiracAgentOptions,
-	DiracSessionEvents,
+	IsaacAgentOptions,
+	IsaacSessionEvents,
 	PermissionHandler,
 } from "../agent/types.js"
 export { AcpAgent } from "./AcpAgent.js"
@@ -65,7 +65,7 @@ export function restoreConsole(): void {
 }
 
 export interface AcpModeOptions {
-	/** Path to Dirac configuration directory */
+	/** Path to Isaac configuration directory */
 	config?: string
 	/** Working directory (default: process.cwd()) */
 	cwd?: string
@@ -76,7 +76,7 @@ export interface AcpModeOptions {
 }
 
 /**
- * Run Dirac in ACP mode.
+ * Run Isaac in ACP mode.
  *
  * This function:
  * 1. Redirects console output to stderr (stdout reserved for JSON-RPC)

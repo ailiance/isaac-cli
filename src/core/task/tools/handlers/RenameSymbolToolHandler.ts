@@ -13,7 +13,7 @@ import { HostProvider } from "@/hosts/host-provider"
 import { getDiagnosticsProviders } from "@/integrations/diagnostics/getDiagnosticsProviders"
 import { SymbolIndexService, SymbolLocation } from "@/services/symbol-index/SymbolIndexService"
 import { telemetryService } from "@/services/telemetry"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import { showNotificationForApproval } from "../../utils"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
@@ -24,7 +24,7 @@ import { ToolResultUtils } from "../utils/ToolResultUtils"
 import { coerceToStringArray } from "../utils/coerceArray"
 
 export class RenameSymbolToolHandler implements IFullyManagedTool {
-	readonly name = DiracDefaultTool.RENAME_SYMBOL
+	readonly name = IsaacDefaultTool.RENAME_SYMBOL
 	public diagnosticsTimeoutMs = 1500
 	public diagnosticsDelayMs = 500
 
@@ -258,7 +258,7 @@ export class RenameSymbolToolHandler implements IFullyManagedTool {
 				).then((results) => results.every(Boolean)))
 
 			if (!shouldAutoApprove) {
-				const notificationMessage = `Dirac wants to rename symbol '${existingSymbol}' to '${newSymbol}' (${totalReplacements} occurrences in ${fileResults.length} files)`
+				const notificationMessage = `Isaac wants to rename symbol '${existingSymbol}' to '${newSymbol}' (${totalReplacements} occurrences in ${fileResults.length} files)`
 				showNotificationForApproval(notificationMessage, config.autoApprovalSettings.enableNotifications)
 
 				// Show the diff for all files in the batch
@@ -326,7 +326,7 @@ export class RenameSymbolToolHandler implements IFullyManagedTool {
 				const actualFinalContent = saveResult.finalContent || fr.finalContent
 
 				config.taskState.didEditFile = true
-				config.services.fileContextTracker.markFileAsEditedByDirac(fr.displayPath)
+				config.services.fileContextTracker.markFileAsEditedByIsaac(fr.displayPath)
 				await config.services.fileContextTracker.trackFileContext(fr.displayPath, "dirac_edited")
 
 				appliedResults.push({

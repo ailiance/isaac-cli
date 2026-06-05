@@ -41,8 +41,8 @@ function parseInput(text: string, availableCommands?: string[]): Segment[] {
 	const slashMatch = slashCommandRegex.exec(text)
 	if (slashMatch) {
 		const prefix = slashMatch[1] || ""
-		const commandText = slashMatch[2] // e.g., "/askDirac"
-		const commandName = commandText.slice(1) // e.g., "askDirac"
+		const commandText = slashMatch[2] // e.g., "/askIsaac"
+		const commandName = commandText.slice(1) // e.g., "askIsaac"
 		const commandStart = slashMatch.index + prefix.length
 		const commandEnd = commandStart + commandText.length
 

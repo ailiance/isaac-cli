@@ -7,7 +7,7 @@ export const openTab = async (_page: Page, tabName: string) => {
 		.click()
 }
 
-export const addSelectedCodeToDiracWebview = async (_page: Page) => {
+export const addSelectedCodeToIsaacWebview = async (_page: Page) => {
 	await _page.locator("div:nth-child(4) > span > span").first().click()
 	await _page.getByRole("textbox", { name: "The editor is not accessible" }).press("ControlOrMeta+a")
 
@@ -16,12 +16,12 @@ export const addSelectedCodeToDiracWebview = async (_page: Page) => {
 
 	// Target the explicit action instead of pressing Enter on the first item.
 	// The first item can vary by platform or diagnostics.
-	const addToDirac = _page.getByText(/Add to Dirac/i)
-	await addToDirac.waitFor({ state: "visible" })
+	const addToIsaac = _page.getByText(/Add to Isaac/i)
+	await addToIsaac.waitFor({ state: "visible" })
 	// For whatever reason, we need to move the mouse to make the context menu item clickable
 	await _page.mouse.move(10, 10)
 	await _page.mouse.move(20, 10)
-	await addToDirac.click()
+	await addToIsaac.click()
 }
 
 export const toggleNotifications = async (_page: Page) => {

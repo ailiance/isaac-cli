@@ -1,7 +1,7 @@
 import { executeHook } from "@core/hooks/hook-executor"
 import { getHookModelContext } from "@core/hooks/hook-model-context"
 import { getHooksEnabledSafe } from "@core/hooks/hooks-utils"
-import { DiracContent } from "@shared/messages/content"
+import { IsaacContent } from "@shared/messages/content"
 import { Logger } from "@shared/services/Logger"
 import { HookExecution } from "./types/HookExecution"
 import { HookManagerDependencies, UserPromptHookResult } from "./types/hook-manager"
@@ -40,7 +40,7 @@ export class HookManager {
 			abortController.abort()
 
 			// Update hook message status to "cancelled"
-			const diracMessages = this.dependencies.messageStateHandler.getDiracMessages()
+			const diracMessages = this.dependencies.messageStateHandler.getIsaacMessages()
 			const hookMessageIndex = diracMessages.findIndex((m) => m.ts === messageTs)
 			if (hookMessageIndex !== -1) {
 				const cancelledMetadata = {
@@ -49,7 +49,7 @@ export class HookManager {
 					status: "cancelled",
 					exitCode: 130, // Standard SIGTERM exit code
 				}
-				await this.dependencies.messageStateHandler.updateDiracMessage(hookMessageIndex, {
+				await this.dependencies.messageStateHandler.updateIsaacMessage(hookMessageIndex, {
 					text: JSON.stringify(cancelledMetadata),
 				})
 			}
@@ -88,7 +88,7 @@ export class HookManager {
 		}
 
 		// Check if we're at a button-only state (no active work, just waiting for user action)
-		const diracMessages = this.dependencies.messageStateHandler.getDiracMessages()
+		const diracMessages = this.dependencies.messageStateHandler.getIsaacMessages()
 		const lastMessage = diracMessages.at(-1)
 		const isAtButtonOnlyState =
 			lastMessage?.type === "ask" &&
@@ -116,7 +116,7 @@ export class HookManager {
 		this.dependencies.taskState.didFinishAbortingStream = true
 
 		// Save conversation state to disk
-		await this.dependencies.messageStateHandler.saveDiracMessagesAndUpdateHistory()
+		await this.dependencies.messageStateHandler.saveIsaacMessagesAndUpdateHistory()
 		await this.dependencies.messageStateHandler.overwriteApiConversationHistory(
 			this.dependencies.messageStateHandler.getApiConversationHistory(),
 		)
@@ -129,7 +129,7 @@ export class HookManager {
 	}
 
 	public async runUserPromptSubmitHook(
-		userContent: DiracContent[],
+		userContent: IsaacContent[],
 		_context: "initial_task" | "resume" | "feedback",
 	): Promise<UserPromptHookResult> {
 		const hooksEnabled = getHooksEnabledSafe(this.dependencies.stateManager.getGlobalSettingsKey("hooksEnabled"))
@@ -166,7 +166,7 @@ export class HookManager {
 			// Set flag to allow Controller.cancelTask() to proceed
 			this.dependencies.taskState.didFinishAbortingStream = true
 			// Save BOTH files so Controller.cancelTask() can find the task
-			await this.dependencies.messageStateHandler.saveDiracMessagesAndUpdateHistory()
+			await this.dependencies.messageStateHandler.saveIsaacMessagesAndUpdateHistory()
 			await this.dependencies.messageStateHandler.overwriteApiConversationHistory(
 				this.dependencies.messageStateHandler.getApiConversationHistory(),
 			)

@@ -1,5 +1,5 @@
 import { cn } from "@heroui/react"
-import { StringRequest } from "@shared/proto/dirac/common"
+import { StringRequest } from "@shared/proto/isaac/common"
 import React, { memo, useLayoutEffect, useRef, useState } from "react"
 import { useWindowSize } from "react-use"
 import { FileServiceClient } from "@/shared/api/grpc-client"

@@ -1,5 +1,5 @@
-import { EmptyRequest } from "@shared/proto/dirac/common"
-import { StackSnapshot } from "@shared/proto/dirac/stack"
+import { EmptyRequest } from "@shared/proto/isaac/common"
+import { StackSnapshot } from "@shared/proto/isaac/stack"
 import { stackMonitor } from "@/services/local-stack/StackMonitor"
 import type { Controller } from "../index"
 

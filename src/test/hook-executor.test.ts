@@ -10,7 +10,7 @@ import { executeHook } from "../core/hooks/hook-executor"
 import { StateManager } from "../core/storage/StateManager"
 import { MessageStateHandler } from "../core/task/message-state"
 import { TaskState } from "../core/task/TaskState"
-import { DiracMessage } from "../shared/ExtensionMessage"
+import { IsaacMessage } from "../shared/ExtensionMessage"
 
 /**
  * Unit tests for the hook-executor module
@@ -22,7 +22,7 @@ describe("Hook Executor", () => {
 	let tempDir: string
 	let baseTempDir: string // Store base directory for cleanup
 	let testHandler: MessageStateHandler
-	let mockMessages: DiracMessage[]
+	let mockMessages: IsaacMessage[]
 	let stateManagerStub: sinon.SinonStub
 
 	/**
@@ -355,14 +355,14 @@ setTimeout(() => {
 
 			await createHookScript("TaskStart", {}, 1) // Exit with error
 
-			const messages: DiracMessage[] = []
+			const messages: IsaacMessage[] = []
 			const mockHandler = {
 				...testHandler,
-				getDiracMessages: () => messages,
-				addToDiracMessages: async (msg: DiracMessage) => {
+				getIsaacMessages: () => messages,
+				addToIsaacMessages: async (msg: IsaacMessage) => {
 					messages.push(msg)
 				},
-				updateDiracMessage: async (index: number, updates: Partial<DiracMessage>) => {
+				updateIsaacMessage: async (index: number, updates: Partial<IsaacMessage>) => {
 					if (messages[index]) {
 						Object.assign(messages[index], updates)
 					}
@@ -382,7 +382,7 @@ setTimeout(() => {
 				},
 				isCancellable: true,
 				say: async (type: any, text?: string) => {
-					const msg: DiracMessage = {
+					const msg: IsaacMessage = {
 						ts: Date.now(),
 						type: "say",
 						say: type,
@@ -409,7 +409,7 @@ setTimeout(() => {
 				cancel: false,
 			})
 
-			const messages: DiracMessage[] = []
+			const messages: IsaacMessage[] = []
 
 			await executeHook({
 				hookName: "TaskStart",
@@ -424,7 +424,7 @@ setTimeout(() => {
 				},
 				isCancellable: true,
 				say: async (type: any, text?: string) => {
-					const msg: DiracMessage = {
+					const msg: IsaacMessage = {
 						ts: Date.now(),
 						type: "say",
 						say: type,
@@ -451,11 +451,11 @@ setTimeout(() => {
 				cancel: false,
 			})
 
-			const messages: DiracMessage[] = []
+			const messages: IsaacMessage[] = []
 			const mockHandler = {
 				...testHandler,
-				getDiracMessages: () => messages,
-				updateDiracMessage: async (index: number, updates: Partial<DiracMessage>) => {
+				getIsaacMessages: () => messages,
+				updateIsaacMessage: async (index: number, updates: Partial<IsaacMessage>) => {
 					if (messages[index]) {
 						Object.assign(messages[index], updates)
 					}
@@ -475,7 +475,7 @@ setTimeout(() => {
 				},
 				isCancellable: true,
 				say: async (type: any, text?: string) => {
-					const msg: DiracMessage = {
+					const msg: IsaacMessage = {
 						ts: Date.now(),
 						type: "say",
 						say: type,

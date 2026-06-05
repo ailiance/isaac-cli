@@ -5,7 +5,7 @@ import { EnvironmentContextTracker } from "@core/context/context-tracking/Enviro
 import { FileContextTracker } from "@core/context/context-tracking/FileContextTracker"
 import { ModelContextTracker } from "@core/context/context-tracking/ModelContextTracker"
 
-import { DiracIgnoreController } from "@core/ignore/DiracIgnoreController"
+import { IsaacIgnoreController } from "@core/ignore/IsaacIgnoreController"
 import { initializeMcpForTask } from "@core/mcp/bootstrap"
 import { mcpClientManager } from "@core/mcp/McpClientManager"
 import { clearActiveMcpToolSet, getActiveMcpToolSet } from "@core/mcp/retrieval/session"
@@ -20,12 +20,12 @@ import { type CommandExecutionOptions, CommandExecutor, StandaloneTerminalManage
 import { ITerminalManager } from "@integrations/terminal/types"
 import { BrowserSession } from "@services/browser/BrowserSession"
 import { UrlContentFetcher } from "@services/browser/UrlContentFetcher"
-import { DiracAsk, DiracSay, MultiCommandState } from "@shared/ExtensionMessage"
+import { IsaacAsk, IsaacSay, MultiCommandState } from "@shared/ExtensionMessage"
 import { HistoryItem } from "@shared/HistoryItem"
-import { DiracContent, DiracToolResponseContent } from "@shared/messages/content"
+import { IsaacContent, IsaacToolResponseContent } from "@shared/messages/content"
 import { Logger } from "@shared/services/Logger"
-import { DiracDefaultTool } from "@shared/tools"
-import { DiracAskResponse } from "@shared/WebviewMessage"
+import { IsaacDefaultTool } from "@shared/tools"
+import { IsaacAskResponse } from "@shared/WebviewMessage"
 import { AnchorStateManager } from "@utils/AnchorStateManager"
 import { isParallelToolCallingEnabled } from "@utils/model-utils"
 import Mutex from "p-mutex"
@@ -51,7 +51,7 @@ import { ToolExecutor } from "./ToolExecutor"
 import type { AgentLoopRunnerContext } from "./types/agent-loop-runner"
 import type { ApiRequestHandlerContext } from "./types/api-request-handler"
 
-export type ToolResponse = DiracToolResponseContent
+export type ToolResponse = IsaacToolResponseContent
 
 type TaskParams = {
 	controller: Controller
@@ -119,7 +119,7 @@ export class Task {
 	contextManager: ContextManager
 	diffViewProvider: DiffViewProvider
 	public checkpointManager?: ICheckpointManager
-	diracIgnoreController: DiracIgnoreController
+	diracIgnoreController: IsaacIgnoreController
 	private commandPermissionController: CommandPermissionController
 	toolExecutor: ToolExecutor
 	/**
@@ -213,7 +213,7 @@ export class Task {
 		this.postStateToWebview = postStateToWebview
 		this.reinitExistingTaskFromId = reinitExistingTaskFromId
 		this.cancelTask = cancelTask
-		this.diracIgnoreController = new DiracIgnoreController(cwd)
+		this.diracIgnoreController = new IsaacIgnoreController(cwd)
 		this.diracIgnoreController.yoloMode = !!stateManager.getGlobalSettingsKey("yoloModeToggled")
 
 		this.commandPermissionController = new CommandPermissionController()
@@ -446,21 +446,21 @@ export class Task {
 	}
 
 	async loadContext(
-		userContent: DiracContent[],
+		userContent: IsaacContent[],
 		includeFileDetails = false,
 		useCompactPrompt = false,
-	): Promise<[DiracContent[], string, boolean, SkillMetadata[], boolean, string?]> {
+	): Promise<[IsaacContent[], string, boolean, SkillMetadata[], boolean, string?]> {
 		return this.contextLoader.loadContext(userContent, includeFileDetails, useCompactPrompt)
 	}
 
 	// Communicate with webview
 
-	async ask(type: DiracAsk, text?: string, partial?: boolean, multiCommandState?: MultiCommandState) {
+	async ask(type: IsaacAsk, text?: string, partial?: boolean, multiCommandState?: MultiCommandState) {
 		return this.taskMessenger.ask(type, text, partial, multiCommandState)
 	}
 
 	async handleWebviewAskResponse(
-		askResponse: DiracAskResponse,
+		askResponse: IsaacAskResponse,
 		text?: string,
 		images?: string[],
 		files?: string[],
@@ -470,7 +470,7 @@ export class Task {
 	}
 
 	async say(
-		type: DiracSay,
+		type: IsaacSay,
 		text?: string,
 		images?: string[],
 		files?: string[],
@@ -479,11 +479,11 @@ export class Task {
 		return this.taskMessenger.say(type, text, images, files, partial)
 	}
 
-	async sayAndCreateMissingParamError(toolName: DiracDefaultTool, paramName: string, relPath?: string) {
+	async sayAndCreateMissingParamError(toolName: IsaacDefaultTool, paramName: string, relPath?: string) {
 		return this.taskMessenger.sayAndCreateMissingParamError(toolName, paramName, relPath)
 	}
 
-	async removeLastPartialMessageIfExistsWithType(type: "ask" | "say", askOrSay: DiracAsk | DiracSay, onlyPartial = true) {
+	async removeLastPartialMessageIfExistsWithType(type: "ask" | "say", askOrSay: IsaacAsk | IsaacSay, onlyPartial = true) {
 		return this.taskMessenger.removeLastPartialMessageIfExistsWithType(type, askOrSay, onlyPartial)
 	}
 
@@ -508,7 +508,7 @@ export class Task {
 	}
 
 	private async runUserPromptSubmitHook(
-		userContent: DiracContent[],
+		userContent: IsaacContent[],
 		context: "initial_task" | "resume" | "feedback",
 	): Promise<{ cancel?: boolean; wasCancelled?: boolean; contextModification?: string; errorMessage?: string }> {
 		return this.hookManager.runUserPromptSubmitHook(userContent, context)
@@ -534,7 +534,7 @@ export class Task {
 		// a fresh session active set, otherwise getActiveMcpToolSet() returns
 		// undefined (or a stale set from a prior task in a long-lived process)
 		// and the prompt-context gate floods the prompt with every MCP spec
-		// still registered in the process-global DiracToolSet. Re-init is cheap
+		// still registered in the process-global IsaacToolSet. Re-init is cheap
 		// (re-lists + re-publishes; the vector index is disk-cached).
 		await initializeMcpForTask(this.toolExecutor)
 		// Seed the active set from the resumed conversation's first user message
@@ -585,7 +585,7 @@ export class Task {
 		}
 	}
 
-	private async initiateTaskLoop(userContent: DiracContent[]): Promise<void> {
+	private async initiateTaskLoop(userContent: IsaacContent[]): Promise<void> {
 		return this.agentLoopRunner.initiateLoop(userContent)
 	}
 
@@ -628,7 +628,7 @@ export class Task {
 		command: string,
 		timeoutSeconds: number | undefined,
 		options?: CommandExecutionOptions,
-	): Promise<[boolean, DiracToolResponseContent]> {
+	): Promise<[boolean, IsaacToolResponseContent]> {
 		return this.commandExecutor.execute(command, timeoutSeconds, options)
 	}
 

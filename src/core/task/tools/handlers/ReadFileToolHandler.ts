@@ -7,9 +7,9 @@ import { extractFileContent } from "@integrations/misc/extract-file-content"
 import { contentHash, hashLines, stripHashes } from "@utils/line-hashing"
 import { arePathsEqual, getReadablePath, isLocatedInWorkspace } from "@utils/path"
 import { telemetryService } from "@/services/telemetry"
-import { DiracSayTool } from "@/shared/ExtensionMessage"
-import { DiracStorageMessage } from "@/shared/messages"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacSayTool } from "@/shared/ExtensionMessage"
+import { IsaacStorageMessage } from "@/shared/messages"
+import { IsaacDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import { showNotificationForApproval } from "../../utils"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
@@ -39,7 +39,7 @@ function resolveMaxFileReadSize(config: TaskConfig): number {
 }
 
 export class ReadFileToolHandler implements IFullyManagedTool {
-	readonly name = DiracDefaultTool.FILE_READ
+	readonly name = IsaacDefaultTool.FILE_READ
 
 	constructor(private validator: ToolValidator) {}
 
@@ -86,7 +86,7 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 		}
 	}
 
-	private extractLastKnownHashFromHistory(history: DiracStorageMessage[], targetPath: string): string | undefined {
+	private extractLastKnownHashFromHistory(history: IsaacStorageMessage[], targetPath: string): string | undefined {
 		return extractLastKnownHashFromHistory(history, targetPath, this.name)
 	}
 
@@ -118,7 +118,7 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 					status: "error" as const,
 					label: "Invalid parameters",
 				})),
-			} satisfies DiracSayTool
+			} satisfies IsaacSayTool
 			await config.callbacks.removeLastPartialMessageIfExistsWithType("ask", "tool")
 			await config.callbacks.removeLastPartialMessageIfExistsWithType("say", "tool")
 			await config.callbacks.say("tool", JSON.stringify(sharedMessageProps), undefined, undefined, false)
@@ -156,7 +156,7 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 					status: "error" as const,
 					label: "Invalid line numbers",
 				})),
-			} satisfies DiracSayTool
+			} satisfies IsaacSayTool
 			const completeMessage = JSON.stringify(sharedMessageProps)
 
 			await config.callbacks.removeLastPartialMessageIfExistsWithType("ask", "tool")
@@ -166,7 +166,7 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 			return formatResponse.toolError(error)
 		}
 
-		// Ensure apiConversationHistory is passed into TaskConfig from the main Dirac instance
+		// Ensure apiConversationHistory is passed into TaskConfig from the main Isaac instance
 		const history = config.messageState.getApiConversationHistory() || []
 
 		// Extract provider information for telemetry
@@ -200,7 +200,7 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 
 			try {
 				// 1. Check diracignore access
-				const accessValidation = this.validator.checkDiracIgnorePath(relPath)
+				const accessValidation = this.validator.checkIsaacIgnorePath(relPath)
 				if (!accessValidation.ok) {
 					if (!config.isSubagentExecution) {
 						await config.callbacks.say("diracignore_error", relPath)
@@ -209,7 +209,7 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 					readFileResults.push({
 						path: relPath,
 						status: "error",
-						label: "Diracignore prevented file read",
+						label: "Isaacignore prevented file read",
 					})
 					anyFailed = true
 
@@ -347,7 +347,7 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 				...r,
 				path: getReadablePath(config.cwd, r.path),
 			})),
-		} satisfies DiracSayTool
+		} satisfies IsaacSayTool
 
 		const completeMessage = JSON.stringify(sharedMessageProps)
 
@@ -378,7 +378,7 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 		} else {
 			// Manual approval flow
 			const range = startLineNum || endLineNum ? ` lines ${startLineNum || 1}-${endLineNum || "?"}` : ""
-			const notificationMessage = `Dirac wants to read ${relPaths.length} file(s)${range}`
+			const notificationMessage = `Isaac wants to read ${relPaths.length} file(s)${range}`
 			showNotificationForApproval(notificationMessage, config.autoApprovalSettings.enableNotifications)
 
 			await config.callbacks.removeLastPartialMessageIfExistsWithType("say", "tool")

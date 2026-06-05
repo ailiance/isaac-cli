@@ -1,15 +1,15 @@
-import { DiracSayTool } from "@shared/ExtensionMessage"
+import { IsaacSayTool } from "@shared/ExtensionMessage"
 import { Logger } from "@shared/services/Logger"
 import { PendingToolEntry, PendingToolRegistry } from "./PendingToolRegistry"
 import { TaskMessenger } from "./TaskMessenger"
 
 /**
- * Subset of {@link DiracSayTool} fields a caller is expected to supply when
+ * Subset of {@link IsaacSayTool} fields a caller is expected to supply when
  * emitting an async-tool notification. The async-* fields are appended by
  * {@link notifyAsyncTool} itself, so callers should not set them.
  */
 export type AsyncToolPayload = Omit<
-	DiracSayTool,
+	IsaacSayTool,
 	"asyncTaskId" | "asyncStatus" | "asyncStartedAt" | "asyncFinishedAt" | "asyncDurationMs" | "asyncResult" | "asyncError"
 >
 
@@ -70,7 +70,7 @@ export async function notifyAsyncTool(opts: NotifyAsyncToolOptions): Promise<Asy
 	const { messenger, registry, entry, initialPayload, stringifyResult = defaultStringifyResult } = opts
 
 	// Step 1: emit the initial "running" partial say.
-	const runningPayload: DiracSayTool = {
+	const runningPayload: IsaacSayTool = {
 		...initialPayload,
 		asyncTaskId: entry.taskId,
 		asyncStatus: "running",
@@ -95,7 +95,7 @@ export async function notifyAsyncTool(opts: NotifyAsyncToolOptions): Promise<Asy
 		// Terminal state: emit the completion say + auto-dispose.
 		const startedAt = updated.startedAt ?? entry.startedAt
 		const finishedAt = updated.finishedAt ?? Date.now()
-		const finalPayload: DiracSayTool = {
+		const finalPayload: IsaacSayTool = {
 			...initialPayload,
 			asyncTaskId: updated.taskId,
 			asyncStatus: updated.status,

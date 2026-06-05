@@ -1,7 +1,7 @@
 import { discoverChromeInstances } from "@services/browser/BrowserDiscovery"
 import { BrowserSession } from "@services/browser/BrowserSession"
-import { BrowserConnection } from "@shared/proto/dirac/browser"
-import { EmptyRequest } from "@shared/proto/dirac/common"
+import { BrowserConnection } from "@shared/proto/isaac/browser"
+import { EmptyRequest } from "@shared/proto/isaac/common"
 import { Controller } from "../index"
 
 /**

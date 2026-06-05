@@ -1,4 +1,4 @@
-import { BooleanRequest, Empty } from "@shared/proto/dirac/common"
+import { BooleanRequest, Empty } from "@shared/proto/isaac/common"
 import type { Controller } from "../index"
 
 /**

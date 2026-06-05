@@ -1,5 +1,5 @@
-import { CheckpointRestoreRequest } from "@shared/proto/dirac/checkpoints"
-import { DiracCheckpointRestore } from "@shared/WebviewMessage"
+import { CheckpointRestoreRequest } from "@shared/proto/isaac/checkpoints"
+import { IsaacCheckpointRestore } from "@shared/WebviewMessage"
 import React, { forwardRef, useMemo, useRef, useState } from "react"
 import DynamicTextArea from "react-textarea-autosize"
 import { useSettingsStore } from "@/features/settings/store/settingsStore"
@@ -40,7 +40,7 @@ const UserMessage: React.FC<UserMessageProps> = ({ text, images, files, messageT
 		}
 	}, [isEditing])
 
-	const handleRestoreWorkspace = async (type: DiracCheckpointRestore) => {
+	const handleRestoreWorkspace = async (type: IsaacCheckpointRestore) => {
 		const delay = type === "task" ? 500 : 1000 // Delay for task and workspace restore
 		setIsEditing(false)
 
@@ -158,10 +158,10 @@ const UserMessage: React.FC<UserMessageProps> = ({ text, images, files, messageT
 
 // Reusable button component for restore actions
 interface RestoreButtonProps {
-	type: DiracCheckpointRestore
+	type: IsaacCheckpointRestore
 	label: string
 	isPrimary: boolean
-	onClick: (type: DiracCheckpointRestore) => void
+	onClick: (type: IsaacCheckpointRestore) => void
 	title?: string
 }
 

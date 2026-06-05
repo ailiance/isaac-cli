@@ -30,9 +30,9 @@ function makeDeps(taskState: TaskState, toolExecutor: any): any {
 	return {
 		taskState,
 		messageStateHandler: {
-			getDiracMessages: () => [],
-			updateDiracMessage: sinon.stub().resolves(),
-			saveDiracMessagesAndUpdateHistory: sinon.stub().resolves(),
+			getIsaacMessages: () => [],
+			updateIsaacMessage: sinon.stub().resolves(),
+			saveIsaacMessagesAndUpdateHistory: sinon.stub().resolves(),
 			addToApiConversationHistory: sinon.stub().resolves(),
 		},
 		api: { getModel: () => ({ id: "stub", info: { contextWindow: 1024 } }) },

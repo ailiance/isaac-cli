@@ -1,6 +1,6 @@
-import { DiracWebviewProvider } from "@/core/webview"
+import { IsaacWebviewProvider } from "@/core/webview"
 
-export class ExternalDiracWebviewProvider extends DiracWebviewProvider {
+export class ExternalIsaacWebviewProvider extends IsaacWebviewProvider {
 	// This hostname cannot be changed without updating the external webview handler.
 	private RESOURCE_HOSTNAME = "internal.resources"
 

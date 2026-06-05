@@ -3,7 +3,7 @@ import type { ToolResponse } from "@core/task/index"
 import type { IFullyManagedTool } from "@core/task/tools/ToolExecutorCoordinator"
 import type { TaskConfig } from "@core/task/tools/types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "@core/task/tools/types/UIHelpers"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import { mcpClientManager } from "./McpClientManager"
 import type { McpToolMetadata } from "./types"
 
@@ -34,12 +34,12 @@ export function formatMcpContent(content: unknown): string {
  * Registered per-tool in ToolExecutorCoordinator for each discovered MCP tool.
  */
 export class McpToolHandler implements IFullyManagedTool {
-	readonly name: DiracDefaultTool
+	readonly name: IsaacDefaultTool
 
 	constructor(public readonly toolMetadata: McpToolMetadata) {
 		// Cast is intentional: MCP tools use dynamic qualified names, not enum values.
 		// ToolExecutorCoordinator.handlers is Map<string, IToolHandler> so lookup works by string.
-		this.name = toolMetadata.qualifiedName as DiracDefaultTool
+		this.name = toolMetadata.qualifiedName as IsaacDefaultTool
 	}
 
 	getDescription(_block: ToolUse): string {

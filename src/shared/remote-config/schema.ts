@@ -63,15 +63,15 @@ export const AwsBedrockSettingsSchema = z.object({
 	awsBedrockEndpoint: z.string().optional(),
 })
 
-// Dirac Provider model schema with per-model settings
-export const DiracModelSchema = z.object({
+// Isaac Provider model schema with per-model settings
+export const IsaacModelSchema = z.object({
 	id: z.string(), // The model ID is required
 })
 
-// Dirac Provider specific settings
-export const DiracSettingsSchema = z.object({
+// Isaac Provider specific settings
+export const IsaacSettingsSchema = z.object({
 	// A list of the allowed models with their settings
-	models: z.array(DiracModelSchema).optional(),
+	models: z.array(IsaacModelSchema).optional(),
 })
 
 // Vertex Provider model schema with per-model settings
@@ -114,7 +114,7 @@ export const AnthropicSchema = z.object({
 const ProviderSettingsSchema = z.object({
 	OpenAiCompatible: OpenAiCompatibleSchema.optional(),
 	AwsBedrock: AwsBedrockSettingsSchema.optional(),
-	Dirac: DiracSettingsSchema.optional(),
+	Isaac: IsaacSettingsSchema.optional(),
 	Vertex: VertexSettingsSchema.optional(),
 	LiteLLM: LiteLLMSchema.optional(),
 	Anthropic: AnthropicSchema.optional(),

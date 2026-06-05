@@ -17,10 +17,10 @@ export function getConfiguredProviders(
 	const configured: ApiProvider[] = []
 
 	if (!apiConfiguration) {
-		return ["dirac"] // Dirac is always available
+		return ["dirac"] // Isaac is always available
 	}
 
-	// Dirac - always available (uses account-based auth)
+	// Isaac - always available (uses account-based auth)
 	configured.push("dirac")
 
 	// OpenRouter - requires API key

@@ -3,18 +3,18 @@ import { Controller } from "@core/controller/index"
 import axios from "axios"
 import { readFile } from "fs/promises"
 import { HostProvider } from "@/hosts/host-provider"
-import { DiracExtensionContext } from "@/shared/dirac"
+import { IsaacExtensionContext } from "@/shared/dirac"
 import { ShowMessageType } from "@/shared/proto/host/window"
 import { Logger } from "@/shared/services/Logger"
 import { getNonce } from "./getNonce"
 
-export abstract class DiracWebviewProvider {
+export abstract class IsaacWebviewProvider {
 	controller: Controller
 
-	private static instance: DiracWebviewProvider | null = null
+	private static instance: IsaacWebviewProvider | null = null
 
-	constructor(readonly context: DiracExtensionContext) {
-		DiracWebviewProvider.instance = this
+	constructor(readonly context: IsaacExtensionContext) {
+		IsaacWebviewProvider.instance = this
 
 		// Create controller with cache service
 		this.controller = new Controller(context)
@@ -22,25 +22,25 @@ export abstract class DiracWebviewProvider {
 
 	async dispose() {
 		await this.controller.dispose()
-		DiracWebviewProvider.instance = null
+		IsaacWebviewProvider.instance = null
 	}
 
-	public static getInstance(): DiracWebviewProvider {
-		if (!DiracWebviewProvider.instance) {
+	public static getInstance(): IsaacWebviewProvider {
+		if (!IsaacWebviewProvider.instance) {
 			throw new Error(
-				"DiracWebviewProvider instance not initialized. Make sure to create a DiracWebviewProvider instance first.",
+				"IsaacWebviewProvider instance not initialized. Make sure to create a IsaacWebviewProvider instance first.",
 			)
 		}
-		return DiracWebviewProvider.instance
+		return IsaacWebviewProvider.instance
 	}
 
-	public static getVisibleInstance(): DiracWebviewProvider | undefined {
-		return DiracWebviewProvider.instance?.isVisible() ? DiracWebviewProvider.instance : undefined
+	public static getVisibleInstance(): IsaacWebviewProvider | undefined {
+		return IsaacWebviewProvider.instance?.isVisible() ? IsaacWebviewProvider.instance : undefined
 	}
 
 	public static async disposeAllInstances() {
-		if (DiracWebviewProvider.instance) {
-			await DiracWebviewProvider.instance.dispose()
+		if (IsaacWebviewProvider.instance) {
+			await IsaacWebviewProvider.instance.dispose()
 		}
 	}
 
@@ -129,7 +129,7 @@ export abstract class DiracWebviewProvider {
 					style-src ${this.getCspSource()} 'unsafe-inline'; 
 					img-src ${this.getCspSource()} https: data:; 
 					script-src 'nonce-${nonce}' 'unsafe-eval';">
-				<title>Dirac</title>
+				<title>Isaac</title>
 			</head>
 			<body>
 				<noscript>You need to enable JavaScript to run this app.</noscript>
@@ -186,7 +186,7 @@ export abstract class DiracWebviewProvider {
 				HostProvider.window.showMessage({
 					type: ShowMessageType.ERROR,
 					message:
-						"Dirac: Local webview dev server is not running, HMR will not work. Please run 'npm run dev:webview' before launching the extension to enable HMR. Using bundled assets.",
+						"Isaac: Local webview dev server is not running, HMR will not work. Please run 'npm run dev:webview' before launching the extension to enable HMR. Using bundled assets.",
 				})
 			}
 
@@ -232,7 +232,7 @@ export abstract class DiracWebviewProvider {
 					<meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">
 					<link rel="stylesheet" type="text/css" href="${stylesUrl}">
 					<link href="${codiconsUrl}" rel="stylesheet" />
-					<title>Dirac</title>
+					<title>Isaac</title>
 					<style>
 						:root {
 							--geist-sans-url: url("${geistSansUrl}");

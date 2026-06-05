@@ -1,11 +1,11 @@
 import { isMultiRootWorkspace } from "@/core/workspace/utils/workspace-detection"
 import { HostProvider } from "@/hosts/host-provider"
 import { ExtensionRegistryInfo } from "@/registry"
-import { EmptyRequest } from "@/shared/proto/dirac/common"
+import { EmptyRequest } from "@/shared/proto/isaac/common"
 import { Logger } from "@/shared/services/Logger"
 
 // Canonical header names for extra client/host context
-export const DiracHeaders = {
+export const IsaacHeaders = {
 	PLATFORM: "X-PLATFORM",
 	PLATFORM_VERSION: "X-PLATFORM-VERSION",
 	CLIENT_VERSION: "X-CLIENT-VERSION",
@@ -13,43 +13,43 @@ export const DiracHeaders = {
 	CORE_VERSION: "X-CORE-VERSION",
 	IS_MULTIROOT: "X-IS-MULTIROOT",
 } as const
-export type DiracHeaderName = (typeof DiracHeaders)[keyof typeof DiracHeaders]
+export type IsaacHeaderName = (typeof IsaacHeaders)[keyof typeof IsaacHeaders]
 
 export function buildExternalBasicHeaders(): Record<string, string> {
 	return {
-		"User-Agent": `Dirac/${ExtensionRegistryInfo.version}`,
+		"User-Agent": `Isaac/${ExtensionRegistryInfo.version}`,
 	}
 }
 
-export async function buildBasicDiracHeaders(): Promise<Record<string, string>> {
+export async function buildBasicIsaacHeaders(): Promise<Record<string, string>> {
 	const headers: Record<string, string> = buildExternalBasicHeaders()
 	try {
 		const host = await HostProvider.env.getHostVersion(EmptyRequest.create({}))
-		headers[DiracHeaders.PLATFORM] = host.platform || "unknown"
-		headers[DiracHeaders.PLATFORM_VERSION] = host.version || "unknown"
-		headers[DiracHeaders.CLIENT_TYPE] = host.diracType || "unknown"
-		headers[DiracHeaders.CLIENT_VERSION] = host.diracVersion || "unknown"
+		headers[IsaacHeaders.PLATFORM] = host.platform || "unknown"
+		headers[IsaacHeaders.PLATFORM_VERSION] = host.version || "unknown"
+		headers[IsaacHeaders.CLIENT_TYPE] = host.diracType || "unknown"
+		headers[IsaacHeaders.CLIENT_VERSION] = host.diracVersion || "unknown"
 	} catch (error) {
 		Logger.log("Failed to get IDE/platform info via HostBridge EnvService.getHostVersion", error)
-		headers[DiracHeaders.PLATFORM] = "unknown"
-		headers[DiracHeaders.PLATFORM_VERSION] = "unknown"
-		headers[DiracHeaders.CLIENT_TYPE] = "unknown"
-		headers[DiracHeaders.CLIENT_VERSION] = "unknown"
+		headers[IsaacHeaders.PLATFORM] = "unknown"
+		headers[IsaacHeaders.PLATFORM_VERSION] = "unknown"
+		headers[IsaacHeaders.CLIENT_TYPE] = "unknown"
+		headers[IsaacHeaders.CLIENT_VERSION] = "unknown"
 	}
-	headers[DiracHeaders.CORE_VERSION] = ExtensionRegistryInfo.version
+	headers[IsaacHeaders.CORE_VERSION] = ExtensionRegistryInfo.version
 
 	return headers
 }
 
-export async function buildDiracExtraHeaders(): Promise<Record<string, string>> {
-	const headers = await buildBasicDiracHeaders()
+export async function buildIsaacExtraHeaders(): Promise<Record<string, string>> {
+	const headers = await buildBasicIsaacHeaders()
 
 	try {
 		const isMultiRoot = await isMultiRootWorkspace()
-		headers[DiracHeaders.IS_MULTIROOT] = isMultiRoot ? "true" : "false"
+		headers[IsaacHeaders.IS_MULTIROOT] = isMultiRoot ? "true" : "false"
 	} catch (error) {
 		Logger.log("Failed to detect multi-root workspace", error)
-		headers[DiracHeaders.IS_MULTIROOT] = "false"
+		headers[IsaacHeaders.IS_MULTIROOT] = "false"
 	}
 
 	return headers

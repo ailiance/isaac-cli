@@ -2,7 +2,7 @@ import { strict as assert } from "node:assert"
 import fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
-import { DiracDefaultTool } from "@shared/tools"
+import { IsaacDefaultTool } from "@shared/tools"
 import * as pathUtils from "@utils/path"
 import { afterEach, beforeEach, describe, it } from "mocha"
 import sinon from "sinon"
@@ -115,7 +115,7 @@ function createConfig() {
 function makeBlock(relPath?: string) {
 	return {
 		type: "tool_use" as const,
-		name: DiracDefaultTool.FILE_READ,
+		name: IsaacDefaultTool.FILE_READ,
 		params: relPath !== undefined ? { paths: [relPath] } : {},
 		partial: false,
 	}

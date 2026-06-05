@@ -12,7 +12,7 @@
 import type { ApiHandler } from "@core/api"
 import { buildApiHandler } from "@core/api"
 import type { Controller } from "@core/controller"
-import { DiracIgnoreController } from "@core/ignore/DiracIgnoreController"
+import { IsaacIgnoreController } from "@core/ignore/IsaacIgnoreController"
 import { CommandPermissionController } from "@core/permissions"
 import type { StateManager } from "@core/storage/StateManager"
 import { isMultiRootEnabled } from "@core/workspace/multi-root-utils"
@@ -29,12 +29,12 @@ import { telemetryService } from "@services/telemetry"
 import type { ApiConfiguration } from "@shared/api"
 import { findLastIndex } from "@shared/array"
 import { getExtensionSourceDir } from "@shared/dirac/constants"
-import type { DiracApiReqInfo, DiracAsk, DiracSay, MultiCommandState } from "@shared/ExtensionMessage"
+import type { IsaacApiReqInfo, IsaacAsk, IsaacSay, MultiCommandState } from "@shared/ExtensionMessage"
 import type { HistoryItem } from "@shared/HistoryItem"
-import type { DiracContent, DiracTextContentBlock } from "@shared/messages/content"
+import type { IsaacContent, IsaacTextContentBlock } from "@shared/messages/content"
 import { ShowMessageType } from "@shared/proto/index.host"
 import { Logger } from "@shared/services/Logger"
-import type { DiracAskResponse } from "@shared/WebviewMessage"
+import type { IsaacAskResponse } from "@shared/WebviewMessage"
 import { ApiConversationManager } from "./ApiConversationManager"
 import { ContextLoader } from "./ContextLoader"
 import { EnvironmentManager } from "./EnvironmentManager"
@@ -77,14 +77,14 @@ export interface TaskServiceInputs {
 	updateTaskHistory: (historyItem: HistoryItem) => Promise<HistoryItem[]>
 	controller: Controller
 	// say/ask binds from the Task instance
-	say: (type: DiracSay, text?: string, images?: string[], files?: string[], partial?: boolean) => Promise<number | undefined>
+	say: (type: IsaacSay, text?: string, images?: string[], files?: string[], partial?: boolean) => Promise<number | undefined>
 	ask: (
-		type: DiracAsk,
+		type: IsaacAsk,
 		text?: string,
 		partial?: boolean,
 		multiCommandState?: MultiCommandState,
 	) => Promise<{
-		response: DiracAskResponse
+		response: IsaacAskResponse
 		text?: string
 		images?: string[]
 		files?: string[]
@@ -185,11 +185,11 @@ export function buildTaskServices(inputs: TaskServiceInputs): TaskServices {
 		...apiConfiguration,
 		ulid,
 		onRetryAttempt: async (attempt: number, maxRetries: number, delay: number, error: any) => {
-			const diracMessages = messageStateHandler.getDiracMessages()
+			const diracMessages = messageStateHandler.getIsaacMessages()
 			const lastApiReqStartedIndex = findLastIndex(diracMessages, (m) => m.say === "api_req_started")
 			if (lastApiReqStartedIndex !== -1) {
 				try {
-					const currentApiReqInfo: DiracApiReqInfo = JSON.parse(diracMessages[lastApiReqStartedIndex].text || "{}")
+					const currentApiReqInfo: IsaacApiReqInfo = JSON.parse(diracMessages[lastApiReqStartedIndex].text || "{}")
 					currentApiReqInfo.retryStatus = {
 						attempt,
 						maxAttempts: maxRetries,
@@ -198,7 +198,7 @@ export function buildTaskServices(inputs: TaskServiceInputs): TaskServices {
 					}
 					delete currentApiReqInfo.cancelReason
 					delete currentApiReqInfo.streamingFailedMessage
-					await messageStateHandler.updateDiracMessage(lastApiReqStartedIndex, {
+					await messageStateHandler.updateIsaacMessage(lastApiReqStartedIndex, {
 						partial: true,
 						text: JSON.stringify(currentApiReqInfo),
 					})
@@ -240,7 +240,7 @@ export function buildTaskServices(inputs: TaskServiceInputs): TaskServices {
 	const commandExecutorCallbacks: CommandExecutorCallbacks = {
 		say: say as CommandExecutorCallbacks["say"],
 		ask: async (type: string, text?: string, partial?: boolean) => {
-			const result = await ask(type as DiracAsk, text, partial)
+			const result = await ask(type as IsaacAsk, text, partial)
 			return {
 				response: result.response,
 				text: result.text,
@@ -250,13 +250,13 @@ export function buildTaskServices(inputs: TaskServiceInputs): TaskServices {
 			}
 		},
 		updateBackgroundCommandState: (isRunning: boolean) => controller.updateBackgroundCommandState(isRunning, taskId),
-		updateDiracMessage: async (index: number, updates: { commandCompleted?: boolean; text?: string }) => {
-			await messageStateHandler.updateDiracMessage(index, updates)
+		updateIsaacMessage: async (index: number, updates: { commandCompleted?: boolean; text?: string }) => {
+			await messageStateHandler.updateIsaacMessage(index, updates)
 			await postStateToWebview()
 		},
-		getDiracMessages: () => messageStateHandler.getDiracMessages() as Array<{ ask?: string; say?: string }>,
+		getIsaacMessages: () => messageStateHandler.getIsaacMessages() as Array<{ ask?: string; say?: string }>,
 		addToUserMessageContent: (content: { type: string; text: string }) => {
-			taskState.userMessageContent.push({ type: "text", text: content.text } as DiracTextContentBlock)
+			taskState.userMessageContent.push({ type: "text", text: content.text } as IsaacTextContentBlock)
 		},
 		getEnvironmentVariables: (cwd: string) => HostProvider.get().getEnvironmentVariables(cwd),
 	}
@@ -285,7 +285,7 @@ export interface TaskManagerInputs {
 	browserSession: BrowserSession
 	diffViewProvider: DiffViewProvider
 	fileContextTracker: import("@core/context/context-tracking/FileContextTracker").FileContextTracker
-	diracIgnoreController: DiracIgnoreController
+	diracIgnoreController: IsaacIgnoreController
 	commandPermissionController: CommandPermissionController
 	contextManager: import("@core/context/context-management/ContextManager").ContextManager
 	streamHandler: StreamResponseHandler
@@ -299,14 +299,14 @@ export interface TaskManagerInputs {
 	cancelTask: () => Promise<void>
 	postStateToWebview: () => Promise<void>
 	// Task instance binds
-	say: (type: DiracSay, text?: string, images?: string[], files?: string[], partial?: boolean) => Promise<number | undefined>
+	say: (type: IsaacSay, text?: string, images?: string[], files?: string[], partial?: boolean) => Promise<number | undefined>
 	ask: (
-		type: DiracAsk,
+		type: IsaacAsk,
 		text?: string,
 		partial?: boolean,
 		multiCommandState?: MultiCommandState,
 	) => Promise<{
-		response: DiracAskResponse
+		response: IsaacAskResponse
 		text?: string
 		images?: string[]
 		files?: string[]
@@ -315,13 +315,13 @@ export interface TaskManagerInputs {
 	}>
 	saveCheckpointCallback: () => Promise<void>
 	sayAndCreateMissingParamError: (
-		toolName: import("@shared/tools").DiracDefaultTool,
+		toolName: import("@shared/tools").IsaacDefaultTool,
 		paramName: string,
 		relPath?: string,
 	) => Promise<string>
 	removeLastPartialMessageIfExistsWithType: (
 		type: "ask" | "say",
-		askOrSay: import("@shared/ExtensionMessage").DiracAsk | DiracSay,
+		askOrSay: import("@shared/ExtensionMessage").IsaacAsk | IsaacSay,
 		onlyPartial?: boolean,
 	) => Promise<void>
 	executeCommandTool: (...args: any[]) => Promise<any>
@@ -331,10 +331,10 @@ export interface TaskManagerInputs {
 	clearActiveHookExecution: () => Promise<void>
 	getActiveHookExecution: () => Promise<TaskState["activeHookExecution"]>
 	runUserPromptSubmitHook: (
-		userContent: DiracContent[],
+		userContent: IsaacContent[],
 		context: "initial_task" | "resume" | "feedback",
 	) => Promise<{ cancel?: boolean; wasCancelled?: boolean; contextModification?: string; errorMessage?: string }>
-	initiateTaskLoop: (userContent: DiracContent[]) => Promise<void>
+	initiateTaskLoop: (userContent: IsaacContent[]) => Promise<void>
 	getCurrentProviderInfo: () => ReturnType<import("./index").Task["getCurrentProviderInfo"]>
 	getEnvironmentDetails: (includeFileDetails?: boolean) => Promise<string>
 	getApiRequestIdSafe: () => string | undefined

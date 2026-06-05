@@ -1,5 +1,5 @@
 /**
- * Internal types for ACP integration with Dirac CLI.
+ * Internal types for ACP integration with Isaac CLI.
  *
  * This file re-exports all public types from ./public-types.ts and adds
  * internal-only Types that reference core modules (Controller, etc.).
@@ -53,11 +53,11 @@ export type {
 export type {
 	AcpAgentOptions,
 	AcpSessionState,
-	DiracAgentCapabilities,
-	DiracAgentInfo,
-	DiracAgentOptions,
-	DiracPermissionOption,
-	DiracSessionEvents,
+	IsaacAgentCapabilities,
+	IsaacAgentInfo,
+	IsaacAgentOptions,
+	IsaacPermissionOption,
+	IsaacSessionEvents,
 	PermissionHandler,
 	SessionUpdatePayload,
 	SessionUpdateType,

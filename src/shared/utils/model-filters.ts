@@ -6,18 +6,18 @@ function normalizeModelId(modelId: string): string {
 
 const DIRAC_FREE_MODEL_EXCEPTIONS = ["minimax-m2", "devstral-2512", "arcee-ai/trinity-large"]
 
-export function isDiracFreeModelException(modelId: string): boolean {
+export function isIsaacFreeModelException(modelId: string): boolean {
 	const normalizedModelId = normalizeModelId(modelId)
 	return DIRAC_FREE_MODEL_EXCEPTIONS.some((token) => normalizedModelId.includes(token))
 }
 
 /**
  * Filters OpenRouter model IDs based on provider-specific rules.
- * For Dirac provider: excludes :free models (except known exception models)
+ * For Isaac provider: excludes :free models (except known exception models)
  * For OpenRouter/Vercel: excludes dirac/ prefixed models
  * @param modelIds Array of model IDs to filter
  * @param provider The current API provider
- * @param allowedFreeModelIds Optional list of Dirac free model IDs to keep visible
+ * @param allowedFreeModelIds Optional list of Isaac free model IDs to keep visible
  * @returns Filtered array of model IDs
  */
 export function filterOpenRouterModelIds(
@@ -27,13 +27,13 @@ export function filterOpenRouterModelIds(
 ): string[] {
 	if (provider === "dirac") {
 		const allowedFreeIdSet = new Set(allowedFreeModelIds.map((id) => normalizeModelId(id)))
-		// For Dirac provider: exclude :free models, but keep known exception models
+		// For Isaac provider: exclude :free models, but keep known exception models
 		return modelIds.filter((id) => {
 			const normalizedModelId = normalizeModelId(id)
 			if (allowedFreeIdSet.has(normalizedModelId)) {
 				return true
 			}
-			if (isDiracFreeModelException(normalizedModelId)) {
+			if (isIsaacFreeModelException(normalizedModelId)) {
 				return true
 			}
 			// Filter out other :free models
@@ -41,6 +41,6 @@ export function filterOpenRouterModelIds(
 		})
 	}
 
-	// For OpenRouter and Vercel AI Gateway providers: exclude Dirac-specific models
+	// For OpenRouter and Vercel AI Gateway providers: exclude Isaac-specific models
 	return modelIds.filter((id) => !id.startsWith("dirac/"))
 }

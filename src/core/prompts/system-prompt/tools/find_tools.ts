@@ -1,8 +1,8 @@
-import { DiracDefaultTool } from "@/shared/tools"
-import type { DiracToolSpec } from "../spec"
+import { IsaacDefaultTool } from "@/shared/tools"
+import type { IsaacToolSpec } from "../spec"
 
-export const find_tools: DiracToolSpec = {
-	id: DiracDefaultTool.FIND_TOOLS,
+export const find_tools: IsaacToolSpec = {
+	id: IsaacDefaultTool.FIND_TOOLS,
 	name: "find_tools",
 	description:
 		"Discover and activate additional MCP tools that are not currently available to you. " +

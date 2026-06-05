@@ -6,15 +6,15 @@ import { isMultiRootEnabled } from "@core/workspace/multi-root-utils"
 import { formatContentBlockToMarkdown } from "@integrations/misc/export-markdown"
 import { telemetryService } from "@services/telemetry"
 import { findLastIndex } from "@shared/array"
-import { DiracApiReqInfo, Mode } from "@shared/ExtensionMessage"
-import { DiracContent, DiracStorageMessage } from "@shared/messages/content"
+import { IsaacApiReqInfo, Mode } from "@shared/ExtensionMessage"
+import { IsaacContent, IsaacStorageMessage } from "@shared/messages/content"
 import { Logger } from "@shared/services/Logger"
 import { ApiConversationManagerDependencies } from "./types/api-conversation-manager"
 
 export class ApiConversationManager {
 	constructor(private dependencies: ApiConversationManagerDependencies) {}
 
-	public calculatePreCompactDeletedRange(apiConversationHistory: DiracStorageMessage[]): [number, number] {
+	public calculatePreCompactDeletedRange(apiConversationHistory: IsaacStorageMessage[]): [number, number] {
 		const newDeletedRange = this.dependencies.contextManager.getNextTruncationRange(
 			apiConversationHistory,
 			this.dependencies.taskState.conversationHistoryDeletedRange,
@@ -42,7 +42,7 @@ export class ApiConversationManager {
 					apiConversationHistory,
 					conversationHistoryDeletedRange: this.dependencies.taskState.conversationHistoryDeletedRange,
 					contextManager: this.dependencies.contextManager,
-					diracMessages: this.dependencies.messageStateHandler.getDiracMessages(),
+					diracMessages: this.dependencies.messageStateHandler.getIsaacMessages(),
 					messageStateHandler: this.dependencies.messageStateHandler,
 					compactionStrategy: "standard-truncation-lastquarter",
 					deletedRange,
@@ -74,7 +74,7 @@ export class ApiConversationManager {
 
 		this.dependencies.taskState.conversationHistoryDeletedRange = newDeletedRange
 
-		await this.dependencies.messageStateHandler.saveDiracMessagesAndUpdateHistory()
+		await this.dependencies.messageStateHandler.saveIsaacMessagesAndUpdateHistory()
 
 		this.dependencies.taskState.didAutomaticallyRetryFailedApiRequest = true
 	}
@@ -89,7 +89,7 @@ export class ApiConversationManager {
 				this.dependencies.taskState.currentlySummarizing = false
 			} else {
 				shouldCompact = this.dependencies.contextManager.shouldCompactContextWindow(
-					this.dependencies.messageStateHandler.getDiracMessages(),
+					this.dependencies.messageStateHandler.getIsaacMessages(),
 					this.dependencies.api,
 					previousApiReqIndex,
 					autoCondenseThreshold,
@@ -116,7 +116,7 @@ export class ApiConversationManager {
 	}
 
 	public async prepareApiRequest(params: {
-		userContent: DiracContent[]
+		userContent: IsaacContent[]
 		shouldCompact: boolean
 		includeFileDetails: boolean
 		useCompactPrompt: boolean
@@ -127,8 +127,8 @@ export class ApiConversationManager {
 		providerId: string
 		modelId: string
 		mode: string
-	}): Promise<{ userContent: DiracContent[]; lastApiReqIndex: number; isDirectResponse?: boolean; directResponseText?: string }> {
-		let parsedUserContent: DiracContent[]
+	}): Promise<{ userContent: IsaacContent[]; lastApiReqIndex: number; isDirectResponse?: boolean; directResponseText?: string }> {
+		let parsedUserContent: IsaacContent[]
 		let environmentDetails: string
 		let diracrulesError: boolean
 		let isDirectResponse = false
@@ -233,13 +233,13 @@ export class ApiConversationManager {
 
 		// since we sent off a placeholder api_req_started message to update the webview while waiting to actually start the API request (to load potential details for example), we need to update the text of that message
 		const lastApiReqIndex = findLastIndex(
-			this.dependencies.messageStateHandler.getDiracMessages(),
+			this.dependencies.messageStateHandler.getIsaacMessages(),
 			(m) => m.say === "api_req_started",
 		)
-		await this.dependencies.messageStateHandler.updateDiracMessage(lastApiReqIndex, {
+		await this.dependencies.messageStateHandler.updateIsaacMessage(lastApiReqIndex, {
 			text: JSON.stringify({
 				request: userContent.map((block) => formatContentBlockToMarkdown(block)).join("\n\n"),
-			} satisfies DiracApiReqInfo),
+			} satisfies IsaacApiReqInfo),
 		})
 
 		await this.dependencies.postStateToWebview()

@@ -20,7 +20,7 @@ import fs from "fs/promises"
 import open from "open"
 import pWaitFor from "p-wait-for"
 import * as path from "path"
-import { DiracEnv } from "@/config"
+import { IsaacEnv } from "@/config"
 import type { FolderLockWithRetryResult } from "@/core/locks/types"
 import { HostProvider } from "@/hosts/host-provider"
 import { githubCopilotAuthManager } from "@/integrations/github-copilot/auth"
@@ -29,7 +29,7 @@ import { BannerService } from "@/services/banner/BannerService"
 import { featureFlagsService } from "@/services/feature-flags"
 import { getDistinctId } from "@/services/logging/distinctId"
 import { telemetryService } from "@/services/telemetry"
-import { DiracExtensionContext } from "@/shared/dirac"
+import { IsaacExtensionContext } from "@/shared/dirac"
 import { getAxiosSettings } from "@/shared/net"
 import { Logger } from "@/shared/services/Logger"
 import { Session } from "@/shared/services/Session"
@@ -41,8 +41,8 @@ import { PromptRegistry } from "../prompts/system-prompt"
 import { ensureCacheDirectoryExists, GlobalFileNames } from "../storage/disk"
 import { type PersistenceErrorEvent, StateManager } from "../storage/StateManager"
 import { Task } from "../task"
-import { getDiracOnboardingModels } from "./models/getDiracOnboardingModels"
-import { appendDiracStealthModels } from "./models/refreshOpenRouterModels"
+import { getIsaacOnboardingModels } from "./models/getIsaacOnboardingModels"
+import { appendIsaacStealthModels } from "./models/refreshOpenRouterModels"
 import { checkCliInstallation } from "./state/checkCliInstallation"
 import { sendStateUpdate } from "./state/subscribeToState"
 import { sendChatButtonClickedEvent } from "./ui/subscribeToChatButtonClicked"
@@ -82,7 +82,7 @@ export class Controller {
 		return this.workspaceManager
 	}
 
-	constructor(readonly context: DiracExtensionContext) {
+	constructor(readonly context: IsaacExtensionContext) {
 		Session.reset() // Reset session on controller initialization
 		PromptRegistry.getInstance() // Ensure prompts and tools are registered
 		this.stateManager = StateManager.get()
@@ -112,7 +112,7 @@ export class Controller {
 			this.postStateToWebview()
 		})
 
-		Logger.log("[Controller] DiracProvider instantiated")
+		Logger.log("[Controller] IsaacProvider instantiated")
 	}
 
 	/*
@@ -508,7 +508,7 @@ export class Controller {
 				const fileContents = await fs.readFile(openRouterModelsFilePath, "utf8")
 				const models = JSON.parse(fileContents)
 				// Append stealth models
-				return appendDiracStealthModels(models)
+				return appendIsaacStealthModels(models)
 			}
 		} catch (error) {
 			Logger.error("Error reading cached OpenRouter models:", error)
@@ -580,7 +580,7 @@ export class Controller {
 
 	async getStateToPostToWebview(): Promise<ExtensionState> {
 		// Get API configuration from cache for immediate access
-		const onboardingModels = getDiracOnboardingModels()
+		const onboardingModels = getIsaacOnboardingModels()
 		const apiConfiguration = this.stateManager.getApiConfiguration()
 		const lastShownAnnouncementId = this.stateManager.getGlobalStateKey("lastShownAnnouncementId")
 		const taskHistory = this.stateManager.getGlobalStateKey("taskHistory")
@@ -637,7 +637,7 @@ export class Controller {
 		const primaryRootPath = this.workspaceManager?.getPrimaryRoot()?.path
 		const currentTaskItem = this.task?.taskId ? (taskHistory || []).find((item) => item.id === this.task?.taskId) : undefined
 		// Spread to create new array reference - React needs this to detect changes in useEffect dependencies
-		const diracMessages = [...(this.task?.messageStateHandler.getDiracMessages() || [])]
+		const diracMessages = [...(this.task?.messageStateHandler.getIsaacMessages() || [])]
 		const checkpointManagerErrorMessage = this.task?.taskState.checkpointManagerErrorMessage
 
 		const processedTaskHistory = (taskHistory || [])
@@ -654,7 +654,7 @@ export class Controller {
 		const platform = process.platform as Platform
 		const distinctId = getDistinctId()
 		const version = ExtensionRegistryInfo.version
-		const diracConfig = DiracEnv.config()
+		const diracConfig = IsaacEnv.config()
 		const environment = diracConfig.environment
 		const banners = BannerService.get().getActiveBanners() ?? []
 		const welcomeBanners = BannerService.get().getWelcomeBanners() ?? []

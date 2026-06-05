@@ -1,5 +1,5 @@
-import { Empty } from "@shared/proto/dirac/common"
-import { AutoApprovalSettingsRequest } from "@shared/proto/dirac/state"
+import { Empty } from "@shared/proto/isaac/common"
+import { AutoApprovalSettingsRequest } from "@shared/proto/isaac/state"
 import { Controller } from ".."
 
 /**

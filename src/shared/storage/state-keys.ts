@@ -14,7 +14,7 @@ interface WorkerEndpoint {
 }
 
 import { BrowserSettings, DEFAULT_BROWSER_SETTINGS } from "@shared/BrowserSettings"
-import { DiracRulesToggles } from "@shared/dirac-rules"
+import { IsaacRulesToggles } from "@shared/dirac-rules"
 import { HistoryItem } from "@shared/HistoryItem"
 import { WorkspaceRoot } from "@shared/multi-root/types"
 import { Mode } from "@shared/storage/types"
@@ -26,7 +26,7 @@ import { LanguageModelChatSelector } from "vscode"
 //
 // Property definitions with types, default values, and metadata
 // NOTE: When adding a new field, the scripts/generate-state-proto.mjs will be
-// executed automatically to regenerate the proto/dirac/state.proto file with the
+// executed automatically to regenerate the proto/isaac/state.proto file with the
 // new fields once the file is staged and committed.
 // ============================================================================
 
@@ -68,10 +68,10 @@ const GLOBAL_STATE_FIELDS = {
 	lastDismissedInfoBannerVersion: { default: 0 as number },
 	lastDismissedModelBannerVersion: { default: 0 as number },
 	lastDismissedCliBannerVersion: { default: 0 as number },
-	remoteRulesToggles: { default: {} as DiracRulesToggles },
-	remoteWorkflowToggles: { default: {} as DiracRulesToggles },
+	remoteRulesToggles: { default: {} as IsaacRulesToggles },
+	remoteWorkflowToggles: { default: {} as IsaacRulesToggles },
 	dismissedBanners: { default: [] as Array<{ bannerId: string; dismissedAt: number }> },
-	// Path to worktree that should auto-open Dirac sidebar when launched
+	// Path to worktree that should auto-open Isaac sidebar when launched
 	worktreeAutoOpenPath: { default: undefined as string | undefined },
 } satisfies FieldDefinitions
 
@@ -217,8 +217,8 @@ const USER_SETTINGS_FIELDS = {
 	autoApprovalSettings: {
 		default: DEFAULT_AUTO_APPROVAL_SETTINGS as AutoApprovalSettings,
 	},
-	globalDiracRulesToggles: { default: {} as DiracRulesToggles },
-	globalWorkflowToggles: { default: {} as DiracRulesToggles },
+	globalDiracRulesToggles: { default: {} as IsaacRulesToggles },
+	globalWorkflowToggles: { default: {} as IsaacRulesToggles },
 	globalSkillsToggles: { default: {} as Record<string, boolean> },
 	browserSettings: {
 		default: DEFAULT_BROWSER_SETTINGS as BrowserSettings,
@@ -352,7 +352,7 @@ export type RemoteConfigFields = GlobalStateAndSettings
 // ============================================================================
 
 export type Secrets = { [K in (typeof SecretKeys)[number]]: string | undefined }
-export type LocalState = { [K in (typeof LocalStateKeys)[number]]: DiracRulesToggles }
+export type LocalState = { [K in (typeof LocalStateKeys)[number]]: IsaacRulesToggles }
 export type SecretKey = (typeof SecretKeys)[number]
 export type GlobalStateKey = keyof GlobalState
 export type LocalStateKey = keyof LocalState

@@ -1,4 +1,4 @@
-import type { EmptyRequest, String as ProtoString } from "@shared/proto/dirac/common"
+import type { EmptyRequest, String as ProtoString } from "@shared/proto/isaac/common"
 import { Logger } from "@/shared/services/Logger"
 import { getRequestRegistry, type StreamingResponseHandler } from "../grpc-handler"
 import type { Controller } from "../index"

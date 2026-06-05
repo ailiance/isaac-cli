@@ -2,14 +2,14 @@ import { strict as assert } from "node:assert"
 import fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
-import { DiracDefaultTool } from "@shared/tools"
+import { IsaacDefaultTool } from "@shared/tools"
 import { afterEach, beforeEach, describe, it } from "mocha"
 import sinon from "sinon"
 import { HostProvider } from "@/hosts/host-provider"
 import * as getDiagnosticsProvidersModule from "@/integrations/diagnostics/getDiagnosticsProviders"
 import { LinterFeedbackProvider } from "@/integrations/diagnostics/LinterFeedbackProvider"
 import { SymbolIndexService } from "@/services/symbol-index/SymbolIndexService"
-import { DiagnosticSeverity } from "@/shared/proto/index.dirac"
+import { DiagnosticSeverity } from "@/shared/proto/index.isaac"
 import { setVscodeHostProviderMock } from "@/test/host-provider-test-utils"
 import { TaskState } from "../../../TaskState"
 import { ToolValidator } from "../../ToolValidator"
@@ -108,7 +108,7 @@ function createConfig() {
 			},
 			fileContextTracker: {
 				trackFileContext: sinon.stub().resolves(),
-				markFileAsEditedByDirac: sinon.stub(),
+				markFileAsEditedByIsaac: sinon.stub(),
 			},
 			browserSession: {},
 			urlContentFetcher: {},
@@ -184,7 +184,7 @@ describe("RenameSymbolToolHandler", () => {
 
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.RENAME_SYMBOL,
+			name: IsaacDefaultTool.RENAME_SYMBOL,
 			params: {
 				existing_symbol: "oldName",
 				new_symbol: "newName",
@@ -222,7 +222,7 @@ describe("RenameSymbolToolHandler", () => {
 
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.RENAME_SYMBOL,
+			name: IsaacDefaultTool.RENAME_SYMBOL,
 			params: {
 				existing_symbol: "myVar",
 				new_symbol: "newVar",
@@ -260,7 +260,7 @@ describe("RenameSymbolToolHandler", () => {
 
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.RENAME_SYMBOL,
+			name: IsaacDefaultTool.RENAME_SYMBOL,
 			params: {
 				existing_symbol: "oldName",
 				new_symbol: "newName",
@@ -286,7 +286,7 @@ describe("RenameSymbolToolHandler", () => {
 
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.RENAME_SYMBOL,
+			name: IsaacDefaultTool.RENAME_SYMBOL,
 			params: {
 				existing_symbol: "nonExistent",
 				new_symbol: "newName",
@@ -318,7 +318,7 @@ describe("RenameSymbolToolHandler", () => {
 
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.RENAME_SYMBOL,
+			name: IsaacDefaultTool.RENAME_SYMBOL,
 			params: {
 				existing_symbol: "x",
 				new_symbol: "y",
@@ -349,7 +349,7 @@ describe("RenameSymbolToolHandler", () => {
 
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.RENAME_SYMBOL,
+			name: IsaacDefaultTool.RENAME_SYMBOL,
 			params: {
 				existing_symbol: "x",
 				new_symbol: "y",
@@ -390,7 +390,7 @@ describe("RenameSymbolToolHandler", () => {
 
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.RENAME_SYMBOL,
+			name: IsaacDefaultTool.RENAME_SYMBOL,
 			params: {
 				existing_symbol: "x",
 				new_symbol: "y",
@@ -422,7 +422,7 @@ describe("RenameSymbolToolHandler", () => {
 
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.RENAME_SYMBOL,
+			name: IsaacDefaultTool.RENAME_SYMBOL,
 			params: {
 				existing_symbol: "old",
 				new_symbol: "new",
@@ -448,7 +448,7 @@ describe("RenameSymbolToolHandler", () => {
 
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.RENAME_SYMBOL,
+			name: IsaacDefaultTool.RENAME_SYMBOL,
 			params: {
 				existing_symbol: "old",
 				new_symbol: "new",
@@ -459,7 +459,7 @@ describe("RenameSymbolToolHandler", () => {
 		}
 
 		await handler.execute(config, block)
-		assert.ok(callbacks.sayAndCreateMissingParamError.calledWith(DiracDefaultTool.RENAME_SYMBOL, "paths"))
+		assert.ok(callbacks.sayAndCreateMissingParamError.calledWith(IsaacDefaultTool.RENAME_SYMBOL, "paths"))
 	})
 
 	it("skips paths that do not exist", async () => {
@@ -468,7 +468,7 @@ describe("RenameSymbolToolHandler", () => {
 
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.RENAME_SYMBOL,
+			name: IsaacDefaultTool.RENAME_SYMBOL,
 			params: {
 				existing_symbol: "old",
 				new_symbol: "new",

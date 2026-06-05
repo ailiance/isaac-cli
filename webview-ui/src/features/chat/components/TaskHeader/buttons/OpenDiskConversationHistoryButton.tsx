@@ -1,4 +1,4 @@
-import { StringRequest } from "@shared/proto/dirac/common"
+import { StringRequest } from "@shared/proto/isaac/common"
 import { ArrowDownToLineIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { FileServiceClient } from "@/shared/api/grpc-client"

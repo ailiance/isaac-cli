@@ -4,7 +4,7 @@ import { extractPathLikeStrings, RuleEvaluationContext, toWorkspaceRelativePosix
 type WorkspaceRoot = { path: string }
 type WorkspaceManagerLike = { getRoots(): WorkspaceRoot[] }
 
-type DiracMessageLike = {
+type IsaacMessageLike = {
 	type: string
 	ask?: string
 	say?: string
@@ -12,7 +12,7 @@ type DiracMessageLike = {
 }
 
 type MessageStateHandlerLike = {
-	getDiracMessages(): DiracMessageLike[]
+	getIsaacMessages(): IsaacMessageLike[]
 }
 
 export type RuleContextBuilderDeps = {
@@ -22,7 +22,7 @@ export type RuleContextBuilderDeps = {
 }
 
 /**
- * Builds the evaluation context used for conditional Dirac Rules (e.g. YAML frontmatter `paths:`).
+ * Builds the evaluation context used for conditional Isaac Rules (e.g. YAML frontmatter `paths:`).
  *
  * Kept in the user-instructions domain so Task remains orchestration-focused.
  *
@@ -47,7 +47,7 @@ export class RuleContextBuilder {
 
 	private static async getRulePathContext(deps: RuleContextBuilderDeps): Promise<string[]> {
 		const candidates: string[] = []
-		const diracMessages = deps.messageStateHandler.getDiracMessages()
+		const diracMessages = deps.messageStateHandler.getIsaacMessages()
 
 		// (1) Current-turn user message evidence:
 		// Use the most recent user-authored text (initial task or subsequent feedback).
@@ -74,7 +74,7 @@ export class RuleContextBuilder {
 			}
 		}
 
-		// (3) Files edited by Dirac during this task (completed operations):
+		// (3) Files edited by Isaac during this task (completed operations):
 		// Parse say="tool" messages for tool results indicating file operations.
 		for (const msg of diracMessages) {
 			if (msg.type !== "say" || msg.say !== "tool" || !msg.text) continue

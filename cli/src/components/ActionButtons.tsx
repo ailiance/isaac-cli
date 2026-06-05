@@ -4,7 +4,7 @@
  * Supports keyboard navigation (1/2 for buttons, arrows to navigate, esc to cancel)
  */
 
-import type { DiracMessage } from "@shared/ExtensionMessage"
+import type { IsaacMessage } from "@shared/ExtensionMessage"
 import { Box, Text } from "ink"
 import React from "react"
 import { COLORS } from "../constants/colors"
@@ -186,7 +186,7 @@ const errorTypes = ["api_req_failed", "mistake_limit_reached"]
 /**
  * Get button configuration based on message type and state
  */
-export function getButtonConfig(message: DiracMessage | undefined, isStreaming = false): ButtonConfig {
+export function getButtonConfig(message: IsaacMessage | undefined, isStreaming = false): ButtonConfig {
 	if (!message) {
 		return BUTTON_CONFIGS.default
 	}

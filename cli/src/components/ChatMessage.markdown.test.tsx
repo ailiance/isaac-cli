@@ -1,4 +1,4 @@
-import type { DiracMessage } from "@shared/ExtensionMessage"
+import type { IsaacMessage } from "@shared/ExtensionMessage"
 import { render } from "ink-testing-library"
 import React from "react"
 import { describe, expect, it, vi } from "vitest"
@@ -14,7 +14,7 @@ vi.mock("../hooks/useTerminalSize", () => ({
 
 describe("ChatMessage markdown rendering", () => {
 	it("renders basic markdown elements correctly with appropriate styling", () => {
-		const message: DiracMessage = {
+		const message: IsaacMessage = {
 			ts: Date.now(),
 			type: "say",
 			say: "text",

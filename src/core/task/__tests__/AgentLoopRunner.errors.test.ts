@@ -92,11 +92,11 @@ function makeContext(overrides: any = {}): { ctx: any; taskState: TaskState; stu
 			// index and updateApiReqMsg can JSON.parse a `text` field.
 			const messages: any[] = [{ ts: 1, type: "say", say: "api_req_started", text: "{}", partial: true }]
 			return {
-				getDiracMessages: () => messages,
-				updateDiracMessage: sinon.stub().callsFake(async (idx: number, patch: any) => {
+				getIsaacMessages: () => messages,
+				updateIsaacMessage: sinon.stub().callsFake(async (idx: number, patch: any) => {
 					Object.assign(messages[idx], patch)
 				}),
-				saveDiracMessagesAndUpdateHistory: sinon.stub().resolves(),
+				saveIsaacMessagesAndUpdateHistory: sinon.stub().resolves(),
 				addToApiConversationHistory: sinon.stub().resolves(),
 			}
 		})(),

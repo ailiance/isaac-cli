@@ -2,7 +2,7 @@ import { strict as assert } from "node:assert"
 import fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
-import { DiracDefaultTool } from "@shared/tools"
+import { IsaacDefaultTool } from "@shared/tools"
 import { afterEach, beforeEach, describe, it } from "mocha"
 import sinon from "sinon"
 import { HostProvider } from "@/hosts/host-provider"
@@ -54,7 +54,7 @@ function createConfig() {
 			},
 			diffViewProvider,
 			fileContextTracker: {
-				markFileAsEditedByDirac: sinon.stub(),
+				markFileAsEditedByIsaac: sinon.stub(),
 				trackFileContext: sinon.stub().resolves(),
 			},
 			diracIgnoreController: { validateAccess: () => true },
@@ -91,7 +91,7 @@ describe("WriteToFileToolHandler – Error Handling", () => {
 
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.FILE_NEW,
+			name: IsaacDefaultTool.FILE_NEW,
 			params: {
 				path: "parent-is-file/test.txt",
 				content: "some content",
@@ -117,7 +117,7 @@ describe("WriteToFileToolHandler – Error Handling", () => {
 
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.FILE_NEW,
+			name: IsaacDefaultTool.FILE_NEW,
 			params: {
 				path: "no-access.txt",
 				content: "some content",
@@ -143,7 +143,7 @@ describe("WriteToFileToolHandler – Error Handling", () => {
 
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.FILE_NEW,
+			name: IsaacDefaultTool.FILE_NEW,
 			params: {
 				path: "readonly.txt",
 				content: "some content",
@@ -170,7 +170,7 @@ describe("WriteToFileToolHandler – Error Handling", () => {
 
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.FILE_NEW,
+			name: IsaacDefaultTool.FILE_NEW,
 			params: {
 				path: "no-write.txt",
 				content: "some content",
@@ -196,7 +196,7 @@ describe("WriteToFileToolHandler – Error Handling", () => {
 
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.FILE_NEW,
+			name: IsaacDefaultTool.FILE_NEW,
 			params: {
 				path: "readonly-write.txt",
 				content: "some content",
@@ -220,7 +220,7 @@ describe("WriteToFileToolHandler – Error Handling", () => {
 
 		const block = {
 			type: "tool_use" as const,
-			name: DiracDefaultTool.FILE_NEW,
+			name: IsaacDefaultTool.FILE_NEW,
 			params: {
 				path: "some-dir",
 				content: "some content",

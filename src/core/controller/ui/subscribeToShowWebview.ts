@@ -1,5 +1,5 @@
-import { EmptyRequest } from "@shared/proto/dirac/common"
-import { ShowWebviewEvent } from "@shared/proto/dirac/ui"
+import { EmptyRequest } from "@shared/proto/isaac/common"
+import { ShowWebviewEvent } from "@shared/proto/isaac/ui"
 import { Logger } from "@/shared/services/Logger"
 import { getRequestRegistry, StreamingResponseHandler } from "../grpc-handler"
 import type { Controller } from "../index"

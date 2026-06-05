@@ -1,4 +1,4 @@
-import { Empty, StringArrayRequest } from "@shared/proto/dirac/common"
+import { Empty, StringArrayRequest } from "@shared/proto/isaac/common"
 import type { Controller } from "../index"
 
 /**

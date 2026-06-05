@@ -1,7 +1,7 @@
 import type { ApiProviderInfo } from "@core/api"
 import { pluginDiscoveryService } from "@core/plugins/PluginDiscoveryService"
 import { getExtensionSourceDir } from "@shared/dirac/constants"
-import { DiracRulesToggles } from "@shared/dirac-rules"
+import { IsaacRulesToggles } from "@shared/dirac-rules"
 import fs from "fs/promises"
 import path from "path"
 import { telemetryService } from "@/services/telemetry"
@@ -40,8 +40,8 @@ type Workflow = FileBasedWorkflow | RemoteWorkflow
  */
 export async function parseSlashCommands(
 	text: string,
-	localWorkflowToggles: DiracRulesToggles,
-	globalWorkflowToggles: DiracRulesToggles,
+	localWorkflowToggles: IsaacRulesToggles,
+	globalWorkflowToggles: IsaacRulesToggles,
 	ulid: string,
 	providerInfo?: ApiProviderInfo,
 	availableSkills: SkillMetadata[] = [],
@@ -50,11 +50,11 @@ export async function parseSlashCommands(
 	sourceDir: string = getExtensionSourceDir(),
 ): Promise<{
 	processedText: string
-	needsDiracrulesFileCheck: boolean
+	needsIsaacrulesFileCheck: boolean
 	isDirectResponse?: boolean
 	directResponseText?: string
 }> {
-	// ailiance-agent fork: dropped "askDirac" — RAG over upstream Dirac source code, irrelevant for our fork
+	// ailiance-agent fork: dropped "askIsaac" — RAG over upstream Isaac source code, irrelevant for our fork
 	const SUPPORTED_DEFAULT_COMMANDS = ["newtask", "smol", "compact", "newrule", "reportbug", "explain-changes", "permissions"]
 
 	const willUseNativeTools = true
@@ -141,7 +141,7 @@ export async function parseSlashCommands(
 						`<explicit_instructions type="permissions">\n${feedback}\n</explicit_instructions>\n` +
 						textWithoutSlashCommand
 					telemetryService.captureSlashCommandUsed(ulid, commandName, "builtin")
-					return { processedText, needsDiracrulesFileCheck: false }
+					return { processedText, needsIsaacrulesFileCheck: false }
 				}
 
 				// remove the slash command and add custom instructions at the top of this message
@@ -157,7 +157,7 @@ export async function parseSlashCommands(
 				// Track telemetry for builtin slash command usage
 				telemetryService.captureSlashCommandUsed(ulid, commandName, "builtin")
 
-				return { processedText: processedText, needsDiracrulesFileCheck: commandName === "newrule" }
+				return { processedText: processedText, needsIsaacrulesFileCheck: commandName === "newrule" }
 			}
 
 			const globalWorkflows: Workflow[] = Object.entries(globalWorkflowToggles)
@@ -247,7 +247,7 @@ export async function parseSlashCommands(
 					// Track telemetry for workflow command usage
 					telemetryService.captureSlashCommandUsed(ulid, commandName, "workflow")
 
-					return { processedText, needsDiracrulesFileCheck: false }
+					return { processedText, needsIsaacrulesFileCheck: false }
 				} catch (error) {
 					Logger.error(`Error reading workflow file ${matchingWorkflow.fullPath}: ${error}`)
 				}
@@ -276,7 +276,7 @@ export async function parseSlashCommands(
 						// Track telemetry for skill command usage
 						telemetryService.captureSlashCommandUsed(ulid, commandName, "skill")
 
-						return { processedText, needsDiracrulesFileCheck: false }
+						return { processedText, needsIsaacrulesFileCheck: false }
 					}
 				} catch (error) {
 					Logger.error(`Error loading skill ${matchingSkill.name}: ${error}`)
@@ -286,5 +286,5 @@ export async function parseSlashCommands(
 	}
 
 	// if no supported commands are found, return the original text
-	return { processedText: text, needsDiracrulesFileCheck: false }
+	return { processedText: text, needsIsaacrulesFileCheck: false }
 }

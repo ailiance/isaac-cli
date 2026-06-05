@@ -1,7 +1,7 @@
 import * as vscode from "vscode"
 import * as path from "path"
 import { GetDiagnosticsRequest, GetDiagnosticsResponse } from "@/shared/proto/host/workspace"
-import { Diagnostic, DiagnosticSeverity, FileDiagnostics } from "@/shared/proto/index.dirac"
+import { Diagnostic, DiagnosticSeverity, FileDiagnostics } from "@/shared/proto/index.isaac"
 import "@/utils/path" // for String.prototype.toPosix
 import { Logger } from "@/shared/services/Logger"
 

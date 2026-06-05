@@ -11,20 +11,20 @@ const AboutSection = ({ version, renderSectionHeader }: AboutSectionProps) => {
 			{renderSectionHeader("about")}
 			<Section>
 				<div className="flex px-4 flex-col gap-2">
-					<h2 className="text-lg font-semibold">Dirac v{version}</h2>
+					<h2 className="text-lg font-semibold">Isaac v{version}</h2>
 					<p>
-						An AI assistant that can use your CLI and Editor. Dirac can handle complex software development tasks
+						An AI assistant that can use your CLI and Editor. Isaac can handle complex software development tasks
 						step-by-step with tools that let him create & edit files, explore large projects, use the browser, and
 						execute terminal commands (after you grant permission).
 					</p>
 
 					<h3 className="text-md font-semibold">Community & Support</h3>
 					<p>
-						<VSCodeLink href="https://x.com/Dirac_AI">X</VSCodeLink>
+						<VSCodeLink href="https://x.com/Isaac_AI">X</VSCodeLink>
 						{" • "}
 						<VSCodeLink href="https://discord.gg/mWkzrF4h">Discord</VSCodeLink>
 						{" • "}
-						<VSCodeLink href="https://www.reddit.com/r/DiracDelta/"> r/dirac</VSCodeLink>
+						<VSCodeLink href="https://www.reddit.com/r/IsaacDelta/"> r/dirac</VSCodeLink>
 					</p>
 
 					<h3 className="text-md font-semibold">Development</h3>

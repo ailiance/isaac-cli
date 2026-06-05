@@ -9,7 +9,7 @@ import { normalizeApiConfiguration } from "@/features/settings/components/utils/
 import { useSettingsStore } from "@/features/settings/store/settingsStore"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip"
 import { OPENROUTER_MODEL_PICKER_Z_INDEX } from "./OpenRouterModelPicker"
-import { DiracProvider } from "./providers/DiracProvider"
+import { IsaacProvider } from "./providers/IsaacProvider"
 import { LiteLlmProvider } from "./providers/LiteLlmProvider"
 import { LMStudioProvider } from "./providers/LMStudioProvider"
 import { OpenAICompatibleProvider } from "./providers/OpenAICompatible"
@@ -295,7 +295,7 @@ const ApiOptions = ({
 
 
 			{apiConfiguration && selectedProvider === "dirac" && (
-				<DiracProvider
+				<IsaacProvider
 					currentMode={currentMode}
 					isPopup={isPopup}
 					showModelOptions={showModelOptions}

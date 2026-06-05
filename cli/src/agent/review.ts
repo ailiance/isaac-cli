@@ -5,7 +5,7 @@ import path from "node:path"
 import type * as acp from "@agentclientprotocol/sdk"
 import * as Diff from "diff"
 import type { ApiConfiguration } from "@shared/api"
-import type { DiracStorageMessage } from "@/shared/messages/content"
+import type { IsaacStorageMessage } from "@/shared/messages/content"
 import { Logger } from "@/shared/services/Logger.js"
 import { buildApiHandler } from "@/core/api"
 import type { Controller } from "@/core/controller"
@@ -316,7 +316,7 @@ ${input.context.diffText}`
 
 	try {
 		for await (const chunk of apiHandler.createMessage(systemPrompt, [
-			{ role: "user", content: userMessage } satisfies DiracStorageMessage,
+			{ role: "user", content: userMessage } satisfies IsaacStorageMessage,
 		])) {
 			if (chunk.type === "text") {
 				chunks.push(chunk.text)

@@ -1,8 +1,8 @@
 import { mentionRegex, mentionRegexGlobal } from "@shared/context-mentions"
 import { Mode } from "@shared/ExtensionMessage"
-import { StringRequest } from "@shared/proto/dirac/common"
-import { FileSearchRequest, FileSearchType, RelativePathsRequest } from "@shared/proto/dirac/file"
-import { PlanActMode, TogglePlanActModeRequest } from "@shared/proto/dirac/state"
+import { StringRequest } from "@shared/proto/isaac/common"
+import { FileSearchRequest, FileSearchType, RelativePathsRequest } from "@shared/proto/isaac/file"
+import { PlanActMode, TogglePlanActModeRequest } from "@shared/proto/isaac/state"
 import { type SlashCommand } from "@shared/slashCommands"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import { motion } from "framer-motion"
@@ -11,7 +11,7 @@ import type React from "react"
 import { forwardRef, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import DynamicTextArea from "react-textarea-autosize"
 import { usePlatform } from "@/context/PlatformContext"
-import DiracRulesToggleModal from "@/features/dirac-rules/components/DiracRulesToggleModal"
+import IsaacRulesToggleModal from "@/features/dirac-rules/components/IsaacRulesToggleModal"
 import { getModeSpecificFields, normalizeApiConfiguration } from "@/features/settings/components/utils/providerUtils"
 import { useSettingsStore } from "@/features/settings/store/settingsStore"
 import { cn } from "@/lib/utils"
@@ -1507,7 +1507,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 								</TooltipTrigger>
 							</Tooltip>
 
-							<DiracRulesToggleModal />
+							<IsaacRulesToggleModal />
 
 							<div className="relative flex flex-1 min-w-0">
 								<div className="inline-flex min-w-0 max-w-full">
@@ -1534,7 +1534,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							className="text-xs px-2 flex flex-col gap-1"
 							hidden={shownTooltipMode === null}
 							side="top">
-							{`In ${shownTooltipMode === "act" ? "Act" : "Plan"}  mode, Dirac will ${shownTooltipMode === "act" ? "complete the task immediately" : "gather information to architect a plan"}`}
+							{`In ${shownTooltipMode === "act" ? "Act" : "Plan"}  mode, Isaac will ${shownTooltipMode === "act" ? "complete the task immediately" : "gather information to architect a plan"}`}
 							<p className="text-description/80 text-xs mb-0">
 								Toggle w/ <kbd className="text-muted-foreground mx-1">{togglePlanActKeys}</kbd>
 							</p>

@@ -11,9 +11,9 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { HostProvider } from "@/hosts/host-provider"
 import { getDiagnosticsProviders } from "@/integrations/diagnostics/getDiagnosticsProviders"
-import { DiracSayTool } from "@/shared/ExtensionMessage"
-import { DiracDefaultTool } from "@/shared/tools"
-import { DiracAskResponse } from "@/shared/WebviewMessage"
+import { IsaacSayTool } from "@/shared/ExtensionMessage"
+import { IsaacDefaultTool } from "@/shared/tools"
+import { IsaacAskResponse } from "@/shared/WebviewMessage"
 import { ToolResponse } from "../../../index"
 import { showNotificationForApproval } from "../../../utils"
 import { ToolValidator } from "../../ToolValidator"
@@ -42,7 +42,7 @@ export class BatchProcessor {
 
 	groupBlocksByPath(config: TaskConfig): Map<string, PreparedFileBatch> {
 		const allBlocks = config.taskState.assistantMessageContent.filter(
-			(b: any): b is ToolUse => b.type === "tool_use" && b.name === DiracDefaultTool.EDIT_FILE,
+			(b: any): b is ToolUse => b.type === "tool_use" && b.name === IsaacDefaultTool.EDIT_FILE,
 		)
 
 		const groups = new Map<string, PreparedFileBatch>()
@@ -439,7 +439,7 @@ export class BatchProcessor {
 	async checkAutoApproval(config: TaskConfig, batches: PreparedFileBatch[]): Promise<boolean> {
 		if (config.isSubagentExecution) return true
 		for (const batch of batches) {
-			const allowed = await config.callbacks.shouldAutoApproveToolWithPath(DiracDefaultTool.EDIT_FILE, batch.displayPath)
+			const allowed = await config.callbacks.shouldAutoApproveToolWithPath(IsaacDefaultTool.EDIT_FILE, batch.displayPath)
 			if (!allowed) return false
 		}
 		return true
@@ -448,7 +448,7 @@ export class BatchProcessor {
 	async requestCombinedApproval(
 		config: TaskConfig,
 		batches: PreparedFileBatch[],
-	): Promise<{ didApprove: boolean; response: DiracAskResponse; text?: string; userEdits?: Record<string, string> }> {
+	): Promise<{ didApprove: boolean; response: IsaacAskResponse; text?: string; userEdits?: Record<string, string> }> {
 		const totalRequestedEdits = batches.reduce(
 			(acc, b) =>
 				acc + b.blocks.reduce((acc2, b2) => acc2 + (Array.isArray(b2.params.edits) ? b2.params.edits.length : 0), 0),
@@ -458,8 +458,8 @@ export class BatchProcessor {
 		const fileNames = batches.map((b) => path.basename(b.absolutePath)).join(", ")
 		const notificationMessage =
 			batches.length === 1
-				? `Dirac wants to edit ${batches[0].displayPath} with ${totalRequestedEdits} anchored edits`
-				: `Dirac wants to edit ${fileNames} with ${totalRequestedEdits} anchored edits`
+				? `Isaac wants to edit ${batches[0].displayPath} with ${totalRequestedEdits} anchored edits`
+				: `Isaac wants to edit ${fileNames} with ${totalRequestedEdits} anchored edits`
 		showNotificationForApproval(notificationMessage, config.autoApprovalSettings.enableNotifications)
 
 		while (true) {
@@ -508,7 +508,7 @@ export class BatchProcessor {
 		}
 	}
 
-	async buildEditMessage(config: TaskConfig, batches: PreparedFileBatch[]): Promise<DiracSayTool> {
+	async buildEditMessage(config: TaskConfig, batches: PreparedFileBatch[]): Promise<IsaacSayTool> {
 		const totalRequestedEdits = batches.reduce(
 			(acc, b) =>
 				acc + b.blocks.reduce((acc2, b2) => acc2 + (Array.isArray(b2.params.edits) ? b2.params.edits.length : 0), 0),
@@ -590,7 +590,7 @@ export class BatchProcessor {
 
 			config.taskState.consecutiveMistakeCount = 0
 			config.taskState.didEditFile = true
-			config.services.fileContextTracker.markFileAsEditedByDirac(displayPath)
+			config.services.fileContextTracker.markFileAsEditedByIsaac(displayPath)
 			await config.services.fileContextTracker.trackFileContext(displayPath, "dirac_edited")
 
 			const newLineHashes = AnchorStateManager.reconcile(absolutePath, finalLines, config.ulid)
@@ -814,7 +814,7 @@ export class BatchProcessor {
 	private async askFuzzyApproval(config: TaskConfig, displayPath: string, candidate: FuzzyCandidate): Promise<boolean> {
 		// Subagent / fully auto-approved workspace: skip the prompt.
 		if (config.isSubagentExecution) return true
-		const autoApproved = await config.callbacks.shouldAutoApproveToolWithPath(DiracDefaultTool.EDIT_FILE, displayPath)
+		const autoApproved = await config.callbacks.shouldAutoApproveToolWithPath(IsaacDefaultTool.EDIT_FILE, displayPath)
 		if (autoApproved) return true
 
 		const message = {
@@ -847,7 +847,7 @@ export class BatchProcessor {
 
 		config.taskState.consecutiveMistakeCount = 0
 		config.taskState.didEditFile = true
-		config.services.fileContextTracker.markFileAsEditedByDirac(displayPath)
+		config.services.fileContextTracker.markFileAsEditedByIsaac(displayPath)
 		await config.services.fileContextTracker.trackFileContext(displayPath, "dirac_edited")
 
 		return {

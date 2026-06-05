@@ -2,7 +2,7 @@ import { expect } from "chai"
 import { describe, it } from "mocha"
 import {
     AwsBedrockSettingsSchema,
-    DiracSettingsSchema,
+    IsaacSettingsSchema,
     EnterpriseTelemetrySchema,
     OpenAiCompatibleSchema,
     PromptUploadingSchema,
@@ -311,17 +311,17 @@ describe("Remote Config Schema", () => {
 		})
 	})
 
-	describe("DiracSettingsSchema", () => {
-		it("should accept valid Dirac provider settings", () => {
+	describe("IsaacSettingsSchema", () => {
+		it("should accept valid Isaac provider settings", () => {
 			const validSettings = {
 				models: [{ id: "claude-3-5-sonnet-20241022" }, { id: "claude-3-5-haiku-20241022" }],
 			}
-			const result = DiracSettingsSchema.parse(validSettings)
+			const result = IsaacSettingsSchema.parse(validSettings)
 			expect(result).to.deep.equal(validSettings)
 		})
 
 		it("should accept empty settings object", () => {
-			const result = DiracSettingsSchema.parse({})
+			const result = IsaacSettingsSchema.parse({})
 			expect(result.models).to.be.undefined
 		})
 
@@ -329,12 +329,12 @@ describe("Remote Config Schema", () => {
 			const settings = {
 				models: [{ id: "claude-3-5-sonnet-20241022" }],
 			}
-			expect(() => DiracSettingsSchema.parse(settings)).to.not.throw()
+			expect(() => IsaacSettingsSchema.parse(settings)).to.not.throw()
 		})
 
 		it("should reject models with missing id field", () => {
 			expect(() =>
-				DiracSettingsSchema.parse({
+				IsaacSettingsSchema.parse({
 					models: [{}],
 				}),
 			).to.throw()
@@ -608,7 +608,7 @@ describe("Remote Config Schema", () => {
 						awsBedrockUsePromptCache: true,
 						awsBedrockEndpoint: "https://custom-bedrock.endpoint",
 					},
-					Dirac: {
+					Isaac: {
 						models: [{ id: "claude-3-5-sonnet-20241022" }, { id: "claude-3-5-haiku-20241022" }],
 					},
 					Vertex: {
@@ -661,10 +661,10 @@ describe("Remote Config Schema", () => {
 			expect(result.providerSettings?.AwsBedrock?.awsBedrockUsePromptCache).to.equal(true)
 			expect(result.providerSettings?.AwsBedrock?.awsBedrockEndpoint).to.equal("https://custom-bedrock.endpoint")
 
-			// Verify Dirac settings
-			expect(result.providerSettings?.Dirac?.models).to.have.lengthOf(2)
-			expect(result.providerSettings?.Dirac?.models?.[0].id).to.equal("claude-3-5-sonnet-20241022")
-			expect(result.providerSettings?.Dirac?.models?.[1].id).to.equal("claude-3-5-haiku-20241022")
+			// Verify Isaac settings
+			expect(result.providerSettings?.Isaac?.models).to.have.lengthOf(2)
+			expect(result.providerSettings?.Isaac?.models?.[0].id).to.equal("claude-3-5-sonnet-20241022")
+			expect(result.providerSettings?.Isaac?.models?.[1].id).to.equal("claude-3-5-haiku-20241022")
 
 			// Verify Vertex settings
 			expect(result.providerSettings?.Vertex?.models).to.have.lengthOf(2)

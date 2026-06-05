@@ -1,4 +1,4 @@
-import { StringRequest } from "@shared/proto/dirac/common"
+import { StringRequest } from "@shared/proto/isaac/common"
 import type { DiffBlock, DiffLine as DiffLineStruct } from "@shared/utils/diff/DiffComputer"
 import type { DiffStructure } from "@shared/utils/diff/DiffStructure"
 import { stripHashes } from "@shared/utils/line-hashing"

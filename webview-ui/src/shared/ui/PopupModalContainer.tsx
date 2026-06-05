@@ -9,7 +9,7 @@ interface PopupModalContainerProps {
 }
 
 /**
- * Shared styled container for popup modals (ModelPicker, ServersToggle, DiracRulesToggle).
+ * Shared styled container for popup modals (ModelPicker, ServersToggle, IsaacRulesToggle).
  * Provides consistent positioning, styling, and arrow pointer.
  */
 const PopupModalContainer = styled.div<PopupModalContainerProps>`

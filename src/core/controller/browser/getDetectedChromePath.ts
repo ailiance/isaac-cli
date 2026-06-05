@@ -1,5 +1,5 @@
-import { ChromePath } from "@shared/proto/dirac/browser"
-import { EmptyRequest } from "@shared/proto/dirac/common"
+import { ChromePath } from "@shared/proto/isaac/browser"
+import { EmptyRequest } from "@shared/proto/isaac/common"
 import { Logger } from "@/shared/services/Logger"
 import { BrowserSession } from "../../../services/browser/BrowserSession"
 import { Controller } from "../index"

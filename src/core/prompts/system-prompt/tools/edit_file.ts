@@ -1,10 +1,10 @@
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import { getDelimiter } from "../../../../utils/line-hashing"
-import type { DiracToolSpec } from "../spec"
+import type { IsaacToolSpec } from "../spec"
 
-const id = DiracDefaultTool.EDIT_FILE
+const id = IsaacDefaultTool.EDIT_FILE
 
-export const edit_file: DiracToolSpec = {
+export const edit_file: IsaacToolSpec = {
 	id,
 	name: "edit_file",
 	description: `Edit one or more files by replacing, inserting after, or inserting before specific lines.

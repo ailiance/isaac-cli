@@ -1,4 +1,4 @@
-import type { StackModel } from "@shared/proto/dirac/stack"
+import type { StackModel } from "@shared/proto/isaac/stack"
 import { CheckCircle2, XCircle } from "lucide-react"
 import { useStackStore } from "../store/stackStore"
 

@@ -1,9 +1,9 @@
-import { DiracSayTool } from "@shared/ExtensionMessage"
+import { IsaacSayTool } from "@shared/ExtensionMessage"
 import { DisplayUnit } from "../types"
 
 export interface BaseToolOutputProps {
 	unit: DisplayUnit
-	tool: DiracSayTool
+	tool: IsaacSayTool
 	isExpanded: boolean
 	onToggleExpand: (ts: number) => void
 }

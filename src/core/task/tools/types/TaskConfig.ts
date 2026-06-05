@@ -1,6 +1,6 @@
 import type { ApiHandler } from "@core/api"
 import type { FileContextTracker } from "@core/context/context-tracking/FileContextTracker"
-import type { DiracIgnoreController } from "@core/ignore/DiracIgnoreController"
+import type { IsaacIgnoreController } from "@core/ignore/IsaacIgnoreController"
 import type { CommandPermissionController } from "@core/permissions"
 import type { DiffViewProvider } from "@integrations/editor/DiffViewProvider"
 import type { CommandExecutionOptions } from "@integrations/terminal"
@@ -8,11 +8,11 @@ import type { BrowserSession } from "@services/browser/BrowserSession"
 import type { UrlContentFetcher } from "@services/browser/UrlContentFetcher"
 import type { AutoApprovalSettings } from "@shared/AutoApprovalSettings"
 import type { BrowserSettings } from "@shared/BrowserSettings"
-import type { DiracAsk, DiracMessage, DiracSay, MultiCommandState } from "@shared/ExtensionMessage"
-import type { DiracContent } from "@shared/messages/content"
+import type { IsaacAsk, IsaacMessage, IsaacSay, MultiCommandState } from "@shared/ExtensionMessage"
+import type { IsaacContent } from "@shared/messages/content"
 import type { Mode } from "@shared/storage/types"
-import type { DiracDefaultTool } from "@shared/tools"
-import type { DiracAskResponse } from "@shared/WebviewMessage"
+import type { IsaacDefaultTool } from "@shared/tools"
+import type { IsaacAskResponse } from "@shared/WebviewMessage"
 import { WorkspaceRootManager } from "@/core/workspace"
 import type { ContextManager } from "../../../context/context-management/ContextManager"
 import type { StateManager } from "../../../storage/StateManager"
@@ -72,7 +72,7 @@ export interface TaskServices {
 	urlContentFetcher: UrlContentFetcher
 	diffViewProvider: DiffViewProvider
 	fileContextTracker: FileContextTracker
-	diracIgnoreController: DiracIgnoreController
+	diracIgnoreController: IsaacIgnoreController
 	commandPermissionController: CommandPermissionController
 	contextManager: ContextManager
 	stateManager: StateManager
@@ -82,15 +82,15 @@ export interface TaskServices {
  * All callback functions available to tool handlers
  */
 export interface TaskCallbacks {
-	say: (type: DiracSay, text?: string, images?: string[], files?: string[], partial?: boolean, multiCommandState?: MultiCommandState) => Promise<number | undefined>
+	say: (type: IsaacSay, text?: string, images?: string[], files?: string[], partial?: boolean, multiCommandState?: MultiCommandState) => Promise<number | undefined>
 
 	ask: (
-		type: DiracAsk,
+		type: IsaacAsk,
 		text?: string,
 		partial?: boolean,
 		multiCommandState?: MultiCommandState,
 	) => Promise<{
-		response: DiracAskResponse
+		response: IsaacAskResponse
 		text?: string
 		images?: string[]
 		askTs?: number
@@ -100,9 +100,9 @@ export interface TaskCallbacks {
 
 	saveCheckpoint: (isAttemptCompletionMessage?: boolean, completionMessageTs?: number) => Promise<void>
 
-	sayAndCreateMissingParamError: (toolName: DiracDefaultTool, paramName: string, relPath?: string) => Promise<any>
+	sayAndCreateMissingParamError: (toolName: IsaacDefaultTool, paramName: string, relPath?: string) => Promise<any>
 
-	removeLastPartialMessageIfExistsWithType: (type: "ask" | "say", askOrSay: DiracAsk | DiracSay, onlyPartial?: boolean) => Promise<void>
+	removeLastPartialMessageIfExistsWithType: (type: "ask" | "say", askOrSay: IsaacAsk | IsaacSay, onlyPartial?: boolean) => Promise<void>
 
 	executeCommandTool: (
 		command: string,
@@ -114,15 +114,15 @@ export interface TaskCallbacks {
 	doesLatestTaskCompletionHaveNewChanges: () => Promise<boolean>
 
 
-	shouldAutoApproveTool: (toolName: DiracDefaultTool) => boolean | [boolean, boolean]
-	shouldAutoApproveToolWithPath: (toolName: DiracDefaultTool, path?: string) => Promise<boolean>
+	shouldAutoApproveTool: (toolName: IsaacDefaultTool) => boolean | [boolean, boolean]
+	shouldAutoApproveToolWithPath: (toolName: IsaacDefaultTool, path?: string) => Promise<boolean>
 
 	// Additional callbacks for task management
 	postStateToWebview: () => Promise<void>
 	reinitExistingTaskFromId: (taskId: string) => Promise<void>
 	cancelTask: () => Promise<void>
-	getDiracMessages: () => DiracMessage[]
-	updateDiracMessage: (index: number, updates: Partial<DiracMessage>) => Promise<void>
+	getIsaacMessages: () => IsaacMessage[]
+	updateIsaacMessage: (index: number, updates: Partial<IsaacMessage>) => Promise<void>
 	updateTaskHistory: (update: any) => Promise<any[]>
 
 	applyLatestBrowserSettings: () => Promise<BrowserSession>
@@ -136,7 +136,7 @@ export interface TaskCallbacks {
 
 	// User prompt hook callback
 	runUserPromptSubmitHook: (
-		userContent: DiracContent[],
+		userContent: IsaacContent[],
 		context: "initial_task" | "resume" | "feedback",
 	) => Promise<{ cancel?: boolean; wasCancelled?: boolean; contextModification?: string; errorMessage?: string }>
 }

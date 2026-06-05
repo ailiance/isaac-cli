@@ -1,5 +1,5 @@
-import { EmptyRequest, String } from "@shared/proto/dirac/common"
-import { DiracWebviewProvider } from "@/core/webview"
+import { EmptyRequest, String } from "@shared/proto/isaac/common"
+import { IsaacWebviewProvider } from "@/core/webview"
 import type { Controller } from "../index"
 
 /**
@@ -9,6 +9,6 @@ import type { Controller } from "../index"
  * resolved through `resolveWebviewView()`.
  */
 export async function getWebviewHtml(_controller: Controller, _: EmptyRequest): Promise<String> {
-	const webview = DiracWebviewProvider.getInstance()
+	const webview = IsaacWebviewProvider.getInstance()
 	return Promise.resolve(String.create({ value: webview.getHtmlContent() }))
 }

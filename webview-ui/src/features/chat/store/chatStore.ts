@@ -1,14 +1,14 @@
-import type { DiracMessage, ExtensionState } from "@shared/ExtensionMessage"
-import { EmptyRequest } from "@shared/proto/dirac/common"
+import type { IsaacMessage, ExtensionState } from "@shared/ExtensionMessage"
+import { EmptyRequest } from "@shared/proto/isaac/common"
 import { create } from "zustand"
 import { StateServiceClient } from "@/shared/api/grpc-client"
 
 interface ChatState {
-	diracMessages: DiracMessage[]
+	diracMessages: IsaacMessage[]
 
 	// Actions
-	setDiracMessages: (messages: DiracMessage[]) => void
-	updatePartialMessage: (message: DiracMessage) => void
+	setIsaacMessages: (messages: IsaacMessage[]) => void
+	updatePartialMessage: (message: IsaacMessage) => void
 
 	// Hydration
 	hydrate: () => () => void
@@ -17,7 +17,7 @@ interface ChatState {
 export const useChatStore = create<ChatState>((set) => ({
 	diracMessages: [],
 
-	setDiracMessages: (messages) => set({ diracMessages: messages }),
+	setIsaacMessages: (messages) => set({ diracMessages: messages }),
 
 
 	updatePartialMessage: (message) =>

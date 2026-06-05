@@ -1,9 +1,9 @@
 import { strict as assert } from "node:assert"
 import { spawn } from "node:child_process"
-import type { DiracSayTool } from "@shared/ExtensionMessage"
+import type { IsaacSayTool } from "@shared/ExtensionMessage"
 import { describe, it } from "mocha"
 import sinon from "sinon"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import { TaskState } from "../TaskState"
 import { ExecuteCommandToolHandler } from "../tools/handlers/ExecuteCommandToolHandler"
 import { GetToolResultToolHandler } from "../tools/handlers/GetToolResultToolHandler"
@@ -101,8 +101,8 @@ function makeRealisticConfig(): {
 		sayAndCreateMissingParamError: sinon.stub().resolves("missing"),
 		removeLastPartialMessageIfExistsWithType: sinon.stub().resolves(),
 		executeCommandTool: realExecuteCommandTool,
-		getDiracMessages: () => storedMessages,
-		updateDiracMessage: sinon.stub().resolves(),
+		getIsaacMessages: () => storedMessages,
+		updateIsaacMessage: sinon.stub().resolves(),
 	}
 
 	const config = {
@@ -142,7 +142,7 @@ function makeBashBlock(command: string): any {
 	return {
 		type: "tool_use",
 		call_id: "block-1",
-		name: DiracDefaultTool.BASH,
+		name: IsaacDefaultTool.BASH,
 		params: { commands: [command] },
 		partial: false,
 	}
@@ -190,7 +190,7 @@ DESCRIBE("asyncTools integration (execute_command + registry + notifier + get_to
 		const runningSay = sayCalls.find((s) => {
 			if (s.type !== "tool" || !s.text) return false
 			try {
-				const p = JSON.parse(s.text) as DiracSayTool
+				const p = JSON.parse(s.text) as IsaacSayTool
 				return p.asyncStatus === "running" && p.asyncTaskId === taskId
 			} catch {
 				return false
@@ -216,7 +216,7 @@ DESCRIBE("asyncTools integration (execute_command + registry + notifier + get_to
 		const completionSay = sayCalls.find((s) => {
 			if (s.type !== "tool" || !s.text) return false
 			try {
-				const p = JSON.parse(s.text) as DiracSayTool
+				const p = JSON.parse(s.text) as IsaacSayTool
 				return p.asyncStatus === "completed" && p.asyncTaskId === taskId
 			} catch {
 				return false
@@ -224,7 +224,7 @@ DESCRIBE("asyncTools integration (execute_command + registry + notifier + get_to
 		})
 		assert.ok(completionSay, "expected an async-completed say")
 		assert.equal(completionSay.partial, false)
-		const completionPayload = JSON.parse(completionSay.text!) as DiracSayTool
+		const completionPayload = JSON.parse(completionSay.text!) as IsaacSayTool
 		assert.ok(
 			completionPayload.asyncDurationMs !== undefined && completionPayload.asyncDurationMs >= 900,
 			`expected duration >= 900ms, got ${completionPayload.asyncDurationMs}`,

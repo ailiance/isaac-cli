@@ -8,7 +8,7 @@ import * as path from "path"
 import { formatResponse } from "@/core/prompts/responses"
 import { SymbolIndexService } from "@/services/symbol-index/SymbolIndexService"
 import { telemetryService } from "@/services/telemetry"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import { showNotificationForApproval } from "../../utils"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
@@ -19,7 +19,7 @@ import { ToolResultUtils } from "../utils/ToolResultUtils"
 import { coerceFirstStringArray } from "../utils/coerceArray"
 
 export class FindSymbolReferencesToolHandler implements IFullyManagedTool {
-	readonly name = DiracDefaultTool.FIND_SYMBOL_REFERENCES
+	readonly name = IsaacDefaultTool.FIND_SYMBOL_REFERENCES
 
 	constructor(private validator: ToolValidator) {}
 
@@ -250,7 +250,7 @@ export class FindSymbolReferencesToolHandler implements IFullyManagedTool {
 				block.isNativeToolCall,
 			)
 		} else {
-			const notificationMessage = `Dirac wants to find ${findType === "both" ? "references" : findType + "s"} for ${symbols.length} symbol(s) in ${relPaths.length} path(s)`
+			const notificationMessage = `Isaac wants to find ${findType === "both" ? "references" : findType + "s"} for ${symbols.length} symbol(s) in ${relPaths.length} path(s)`
 			showNotificationForApproval(notificationMessage, config.autoApprovalSettings.enableNotifications)
 
 			await config.callbacks.removeLastPartialMessageIfExistsWithType("say", "tool")

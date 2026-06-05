@@ -1,4 +1,4 @@
-import { EmptyRequest } from "@shared/proto/dirac/common"
+import { EmptyRequest } from "@shared/proto/isaac/common"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import { useEffect, useRef, useState } from "react"
 import { useSettingsStore } from "@/features/settings/store/settingsStore"

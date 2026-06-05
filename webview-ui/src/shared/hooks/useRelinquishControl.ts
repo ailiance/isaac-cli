@@ -1,4 +1,4 @@
-import { EmptyRequest } from "@shared/proto/dirac/common"
+import { EmptyRequest } from "@shared/proto/isaac/common"
 import { useCallback, useEffect, useRef } from "react"
 import { UiServiceClient } from "@/shared/api/grpc-client"
 

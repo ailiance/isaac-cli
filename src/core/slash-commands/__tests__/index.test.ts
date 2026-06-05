@@ -6,7 +6,7 @@ describe("slash-commands", () => {
 		const text = "Hello world"
 		const result = await parseSlashCommands(text, {}, {}, "test-ulid")
 		expect(result.processedText).to.equal(text)
-		expect(result.needsDiracrulesFileCheck).to.equal(false)
+		expect(result.needsIsaacrulesFileCheck).to.equal(false)
 	})
 
 	it("should process builtin slash command", async () => {

@@ -1,5 +1,5 @@
-// ailiance-agent fork: rebrand "Dirac" → "ailiance-agent" in subagent status messages
-import type { DiracAskUseSubagents, DiracMessage, DiracSaySubagentStatus } from "@shared/ExtensionMessage"
+// ailiance-agent fork: rebrand "Isaac" → "ailiance-agent" in subagent status messages
+import type { IsaacAskUseSubagents, IsaacMessage, IsaacSaySubagentStatus } from "@shared/ExtensionMessage"
 import { Box, Text } from "ink"
 import Spinner from "ink-spinner"
 import React from "react"
@@ -8,7 +8,7 @@ import { useTerminalSize } from "../hooks/useTerminalSize"
 import { jsonParseSafe } from "../utils/parser"
 
 interface SubagentMessageProps {
-	message: DiracMessage
+	message: IsaacMessage
 	isStreaming?: boolean
 	mode?: "act" | "plan"
 }
@@ -179,7 +179,7 @@ export const SubagentMessage: React.FC<SubagentMessageProps> = ({ message, mode,
 
 	if ((type === "ask" && ask === "use_subagents") || say === "use_subagents") {
 		const parsed = text
-			? jsonParseSafe<DiracAskUseSubagents>(text, {
+			? jsonParseSafe<IsaacAskUseSubagents>(text, {
 					prompts: [],
 				})
 			: { prompts: [] }
@@ -231,7 +231,7 @@ export const SubagentMessage: React.FC<SubagentMessageProps> = ({ message, mode,
 	}
 
 	if (say === "subagent" && text) {
-		const parsed = jsonParseSafe<DiracSaySubagentStatus>(text, {
+		const parsed = jsonParseSafe<IsaacSaySubagentStatus>(text, {
 			status: "running",
 			total: 0,
 			completed: 0,

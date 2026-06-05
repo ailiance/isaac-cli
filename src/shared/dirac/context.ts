@@ -25,7 +25,7 @@ enum ExtensionMode {
 	Test = 3,
 }
 
-export interface DiracExtensionContext {
+export interface IsaacExtensionContext {
 	/**
 	 * An array to which disposables can be added. When this
 	 * extension is deactivated the disposables will be disposed.

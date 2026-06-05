@@ -3,7 +3,7 @@ import {
 	DiffViewProviderCreator,
 	HostProvider,
 	TerminalManagerCreator,
-	DiracWebviewProviderCreator,
+	IsaacWebviewProviderCreator,
 } from "@/hosts/host-provider"
 import { HostBridgeClientProvider } from "@/hosts/host-provider-types"
 import { vscodeHostBridgeClient } from "@/hosts/vscode/hostbridge/client/host-grpc-client"
@@ -16,7 +16,7 @@ import { ITerminalManager } from "@/integrations/terminal/types"
  * @param options Optional overrides for the default test configuration
  */
 export function setVscodeHostProviderMock(options?: {
-	webviewProviderCreator?: DiracWebviewProviderCreator
+	webviewProviderCreator?: IsaacWebviewProviderCreator
 	diffViewProviderCreator?: DiffViewProviderCreator
 	commentReviewControllerCreator?: CommentReviewControllerCreator
 	terminalManagerCreator?: TerminalManagerCreator
@@ -31,7 +31,7 @@ export function setVscodeHostProviderMock(options?: {
 	HostProvider.reset()
 	HostProvider.initialize(
 		"extension",
-		options?.webviewProviderCreator ?? ((() => {}) as DiracWebviewProviderCreator),
+		options?.webviewProviderCreator ?? ((() => {}) as IsaacWebviewProviderCreator),
 		options?.diffViewProviderCreator ?? ((() => {}) as DiffViewProviderCreator),
 		options?.commentReviewControllerCreator ?? ((() => {}) as CommentReviewControllerCreator),
 		options?.terminalManagerCreator ?? ((() => ({}) as ITerminalManager) as TerminalManagerCreator),

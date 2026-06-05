@@ -1,4 +1,4 @@
-import { Empty, StringRequest } from "@shared/proto/dirac/common"
+import { Empty, StringRequest } from "@shared/proto/isaac/common"
 import * as vscode from "vscode"
 
 export async function openExternal(request: StringRequest): Promise<Empty> {

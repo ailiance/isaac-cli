@@ -24,7 +24,7 @@ export function asObjectSafe(value: any): object {
 
 		return {}
 	} catch (error) {
-		Logger.warn("Dirac <Language Model API>: Failed to parse object:", error)
+		Logger.warn("Isaac <Language Model API>: Failed to parse object:", error)
 		return {}
 	}
 }
@@ -162,7 +162,7 @@ export function convertToAnthropicRole(
 export function convertToAnthropicMessage(vsCodeLmMessage: vscode.LanguageModelChatMessage): Anthropic.Messages.Message {
 	const anthropicRole = convertToAnthropicRole(vsCodeLmMessage.role)
 	if (anthropicRole !== "assistant") {
-		throw new Error("Dirac <Language Model API>: Only assistant messages are supported.")
+		throw new Error("Isaac <Language Model API>: Only assistant messages are supported.")
 	}
 
 	return {

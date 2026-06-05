@@ -607,7 +607,7 @@ export const ConfigView: React.FC<ConfigViewProps> = ({
 	return (
 		<Box flexDirection="column">
 			<Text bold color="white">
-				{/* ISAAC fork: rebrand "Dirac" → "ISAAC" in config header */}
+				{/* ISAAC fork: rebrand "Isaac" → "ISAAC" in config header */}
 				⚙️ ISAAC Configuration
 			</Text>
 			<Text color="gray">{SEPARATOR}</Text>

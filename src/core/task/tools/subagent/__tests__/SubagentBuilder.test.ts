@@ -1,10 +1,10 @@
 import { strict as assert } from "node:assert"
 import * as api from "@core/api"
-import { DiracToolSet } from "@core/prompts/system-prompt/registry/DiracToolSet"
+import { IsaacToolSet } from "@core/prompts/system-prompt/registry/IsaacToolSet"
 import type { TaskConfig } from "@core/task/tools/types/TaskConfig"
 import { afterEach, describe, it } from "mocha"
 import sinon from "sinon"
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import { AgentConfigLoader } from "../AgentConfigLoader"
 import { SUBAGENT_DEFAULT_ALLOWED_TOOLS, SUBAGENT_SYSTEM_SUFFIX, SubagentBuilder } from "../SubagentBuilder"
 
@@ -39,7 +39,7 @@ describe("SubagentBuilder", () => {
 					? {
 							name: "cached-agent",
 							description: "cached description",
-							tools: [DiracDefaultTool.LIST_FILES],
+							tools: [IsaacDefaultTool.LIST_FILES],
 							modelId: "gpt-5",
 							systemPrompt: "cached system prompt",
 						}
@@ -58,7 +58,7 @@ describe("SubagentBuilder", () => {
 		assert.equal((effectiveApiConfig as Record<string, unknown>).actModeOpenAiModelId, "gpt-5")
 		assert.equal((effectiveApiConfig as Record<string, unknown>).actModeApiModelId, "act-default")
 
-		assert.deepEqual(builder.getAllowedTools(), [DiracDefaultTool.LIST_FILES, DiracDefaultTool.ATTEMPT])
+		assert.deepEqual(builder.getAllowedTools(), [IsaacDefaultTool.LIST_FILES, IsaacDefaultTool.ATTEMPT])
 		const prompt = builder.buildSystemPrompt("generated system prompt")
 		assert.match(prompt, /# Agent Profile/)
 		assert.match(prompt, /Name: cached-agent/)
@@ -87,7 +87,7 @@ describe("SubagentBuilder", () => {
 					? {
 							name: "openrouter-agent",
 							description: "openrouter plan agent",
-							tools: [DiracDefaultTool.FILE_READ],
+							tools: [IsaacDefaultTool.FILE_READ],
 							modelId: "openrouter/custom-model",
 							systemPrompt: "plan system",
 						}
@@ -115,7 +115,7 @@ describe("SubagentBuilder", () => {
 					? {
 							name: "tools-agent",
 							description: "tool-limited",
-							tools: [DiracDefaultTool.LIST_FILES],
+							tools: [IsaacDefaultTool.LIST_FILES],
 							modelId: "sonnet",
 							systemPrompt: "tool prompt",
 						}
@@ -123,18 +123,18 @@ describe("SubagentBuilder", () => {
 		} as unknown as AgentConfigLoader)
 		sinon.stub(api, "buildApiHandler").returns({ getModel: sinon.stub(), createMessage: sinon.stub() } as never)
 
-		const getEnabledToolSpecsStub = sinon.stub(DiracToolSet, "getEnabledToolSpecs").returns([
+		const getEnabledToolSpecsStub = sinon.stub(IsaacToolSet, "getEnabledToolSpecs").returns([
 			{
-				id: DiracDefaultTool.LIST_FILES,
+				id: IsaacDefaultTool.LIST_FILES,
 				contextRequirements: () => true,
 			},
 			{
-				id: DiracDefaultTool.SEARCH,
+				id: IsaacDefaultTool.SEARCH,
 				contextRequirements: () => true,
 			},
 		] as any)
 		const converter = sinon.stub().callsFake((tool: { id: string }) => ({ converted: tool.id }))
-		const getConverterStub = sinon.stub(DiracToolSet, "getNativeConverter").returns(converter as never)
+		const getConverterStub = sinon.stub(IsaacToolSet, "getNativeConverter").returns(converter as never)
 
 		const builder = new SubagentBuilder(createTaskConfig("act", "anthropic"), "tools-agent")
 
@@ -149,6 +149,6 @@ describe("SubagentBuilder", () => {
 		assert.equal(getEnabledToolSpecsStub.callCount, 1)
 		assert.equal(getConverterStub.callCount, 1)
 		// Subagents now receive all tools, so it should include both LIST_FILES and SEARCH
-		assert.deepEqual(result, [{ converted: DiracDefaultTool.LIST_FILES }, { converted: DiracDefaultTool.SEARCH }])
+		assert.deepEqual(result, [{ converted: IsaacDefaultTool.LIST_FILES }, { converted: IsaacDefaultTool.SEARCH }])
 	})
 })

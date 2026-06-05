@@ -1,9 +1,9 @@
-import { DiracMessage, DiracSayTool } from "@shared/ExtensionMessage"
+import { IsaacMessage, IsaacSayTool } from "@shared/ExtensionMessage"
 import { useMemo, useState, useCallback } from "react"
 import { serializeToolToDisplayUnits } from "../ChatView/utils/toolSerialization"
 import { ToolRow } from "./ToolRow"
 import { FileServiceClient } from "@/shared/api/grpc-client"
-import { StringRequest } from "@shared/proto/dirac/common"
+import { StringRequest } from "@shared/proto/isaac/common"
 import { getComponentForTool } from "./ToolRegistry"
 import { ApprovalBox } from "./ApprovalBox"
 import { useMessageHandlers } from "../ChatView/hooks/useMessageHandlers"
@@ -17,8 +17,8 @@ const handlePathClick = (path: string) => {
 
 
 interface ToolOutputProps {
-	tool: DiracSayTool
-	message: DiracMessage
+	tool: IsaacSayTool
+	message: IsaacMessage
 	isExpanded: boolean
 	onToggleExpand: (ts: number) => void
 	onHeightChange?: (isTaller: boolean) => void

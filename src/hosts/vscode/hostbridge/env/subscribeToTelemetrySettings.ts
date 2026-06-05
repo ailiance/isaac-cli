@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 import { StreamingResponseHandler } from "@/hosts/vscode/hostbridge-grpc-handler"
-import { EmptyRequest } from "@/shared/proto/index.dirac"
+import { EmptyRequest } from "@/shared/proto/index.isaac"
 import { Setting } from "@/shared/proto/index.host"
 
 /**

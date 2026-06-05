@@ -2,7 +2,7 @@ import { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
 import { telemetryService } from "@/services/telemetry"
 
-import { DiracDefaultTool } from "@/shared/tools"
+import { IsaacDefaultTool } from "@/shared/tools"
 import { ToolResponse } from "../../index"
 import { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import { ToolValidator } from "../ToolValidator"
@@ -14,7 +14,7 @@ import { EditFormatter } from "./edit-file/EditFormatter"
 import { PreparedFileBatch } from "./edit-file/types"
 
 export class EditFileToolHandler implements IFullyManagedTool {
-	readonly name = DiracDefaultTool.EDIT_FILE
+	readonly name = IsaacDefaultTool.EDIT_FILE
 	private resultsCache = new Map<string, ToolResponse>()
 	private lastApiRequestCount = -1
 
@@ -205,7 +205,7 @@ export class EditFileToolHandler implements IFullyManagedTool {
 			return Array.from(new Set(responses as string[])).join("\n\n")
 		}
 
-		const allBlocks: any[] = [] // Using any to avoid complex union types for DiracTextContentBlock | DiracImageContentBlock
+		const allBlocks: any[] = [] // Using any to avoid complex union types for IsaacTextContentBlock | IsaacImageContentBlock
 		for (const r of responses) {
 			if (typeof r === "string") {
 				allBlocks.push({ type: "text", text: r })

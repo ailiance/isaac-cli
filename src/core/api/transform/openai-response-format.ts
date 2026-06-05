@@ -1,17 +1,17 @@
 import { ResponseInput, ResponseInputMessageContentList } from "openai/resources/responses/responses"
 import {
-	DiracAssistantThinkingBlock,
-	DiracAssistantToolUseBlock,
-	DiracContent,
-	DiracImageContentBlock,
-	DiracStorageMessage,
-	DiracTextContentBlock,
-	DiracUserToolResultContentBlock,
-	DiracAssistantRedactedThinkingBlock,
+	IsaacAssistantThinkingBlock,
+	IsaacAssistantToolUseBlock,
+	IsaacContent,
+	IsaacImageContentBlock,
+	IsaacStorageMessage,
+	IsaacTextContentBlock,
+	IsaacUserToolResultContentBlock,
+	IsaacAssistantRedactedThinkingBlock,
 } from "@/shared/messages/content"
 
 /**
- * Converts an array of DiracStorageMessage objects (extension of Anthropic format) to a ResponseInput array to use with OpenAI's Responses API.
+ * Converts an array of IsaacStorageMessage objects (extension of Anthropic format) to a ResponseInput array to use with OpenAI's Responses API.
  *
  * ## Key Differences from Chat Completions API
  *
@@ -77,11 +77,11 @@ import {
  *
  * @link https://community.openai.com/t/openai-api-error-function-call-was-provided-without-its-required-reasoning-item-the-real-issue/1355347
  *
- * @param messages - Array of DiracStorageMessage objects to be converted
+ * @param messages - Array of IsaacStorageMessage objects to be converted
  * @returns ResponseInput array containing the transformed messages with proper reasoning pairing
  */
 export function convertToOpenAIResponsesInput(
-	_messages: DiracStorageMessage[],
+	_messages: IsaacStorageMessage[],
 	options?: { usePreviousResponseId?: boolean },
 ): {
 	input: ResponseInput
@@ -125,7 +125,7 @@ export function convertToOpenAIResponsesInput(
 			const itemOrder: string[] = []
 
 			for (const _part of m.content) {
-				const part = _part as DiracContent
+				const part = _part as IsaacContent
 				const call_id = (part as any).call_id || (part as any).id
 				if (!call_id) continue
 
@@ -137,7 +137,7 @@ export function convertToOpenAIResponsesInput(
 
 				switch (part.type) {
 					case "thinking": {
-						const thinkingBlock = part as DiracAssistantThinkingBlock
+						const thinkingBlock = part as IsaacAssistantThinkingBlock
 						const hasThinkingContent = thinkingBlock.thinking && thinkingBlock.thinking.trim().length > 0
 						const hasSummaryContent =
 							thinkingBlock.summary && Array.isArray(thinkingBlock.summary) && thinkingBlock.summary.length > 0
@@ -155,7 +155,7 @@ export function convertToOpenAIResponsesInput(
 						break
 					}
 					case "redacted_thinking": {
-						const redactedBlock = part as DiracAssistantRedactedThinkingBlock
+						const redactedBlock = part as IsaacAssistantRedactedThinkingBlock
 						if (!item) {
 							item = { type: "reasoning", summary: [] }
 							assistantTurnItems.set(call_id, item)
@@ -166,7 +166,7 @@ export function convertToOpenAIResponsesInput(
 						break
 					}
 					case "text": {
-						const textBlock = part as DiracTextContentBlock
+						const textBlock = part as IsaacTextContentBlock
 						assistantTurnItems.set(call_id, {
 							type: "message",
 							role: "assistant",
@@ -175,7 +175,7 @@ export function convertToOpenAIResponsesInput(
 						break
 					}
 					case "image": {
-						const imageBlock = part as DiracImageContentBlock
+						const imageBlock = part as IsaacImageContentBlock
 						assistantTurnItems.set(call_id, {
 							type: "message",
 							role: "assistant",
@@ -189,7 +189,7 @@ export function convertToOpenAIResponsesInput(
 						break
 					}
 					case "tool_use": {
-						const toolUseBlock = part as DiracAssistantToolUseBlock
+						const toolUseBlock = part as IsaacAssistantToolUseBlock
 						const call_id = toolUseBlock.call_id || toolUseBlock.id
 						if (toolUseBlock.call_id) {
 							toolUseIdToCallId.set(toolUseBlock.id, toolUseBlock.call_id)
@@ -239,15 +239,15 @@ export function convertToOpenAIResponsesInput(
 			const messageContent: ResponseInputMessageContentList = []
 
 			for (const _part of m.content) {
-				const part = _part as DiracContent
+				const part = _part as IsaacContent
 				switch (part.type) {
 					case "text": {
-						const textBlock = part as DiracTextContentBlock
+						const textBlock = part as IsaacTextContentBlock
 						messageContent.push({ type: "input_text", text: textBlock.text || "" })
 						break
 					}
 					case "image": {
-						const imageBlock = part as DiracImageContentBlock
+						const imageBlock = part as IsaacImageContentBlock
 						messageContent.push({
 							type: "input_image",
 							detail: "auto",
@@ -256,7 +256,7 @@ export function convertToOpenAIResponsesInput(
 						break
 					}
 					case "tool_result": {
-						const toolResultBlock = part as DiracUserToolResultContentBlock
+						const toolResultBlock = part as IsaacUserToolResultContentBlock
 						// Flush any pending message content before adding tool result
 						if (messageContent.length > 0) {
 							allItems.push({ role: m.role, content: [...messageContent] })

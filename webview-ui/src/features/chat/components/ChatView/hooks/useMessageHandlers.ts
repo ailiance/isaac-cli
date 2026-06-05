@@ -1,6 +1,6 @@
-import type { DiracMessage } from "@shared/ExtensionMessage"
-import { EmptyRequest, StringRequest } from "@shared/proto/dirac/common"
-import { AskResponseRequest, NewTaskRequest } from "@shared/proto/dirac/task"
+import type { IsaacMessage } from "@shared/ExtensionMessage"
+import { EmptyRequest, StringRequest } from "@shared/proto/isaac/common"
+import { AskResponseRequest, NewTaskRequest } from "@shared/proto/isaac/task"
 import { useCallback, useRef } from "react"
 import { useSettingsStore } from "@/features/settings/store/settingsStore"
 import { SlashServiceClient, TaskServiceClient } from "@/shared/api/grpc-client"
@@ -12,7 +12,7 @@ import type { ChatState, MessageHandlers } from "../types/chatTypes"
  * Custom hook for managing message handlers
  * Handles sending messages, button clicks, and task management
  */
-export function useMessageHandlers(messages: DiracMessage[], chatState: ChatState): MessageHandlers {
+export function useMessageHandlers(messages: IsaacMessage[], chatState: ChatState): MessageHandlers {
 	const { state: interactionState } = useInteractionState()
 	const { backgroundCommandRunning, setExpandTaskHeader } = useSettingsStore() as any
 	const {
