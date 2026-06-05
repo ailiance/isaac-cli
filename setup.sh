@@ -122,9 +122,10 @@ else
 		curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash \
 			|| die "nvm install failed; install Node 20–24 manually."
 	fi
-	# nvm.sh is not always clean under `set -u` — relax while sourcing.
+	# nvm.sh is not clean under `set -e`/`set -u` (it returns non-zero and
+	# references unset vars) — relax both while sourcing, then restore.
 	# shellcheck disable=SC1091
-	set +u; . "$NVM_DIR/nvm.sh"; set -u
+	set +eu; . "$NVM_DIR/nvm.sh"; set -eu
 	info "Installing/using Node $ISAAC_NODE_VERSION via nvm..."
 	nvm install "$ISAAC_NODE_VERSION" >/dev/null || die "nvm install $ISAAC_NODE_VERSION failed."
 	nvm use "$ISAAC_NODE_VERSION" >/dev/null     || die "nvm use $ISAAC_NODE_VERSION failed."
