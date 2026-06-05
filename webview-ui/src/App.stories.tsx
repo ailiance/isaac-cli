@@ -1,6 +1,6 @@
 import { HeroUIProvider } from "@heroui/react"
 import { DEFAULT_AUTO_APPROVAL_SETTINGS } from "@shared/AutoApprovalSettings"
-import { type ApiConfiguration, bedrockModels } from "@shared/api"
+import type { ApiConfiguration } from "@shared/api"
 import type { IsaacMessage, IsaacSayTool } from "@shared/ExtensionMessage"
 import type { HistoryItem } from "@shared/HistoryItem"
 import type { Meta, StoryObj } from "@storybook/react-vite"
@@ -251,7 +251,7 @@ const createMockState = (overrides: any = {}) => ({
 	taskHistory: mockTaskHistory,
 	apiConfiguration: mockApiConfiguration,
 	onboardingModels: undefined,
-	openRouterModels: bedrockModels,
+	openRouterModels: {},
 	showAnnouncement: false,
 	backgroundEditEnabled: false,
 	...overrides,

@@ -1,5 +1,4 @@
 import { ApiHandlerModel, ApiProviderInfo } from "@core/api"
-import { AnthropicModelId, anthropicModels } from "@/shared/api"
 
 export { supportsReasoningEffortForModel } from "@shared/utils/reasoning-support"
 
@@ -25,9 +24,9 @@ export function shouldSkipReasoningForModel(modelId?: string): boolean {
 	return normalized.includes("grok") || normalized.includes("devstral")
 }
 
-export function isAnthropicModelId(modelId: string): modelId is AnthropicModelId {
+export function isAnthropicModelId(modelId: string): boolean {
 	const CLAUDE_MODELS = ["sonnet", "opus", "haiku"]
-	return modelId in anthropicModels || CLAUDE_MODELS.some((substring) => modelId.includes(substring))
+	return CLAUDE_MODELS.some((substring) => modelId.includes(substring))
 }
 
 export function isGPT5(id: string): boolean {

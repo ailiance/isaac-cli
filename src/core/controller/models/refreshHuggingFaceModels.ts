@@ -1,4 +1,3 @@
-import { huggingFaceModels } from "@shared/api"
 import { EmptyRequest } from "@shared/proto/isaac/common"
 import { OpenRouterCompatibleModelInfo, OpenRouterModelInfo } from "@shared/proto/isaac/models"
 import { fileExistsAtPath } from "@utils/fs"
@@ -49,18 +48,6 @@ export async function refreshHuggingFaceModels(
 					description: `Available on providers: ${providersList || "unknown"}`,
 				})
 
-				// Add model-specific configurations if we have them in our static models
-				if (rawModel.id in huggingFaceModels) {
-					const staticModel = huggingFaceModels[rawModel.id as keyof typeof huggingFaceModels]
-					modelInfo.maxTokens = staticModel.maxTokens
-					modelInfo.contextWindow = staticModel.contextWindow
-					modelInfo.supportsImages = staticModel.supportsImages
-					modelInfo.supportsPromptCache = staticModel.supportsPromptCache
-					modelInfo.inputPrice = staticModel.inputPrice
-					modelInfo.outputPrice = staticModel.outputPrice
-					modelInfo.description = staticModel.description || modelInfo.description
-				}
-
 				models[rawModel.id] = modelInfo
 			}
 
@@ -79,23 +66,6 @@ export async function refreshHuggingFaceModels(
 			}
 		} catch (cacheError) {
 			Logger.error("Error loading cached Hugging Face models:", cacheError)
-		}
-
-		// If no cache available, use static models as fallback
-		if (Object.keys(models).length === 0) {
-			for (const [modelId, modelInfo] of Object.entries(huggingFaceModels)) {
-				models[modelId] = OpenRouterModelInfo.create({
-					maxTokens: modelInfo.maxTokens,
-					contextWindow: modelInfo.contextWindow,
-					supportsImages: modelInfo.supportsImages,
-					supportsPromptCache: modelInfo.supportsPromptCache,
-					inputPrice: modelInfo.inputPrice,
-					outputPrice: modelInfo.outputPrice,
-					cacheWritesPrice: (modelInfo as any).cacheWritesPrice || 0,
-					cacheReadsPrice: (modelInfo as any).cacheReadsPrice || 0,
-					description: modelInfo.description || "",
-				})
-			}
 		}
 	}
 

@@ -3,28 +3,31 @@
  * Handles interactive authentication and provider configuration
  */
 
+import { ApiProvider } from "@shared/api"
+import { ProviderToBaseUrlKeyMap } from "@shared/storage"
 import { Box, Text, useApp, useInput } from "ink"
 import Spinner from "ink-spinner"
 import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { StateManager } from "@/core/storage/StateManager"
-import { ProviderToBaseUrlKeyMap } from "@shared/storage"
-import { ApiProvider } from "@shared/api"
 import { openAiCodexOAuthManager } from "@/integrations/openai-codex/oauth"
-import { openAiCodexDefaultModelId } from "@/shared/api"
+
+// Default model for the OpenAI Codex OAuth flow (inlined; static model maps removed).
+const openAiCodexDefaultModelId = "gpt-5.5"
+
 import { getRandomQuote } from "@/shared/quotes"
 import { openExternal } from "@/utils/env"
-import { copyToClipboardNative, terminalLink } from "../utils/clipboard"
 import { COLORS } from "../constants/colors"
 import { useStdinContext } from "../context/StdinContext"
 import { useScrollableList } from "../hooks/useScrollableList"
+import { copyToClipboardNative, terminalLink } from "../utils/clipboard"
 import { type DetectedSources, detectImportSources, type ImportSource } from "../utils/import-configs"
 import { isMouseEscapeSequence } from "../utils/input"
 import { applyProviderConfig } from "../utils/provider-config"
 import { useValidProviders } from "../utils/providers"
 import { ApiKeyInput } from "./ApiKeyInput"
 import { StaticRobotFrame } from "./AsciiMotionCli"
-import { ImportView } from "./ImportView"
 import { GithubAuthView } from "./GithubAuthView"
+import { ImportView } from "./ImportView"
 import { getDefaultModelId, hasModelPicker, ModelPicker } from "./ModelPicker"
 import { OpenAiCodexDeviceAuthView } from "./OpenAiCodexDeviceAuthView"
 import { getProviderLabel } from "./ProviderPicker"
@@ -343,7 +346,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ controller, onComplete, onEr
 
 	const handleModelIdSubmit = useCallback(
 		(value: string) => {
-
 			if (value.trim()) {
 				setModelId(value)
 			}
@@ -366,7 +368,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ controller, onComplete, onEr
 		},
 		[modelId, saveConfiguration],
 	)
-
 
 	const handleImportComplete = useCallback(() => {
 		setStep("success")
@@ -594,7 +595,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ controller, onComplete, onEr
 									</Text>
 								</Box>
 
-
 								<Box marginTop={1}>
 									{copied ? (
 										<Text color="green">✔ Copied to clipboard!</Text>
@@ -679,9 +679,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ controller, onComplete, onEr
 
 	// Steps that allow going back with escape (apikey handled by ApiKeyInput component)
 	// OcaEmployeeCheck handles its own escape key, so oca_employee_check is not in this list
-	const canGoBack = ["provider", "modelid", "baseurl", "openai_codex_auth", "openai_codex_device_auth", "error"].includes(
-		step,
-	)
+	const canGoBack = ["provider", "modelid", "baseurl", "openai_codex_auth", "openai_codex_device_auth", "error"].includes(step)
 
 	useInput(
 		(input, key) => {
@@ -695,7 +693,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ controller, onComplete, onEr
 				}
 				return
 			}
-
 
 			if (key.escape && canGoBack) {
 				goBack()
@@ -734,7 +731,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ controller, onComplete, onEr
 		<Box flexDirection="column" paddingLeft={1} paddingRight={1} width="100%">
 			{/* Isaac robot - centered */}
 			<StaticRobotFrame />
-
 
 			<Box justifyContent="center" marginTop={1} paddingX={4}>
 				<Text color="cyan" italic>

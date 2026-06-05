@@ -8,7 +8,6 @@ import axios from "axios"
 import { StateManager } from "@/core/storage/StateManager"
 import { getAxiosSettings } from "@/shared/net"
 import { Logger } from "@/shared/services/Logger"
-import { basetenModels } from "../../../shared/api"
 import { Controller } from ".."
 
 // Track pending refresh promise to prevent duplicate concurrent fetches
@@ -78,8 +77,7 @@ async function fetchAndCacheModels(controller: Controller): Promise<Record<strin
 						continue
 					}
 
-					// Check if we have static pricing information for this model
-					const staticModelInfo = basetenModels[rawModel.id as keyof typeof basetenModels]
+					const staticModelInfo: any = undefined
 					const supportThinking = rawModel?.supported_features?.some(
 						(p: string) => p === "reasoning_effort" || p === "reasoning",
 					)
@@ -143,23 +141,6 @@ async function fetchAndCacheModels(controller: Controller): Promise<Record<strin
 			// Use all cached models (no filtering)
 			for (const [modelId, modelInfo] of Object.entries(cachedModels)) {
 				models[modelId] = modelInfo
-			}
-		} else {
-			// Fall back to static models from shared/api.ts
-			for (const [modelId, modelInfo] of Object.entries(basetenModels)) {
-				models[modelId] = {
-					maxTokens: modelInfo.maxTokens,
-					contextWindow: modelInfo.contextWindow,
-					supportsImages: modelInfo.supportsImages,
-					supportsPromptCache: modelInfo.supportsPromptCache,
-					inputPrice: modelInfo.inputPrice,
-					outputPrice: modelInfo.outputPrice,
-					cacheWritesPrice: (modelInfo as any).cacheWritesPrice || 0,
-					cacheReadsPrice: (modelInfo as any).cacheReadsPrice || 0,
-					description: (modelInfo as any).description || `${modelId} model`,
-					supportsReasoning: modelInfo.supportsReasoning || false,
-					thinkingConfig: modelInfo.supportsReasoning ? { maxBudget: ANTHROPIC_MAX_THINKING_BUDGET } : undefined,
-				}
 			}
 		}
 	}

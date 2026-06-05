@@ -8,7 +8,6 @@ import { StateManager } from "@/core/storage/StateManager"
 import { telemetryService } from "@/services/telemetry"
 import { getAxiosSettings } from "@/shared/net"
 import { Logger } from "@/shared/services/Logger"
-import { groqModels } from "../../../shared/api"
 import { Controller } from ".."
 
 // Track pending refresh promise to prevent duplicate concurrent fetches
@@ -52,21 +51,7 @@ async function fetchAndCacheModels(controller: Controller): Promise<Record<strin
 	let models: Record<string, Partial<ModelInfo>> = {}
 	try {
 		if (!groqApiKey) {
-			Logger.log("No Groq API key found, using static models as fallback")
-			// Don't throw an error, just use static models
-			for (const [modelId, modelInfo] of Object.entries(groqModels)) {
-				models[modelId] = {
-					maxTokens: modelInfo.maxTokens,
-					contextWindow: modelInfo.contextWindow,
-					supportsImages: modelInfo.supportsImages,
-					supportsPromptCache: modelInfo.supportsPromptCache,
-					inputPrice: modelInfo.inputPrice,
-					outputPrice: modelInfo.outputPrice,
-					cacheWritesPrice: (modelInfo as any).cacheWritesPrice || 0,
-					cacheReadsPrice: (modelInfo as any).cacheReadsPrice || 0,
-					description: modelInfo.description || `${modelId} model`,
-				}
-			}
+			Logger.log("No Groq API key found; returning no models")
 		} else {
 			// Ensure the API key is properly formatted
 			const cleanApiKey = groqApiKey.trim()
@@ -95,8 +80,7 @@ async function fetchAndCacheModels(controller: Controller): Promise<Record<strin
 						continue
 					}
 
-					// Check if we have static pricing information for this model
-					const staticModelInfo = groqModels[rawModel.id as keyof typeof groqModels]
+					const staticModelInfo: any = undefined
 
 					const modelInfo: Partial<ModelInfo> = {
 						maxTokens: rawModel.max_completion_tokens || staticModelInfo?.maxTokens || 8192,
@@ -106,7 +90,7 @@ async function fetchAndCacheModels(controller: Controller): Promise<Record<strin
 						inputPrice: staticModelInfo?.inputPrice || 0,
 						outputPrice: staticModelInfo?.outputPrice || 0,
 						cacheWritesPrice: (staticModelInfo as any)?.cacheWritesPrice || 0,
-						cacheReadsPrice: (staticModelInfo as any).cacheReadsPrice || 0,
+						cacheReadsPrice: (staticModelInfo as any)?.cacheReadsPrice || 0,
 						description: generateModelDescription(rawModel, staticModelInfo),
 					}
 
@@ -152,22 +136,6 @@ async function fetchAndCacheModels(controller: Controller): Promise<Record<strin
 		if (cachedModels && Object.keys(cachedModels).length > 0) {
 			Logger.log("Using cached Groq models")
 			models = cachedModels
-		} else {
-			// Fall back to static models from shared/api.ts
-			Logger.log("Using static Groq models as fallback")
-			for (const [modelId, modelInfo] of Object.entries(groqModels)) {
-				models[modelId] = {
-					maxTokens: modelInfo.maxTokens,
-					contextWindow: modelInfo.contextWindow,
-					supportsImages: modelInfo.supportsImages,
-					supportsPromptCache: modelInfo.supportsPromptCache,
-					inputPrice: modelInfo.inputPrice,
-					outputPrice: modelInfo.outputPrice,
-					cacheWritesPrice: (modelInfo as any).cacheWritesPrice || 0,
-					cacheReadsPrice: (modelInfo as any).cacheReadsPrice || 0,
-					description: modelInfo.description || `${modelId} model`,
-				}
-			}
 		}
 	}
 

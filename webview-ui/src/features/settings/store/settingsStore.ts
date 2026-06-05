@@ -1,15 +1,5 @@
 import { DEFAULT_AUTO_APPROVAL_SETTINGS } from "@shared/AutoApprovalSettings"
-import {
-	basetenDefaultModelId,
-	basetenModels,
-	groqDefaultModelId,
-	groqModels,
-	liteLlmModelInfoSaneDefaults,
-	openRouterDefaultModelId,
-	openRouterDefaultModelInfo,
-	requestyDefaultModelId,
-	requestyDefaultModelInfo,
-} from "@shared/api"
+import { liteLlmModelInfoSaneDefaults, openRouterDefaultModelId, openRouterDefaultModelInfo } from "@shared/api"
 import { DEFAULT_BROWSER_SETTINGS } from "@shared/BrowserSettings"
 import { Environment } from "@shared/config-types"
 import type { ExtensionState, IsaacMessage } from "@shared/ExtensionMessage"
@@ -277,17 +267,10 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 			console.error("Failed to refresh LiteLLM models:", error)
 		}
 	},
-	basetenModels: {
-		...basetenModels,
-		[basetenDefaultModelId]: basetenModels[basetenDefaultModelId],
-	},
-	groqModels: {
-		[groqDefaultModelId]: groqModels[groqDefaultModelId],
-	},
+	basetenModels: {},
+	groqModels: {},
 	huggingFaceModels: {},
-	requestyModels: {
-		[requestyDefaultModelId]: requestyDefaultModelInfo,
-	},
+	requestyModels: {},
 	githubCopilotModels: {},
 	githubCopilotIsAuthenticated: false,
 	githubCopilotEmail: undefined,
@@ -342,11 +325,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 		try {
 			const response = await ModelsServiceClient.refreshBasetenModelsRpc(EmptyRequest.create())
 			set({
-				basetenModels: {
-					...basetenModels,
-					[basetenDefaultModelId]: basetenModels[basetenDefaultModelId],
-					...fromProtobufModels(response.models),
-				},
+				basetenModels: fromProtobufModels(response.models),
 			})
 		} catch (error) {
 			console.error("Failed to refresh Baseten models:", error)
@@ -356,10 +335,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 		try {
 			const response = await ModelsServiceClient.refreshGroqModelsRpc(EmptyRequest.create())
 			set({
-				groqModels: {
-					[groqDefaultModelId]: groqModels[groqDefaultModelId],
-					...fromProtobufModels(response.models),
-				},
+				groqModels: fromProtobufModels(response.models),
 			})
 		} catch (error) {
 			console.error("Failed to refresh Groq models:", error)
@@ -377,10 +353,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 		try {
 			const response = await ModelsServiceClient.refreshRequestyModels(EmptyRequest.create())
 			set({
-				requestyModels: {
-					[requestyDefaultModelId]: requestyDefaultModelInfo,
-					...fromProtobufModels(response.models),
-				},
+				requestyModels: fromProtobufModels(response.models),
 			})
 		} catch (error) {
 			console.error("Failed to refresh Requesty models:", error)

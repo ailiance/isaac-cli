@@ -1,14 +1,5 @@
 import type { ModelInfo } from "@shared/api"
-import {
-	basetenDefaultModelId,
-	basetenModels,
-	groqDefaultModelId,
-	groqModels,
-	openRouterDefaultModelId,
-	openRouterDefaultModelInfo,
-	requestyDefaultModelId,
-	requestyDefaultModelInfo,
-} from "@shared/api"
+import { openRouterDefaultModelId, openRouterDefaultModelInfo } from "@shared/api"
 import type { OnboardingModelGroup } from "@shared/proto/isaac/state"
 import { create } from "zustand"
 
@@ -46,16 +37,9 @@ export const useModelsStore = create<ModelsState>((set) => ({
 	vercelAiGatewayModels: {},
 	liteLlmModels: {},
 	openAiModels: [],
-	requestyModels: {
-		[requestyDefaultModelId]: requestyDefaultModelInfo,
-	},
-	groqModels: {
-		[groqDefaultModelId]: groqModels[groqDefaultModelId],
-	},
-	basetenModels: {
-		...basetenModels,
-		[basetenDefaultModelId]: basetenModels[basetenDefaultModelId],
-	},
+	requestyModels: {},
+	groqModels: {},
+	basetenModels: {},
 	huggingFaceModels: {},
 
 	setOnboardingModels: (models) => set({ onboardingModels: models }),

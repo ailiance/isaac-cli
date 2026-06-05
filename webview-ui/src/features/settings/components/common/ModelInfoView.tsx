@@ -1,4 +1,4 @@
-import { geminiModels, ModelInfo } from "@shared/api"
+import { ModelInfo } from "@shared/api"
 import { VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react"
 import { useState } from "react"
 import styled from "styled-components"
@@ -188,7 +188,7 @@ export const ModelInfoView = ({
 }: ModelInfoViewProps) => {
 	const [advancedExpanded, setAdvancedExpanded] = useState(false)
 
-	const isGemini = Object.keys(geminiModels).includes(selectedModelId)
+	const isGemini = selectedModelId.toLowerCase().includes("gemini")
 	const hasThinkingConfig = hasThinkingBudget(modelInfo)
 	const hasTiers = !!modelInfo.tiers && modelInfo.tiers.length > 0
 

@@ -222,7 +222,7 @@ async function fetchAndCacheModels(controller: Controller): Promise<Record<strin
 						break
 					case "deepseek/deepseek-chat":
 						modelInfo.supportsPromptCache = true
-						// see api.ts/deepSeekModels for more info
+						// DeepSeek cache pricing (routed via OpenRouter)
 						modelInfo.inputPrice = 0
 						modelInfo.cacheWritesPrice = 0.14
 						modelInfo.cacheReadsPrice = 0.014
