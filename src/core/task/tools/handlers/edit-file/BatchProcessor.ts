@@ -7,7 +7,6 @@ import { computeDiff } from "@shared/utils/diff"
 import { AnchorStateManager } from "@utils/AnchorStateManager"
 import { contentHash } from "@utils/line-hashing"
 import { isLocatedInWorkspace } from "@utils/path"
-import * as fs from "fs/promises"
 import * as path from "path"
 import { HostProvider } from "@/hosts/host-provider"
 import { getDiagnosticsProviders } from "@/integrations/diagnostics/getDiagnosticsProviders"
@@ -712,7 +711,7 @@ export class BatchProcessor {
 	): Promise<PreparedEdits | { error: ToolResponse }> {
 		try {
 			await HostProvider.workspace.saveOpenDocumentIfDirty({ filePath: absolutePath })
-			const content = await fs.readFile(absolutePath, "utf8")
+			const content = await config.environment.readFile(absolutePath)
 
 			// Stale anchor detection. If the file has changed since the model's
 			// last `read_file`, abort before resolving anchors against an

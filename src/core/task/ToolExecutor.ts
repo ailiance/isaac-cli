@@ -8,6 +8,7 @@ import { DiffViewProvider } from "@integrations/editor/DiffViewProvider"
 import type { CommandExecutionOptions } from "@integrations/terminal"
 import { BrowserSession } from "@services/browser/BrowserSession"
 import { UrlContentFetcher } from "@services/browser/UrlContentFetcher"
+import type { Environment } from "@services/environment"
 import { IsaacAsk, IsaacMessage, IsaacSay, MultiCommandState } from "@shared/ExtensionMessage"
 import { IsaacContent } from "@shared/messages/content"
 import { IsaacDefaultTool, toolUseNames } from "@shared/tools"
@@ -130,6 +131,9 @@ export class ToolExecutor {
 			userContent: IsaacContent[],
 			context: "initial_task" | "resume" | "feedback",
 		) => Promise<{ cancel?: boolean; wasCancelled?: boolean; contextModification?: string; errorMessage?: string }>,
+
+		// Execution environment for tool I/O (files/shell/search)
+		private readonly environment: Environment,
 	) {
 		this.autoApprover = new AutoApprove(this.stateManager, this.commandPermissionController)
 
@@ -238,6 +242,7 @@ export class ToolExecutor {
 			isSubagentExecution: false,
 			backgroundEditEnabled: !!this.stateManager.getGlobalSettingsKey("backgroundEditEnabled"),
 			cwd: this.cwd,
+			environment: this.environment,
 			workspaceManager: this.workspaceManager,
 			isMultiRootEnabled: this.isMultiRootEnabled,
 			taskState: this.taskState,

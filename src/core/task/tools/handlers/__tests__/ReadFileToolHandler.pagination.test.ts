@@ -2,6 +2,7 @@ import { strict as assert } from "node:assert"
 import fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
+import { LocalEnvironment } from "@services/environment"
 import { IsaacDefaultTool } from "@shared/tools"
 import * as pathUtils from "@utils/path"
 import { afterEach, beforeEach, describe, it } from "mocha"
@@ -64,6 +65,7 @@ function createConfig(opts: CreateConfigOpts = {}) {
 		taskId: "task-1",
 		ulid: "ulid-1",
 		cwd: tmpDir,
+		environment: new LocalEnvironment(tmpDir),
 		mode: "act",
 		strictPlanModeEnabled: false,
 		yoloModeToggled: true,

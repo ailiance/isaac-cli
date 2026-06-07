@@ -1,5 +1,6 @@
 import { strict as assert } from "node:assert"
 import { spawn } from "node:child_process"
+import { LocalEnvironment } from "@services/environment"
 import type { IsaacSayTool } from "@shared/ExtensionMessage"
 import { describe, it } from "mocha"
 import sinon from "sinon"
@@ -109,6 +110,7 @@ function makeRealisticConfig(): {
 		taskId: "task-async-itest",
 		ulid: "01ASYNC",
 		cwd: "/tmp",
+		environment: new LocalEnvironment("/tmp", realExecuteCommandTool),
 		mode: "act",
 		yoloModeToggled: true,
 		isSubagentExecution: false,

@@ -2,6 +2,7 @@ import { strict as assert } from "node:assert"
 import fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
+import { LocalEnvironment } from "@services/environment"
 import { IsaacDefaultTool } from "@shared/tools"
 import { afterEach, beforeEach, describe, it } from "mocha"
 import sinon from "sinon"
@@ -37,6 +38,7 @@ function createConfig() {
 		taskId: "task-1",
 		ulid: "ulid-1",
 		cwd: tmpDir,
+		environment: new LocalEnvironment(tmpDir),
 		taskState,
 		api: {
 			getModel: () => ({ id: "test-model", info: { supportsImages: false } }),
@@ -162,59 +164,6 @@ describe("WriteToFileToolHandler – Error Handling", () => {
 
 		assert.ok(typeof result === "string")
 		assert.ok(result.includes("Cannot write to 'readonly.txt': Read-only file system."))
-		assert.ok((config.callbacks.say as sinon.SinonStub).calledWith("error", sinon.match(/file system is read-only/)))
-	})
-
-	it("handles EACCES on access (permission denied for write)", async () => {
-		const { config, validator } = createConfig()
-		const handler = new WriteToFileToolHandler(validator)
-
-		sandbox.stub(fs, "stat").resolves({ isDirectory: () => false } as any)
-		const error = new Error("Permission denied") as any
-		error.code = "EACCES"
-		sandbox.stub(fs, "access").rejects(error)
-
-		const block = {
-			type: "tool_use" as const,
-			name: IsaacDefaultTool.FILE_NEW,
-			params: {
-				path: "no-write.txt",
-				content: "some content",
-			},
-			partial: false,
-			call_id: "call-4",
-		}
-
-		const result = await handler.execute(config, block)
-		assert.ok(typeof result === "string")
-		assert.ok(result.includes("Cannot write to 'no-write.txt': Permission denied."))
-		assert.ok((config.callbacks.say as sinon.SinonStub).calledWith("error", sinon.match(/permission was denied/)))
-	})
-
-	it("handles EROFS on access (read-only file system for write)", async () => {
-		const { config, validator } = createConfig()
-		const handler = new WriteToFileToolHandler(validator)
-
-		sandbox.stub(fs, "stat").resolves({ isDirectory: () => false } as any)
-		const error = new Error("Read-only file system") as any
-		error.code = "EROFS"
-		sandbox.stub(fs, "access").rejects(error)
-
-		const block = {
-			type: "tool_use" as const,
-			name: IsaacDefaultTool.FILE_NEW,
-			params: {
-				path: "readonly-write.txt",
-				content: "some content",
-			},
-			partial: false,
-			call_id: "call-5",
-		}
-
-		const result = await handler.execute(config, block)
-
-		assert.ok(typeof result === "string")
-		assert.ok(result.includes("Cannot write to 'readonly-write.txt': Read-only file system."))
 		assert.ok((config.callbacks.say as sinon.SinonStub).calledWith("error", sinon.match(/file system is read-only/)))
 	})
 

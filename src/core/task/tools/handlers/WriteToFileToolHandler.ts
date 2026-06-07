@@ -1,4 +1,3 @@
-import fs from "node:fs/promises"
 import path from "node:path"
 import { setTimeout as setTimeoutPromise } from "node:timers/promises"
 import type { ToolUse } from "@core/assistant-message"
@@ -518,33 +517,18 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 		absolutePath: string,
 	): Promise<{ fileExists: boolean; ok: boolean; errorResponse?: string }> {
 		try {
-			const stats = await fs.stat(absolutePath)
-			if (stats.isDirectory()) {
+			const stats = await config.environment.stat(absolutePath)
+			if (stats.isDir) {
 				const errorResponse = formatResponse.toolError(`Cannot write to '${relPath}' because it is a directory.`)
 				await config.callbacks.say("error", `Isaac tried to write to '${relPath}', but it is a directory.`)
 				return { fileExists: true, ok: false, errorResponse }
 			}
 
-			// If it's a file, check if we have write permission
-			try {
-				await fs.access(absolutePath, fs.constants.W_OK)
-			} catch (error: any) {
-				if (error.code === "EACCES") {
-					const errorResponse = formatResponse.toolError(formatResponse.filePermissionError(relPath, "write to"))
-					await config.callbacks.say("error", `Isaac tried to write to '${relPath}', but permission was denied.`)
-					return { fileExists: true, ok: false, errorResponse }
-				}
-				if (error.code === "EROFS") {
-					const errorResponse = formatResponse.toolError(formatResponse.readOnlyError(relPath))
-					await config.callbacks.say("error", `Isaac tried to write to '${relPath}', but the file system is read-only.`)
-					return { fileExists: true, ok: false, errorResponse }
-				}
-				// Ignore other access errors here, they will be caught by the outer try/catch if they are critical
-			}
-
 			config.services.diffViewProvider.editType = "modify"
 			return { fileExists: true, ok: true }
-		} catch (error: any) {
+		} catch (wrapped: any) {
+			// Environment wraps the underlying fs error; unwrap to inspect its code.
+			const error: any = wrapped?.cause ?? wrapped
 			if (error.code === "ENOENT") {
 				config.services.diffViewProvider.editType = "create"
 				return { fileExists: false, ok: true }

@@ -25,6 +25,7 @@ import { CommandExecutor, type CommandExecutorCallbacks, type FullCommandExecuto
 import type { ITerminalManager } from "@integrations/terminal/types"
 import type { BrowserSession } from "@services/browser/BrowserSession"
 import type { UrlContentFetcher } from "@services/browser/UrlContentFetcher"
+import { resolveEnvironment } from "@services/environment"
 import { telemetryService } from "@services/telemetry"
 import type { ApiConfiguration } from "@shared/api"
 import { findLastIndex } from "@shared/array"
@@ -411,6 +412,11 @@ export function buildTaskManagers(inputs: TaskManagerInputs): TaskManagers {
 		recordEnvironment,
 	} = inputs
 
+	// Resolve the execution environment for tool I/O. execute_command routes
+	// through environment.runCommand, which delegates to the same
+	// executeCommandTool callback used everywhere else (identical behavior).
+	const environment = resolveEnvironment({ cwd, commandRunner: executeCommandTool })
+
 	const toolExecutor = new ToolExecutor(
 		taskState,
 		messageStateHandler,
@@ -444,6 +450,7 @@ export function buildTaskManagers(inputs: TaskManagerInputs): TaskManagers {
 		clearActiveHookExecution,
 		getActiveHookExecution,
 		runUserPromptSubmitHook,
+		environment,
 	)
 
 	const environmentManager = new EnvironmentManager({

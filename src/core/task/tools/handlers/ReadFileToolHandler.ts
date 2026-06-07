@@ -1,4 +1,3 @@
-import fs from "node:fs/promises"
 import path from "node:path"
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
@@ -250,10 +249,10 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 
 				// 3. Safety check: prevent reading files too large
 				if (!hasLineRange && !hasOffsetLimit) {
-					const stats = await fs.stat(absolutePath)
+					const stats = await config.environment.stat(absolutePath)
 					const ext = path.extname(absolutePath).toLowerCase()
 					const isImage = [".png", ".jpg", ".jpeg", ".webp"].includes(ext)
-					if (stats.isFile() && !isImage && stats.size > maxFileReadSize) {
+					if (!stats.isDir && !isImage && stats.size > maxFileReadSize) {
 						const estimatedLines = Math.max(1, Math.ceil(stats.size / 80))
 						const message =
 							`File ${displayPath} is ${stats.size} bytes which exceeds the read limit (${maxFileReadSize} bytes).\n` +

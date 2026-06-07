@@ -6,6 +6,7 @@ import type { DiffViewProvider } from "@integrations/editor/DiffViewProvider"
 import type { CommandExecutionOptions } from "@integrations/terminal"
 import type { BrowserSession } from "@services/browser/BrowserSession"
 import type { UrlContentFetcher } from "@services/browser/UrlContentFetcher"
+import type { Environment } from "@services/environment"
 import type { AutoApprovalSettings } from "@shared/AutoApprovalSettings"
 import type { BrowserSettings } from "@shared/BrowserSettings"
 import type { IsaacAsk, IsaacMessage, IsaacSay, MultiCommandState } from "@shared/ExtensionMessage"
@@ -31,6 +32,8 @@ export interface TaskConfig {
 	taskId: string
 	ulid: string
 	cwd: string
+	/** Execution environment for tool I/O (files/shell/search). Local by default. */
+	environment: Environment
 	mode: Mode
 	strictPlanModeEnabled: boolean
 	yoloModeToggled: boolean
