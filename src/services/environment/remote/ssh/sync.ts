@@ -1,6 +1,26 @@
 import { spawn } from "node:child_process"
+import fs from "node:fs/promises"
+import path from "node:path"
 
 export const DEFAULT_EXCLUDES = [".git", "node_modules", "dist", "build", ".isaac", ".ailiance-agent", "*.vsix"]
+
+/** Read `<localDir>/.gitignore` into rsync exclude entries (skips comments/blanks). */
+export async function gitignoreExcludes(localDir: string): Promise<string[]> {
+	try {
+		const raw = await fs.readFile(path.join(localDir, ".gitignore"), "utf8")
+		return raw
+			.split("\n")
+			.map((l) => l.trim())
+			.filter((l) => l && !l.startsWith("#"))
+	} catch {
+		return []
+	}
+}
+
+/** Union several exclude lists, de-duplicated, preserving first-seen order. */
+export function mergeExcludes(...lists: string[][]): string[] {
+	return [...new Set(lists.flat())]
+}
 
 function excludeArgs(excludes: string[]): string[] {
 	return excludes.map((e) => `--exclude=${e}`)
@@ -14,6 +34,30 @@ export function buildRsyncPush(host: string, localDir: string, remoteDir: string
 /** rsync remote dir -> local dir (pull back). No --delete (remote authoritative for content, not deletions). */
 export function buildRsyncPull(host: string, remoteDir: string, localDir: string, excludes: string[]): string[] {
 	return ["-az", "-e", "ssh", ...excludeArgs(excludes), `${host}:${remoteDir}/`, `${localDir}/`]
+}
+
+/** Pull remote->local but exclude specific relpaths (protect local edits). */
+export function buildRsyncPullExcept(
+	host: string,
+	remoteDir: string,
+	localDir: string,
+	excludes: string[],
+	exceptPaths: string[],
+): string[] {
+	return [
+		"-az",
+		"-e",
+		"ssh",
+		...excludeArgs(excludes),
+		...exceptPaths.map((p) => `--exclude=/${p}`),
+		`${host}:${remoteDir}/`,
+		`${localDir}/`,
+	]
+}
+
+/** Fetch only specific relpaths into a side directory, preserving structure. */
+export function buildRsyncPullInto(host: string, remoteDir: string, sideDir: string, paths: string[]): string[] {
+	return ["-az", "-R", "-e", "ssh", ...paths.map((p) => `${host}:${remoteDir}/./${p}`), `${sideDir}/`]
 }
 
 /** rsync a single file (the daemon bundle) to a remote path. */
