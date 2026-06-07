@@ -1,9 +1,8 @@
 import fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import { copySourceCode } from "./scripts/copy-source.mjs"
-
 import * as esbuild from "esbuild"
+import { copySourceCode } from "./scripts/copy-source.mjs"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -163,7 +162,6 @@ const copyAssets = {
 					fs.cpSync(sourceModuleDir, targetModuleDir, { recursive: true })
 				}
 			}
-
 		})
 	},
 }
@@ -239,7 +237,7 @@ const extensionConfig = {
 	...baseConfig,
 	entryPoints: ["src/extension.ts"],
 	outfile: `${destDir}/extension.js`,
-	external: ["vscode", "web-tree-sitter", "better-sqlite3"],
+	external: ["vscode", "web-tree-sitter", "better-sqlite3", "onnxruntime-node"],
 }
 
 // Standalone-specific configuration
