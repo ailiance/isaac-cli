@@ -76,7 +76,14 @@ export function decodeMessages(onMessage: (m: RpcMessage) => void) {
 				}
 				const body = buffer.subarray(start, start + len).toString("utf8")
 				buffer = buffer.subarray(start + len)
-				onMessage(JSON.parse(body))
+				// A malformed body must not escape the transport's `data` listener
+				// (it would become an uncaughtException and crash the daemon). The
+				// buffer is already advanced, so drop the frame and keep decoding.
+				try {
+					onMessage(JSON.parse(body))
+				} catch {
+					// ignore malformed / unhandled frame
+				}
 			}
 		},
 	}
