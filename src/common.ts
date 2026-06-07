@@ -14,6 +14,8 @@ import { ExtensionRegistryInfo } from "./registry"
 import { ErrorService } from "./services/error"
 import { featureFlagsService } from "./services/feature-flags"
 import { getDistinctId } from "./services/logging/distinctId"
+import { DreamWorker } from "./services/memory/dreaming"
+import { buildDreamDeps } from "./services/memory/dreaming/wire"
 import { SymbolIndexService } from "./services/symbol-index/SymbolIndexService"
 import { telemetryService } from "./services/telemetry"
 // Legacy telemetry removed
@@ -95,7 +97,43 @@ export async function initialize(storageContext: StorageContext): Promise<IsaacW
 		})
 	}, INITIALIZATION_DELAY_MS)
 
+	// =============== Dreaming worker (opt-in, default OFF) ===============
+	// Gated behind ISAAC_DREAMING=1 (MVP opt-in). Without the flag, nothing is
+	// constructed or started, so behavior is unchanged by default.
+	startDreamWorker(stateManager)
+
 	return webview
+}
+
+/** Module-scoped handle so tearDown() can stop the worker. Stays undefined when opt-in is off. */
+let dreamWorker: DreamWorker | undefined
+
+/**
+ * Opt-in dreaming lifecycle. Starts only when ISAAC_DREAMING=1 AND an API
+ * configuration is obtainable. Best-effort: any failure leaves the worker off.
+ */
+function startDreamWorker(stateManager: StateManager): void {
+	if (process.env.ISAAC_DREAMING !== "1") {
+		return
+	}
+	try {
+		// Probe config availability; getApiConfiguration throws if uninitialized.
+		if (!stateManager.getApiConfiguration()) {
+			return
+		}
+		dreamWorker = new DreamWorker(
+			buildDreamDeps(
+				() => stateManager.getApiConfiguration(),
+				() => (stateManager.getGlobalSettingsKey("mode") === "plan" ? "plan" : "act"),
+				[process.cwd()],
+			),
+		)
+		dreamWorker.start()
+		Logger.info("[Isaac] Dreaming worker started (ISAAC_DREAMING=1)")
+	} catch (error) {
+		Logger.error("[Isaac] Failed to start dreaming worker:", error)
+		dreamWorker = undefined
+	}
 }
 
 async function showVersionUpdateAnnouncement(stateManager: StateManager) {
@@ -174,6 +212,8 @@ async function checkWorktreeAutoOpen(stateManager: StateManager): Promise<void> 
  * Performs cleanup when Isaac is deactivated that is common to all platforms.
  */
 export async function tearDown(): Promise<void> {
+	dreamWorker?.stop()
+	dreamWorker = undefined
 	AgentConfigLoader.getInstance()?.dispose()
 	// Legacy telemetry removed
 	telemetryService.dispose()
