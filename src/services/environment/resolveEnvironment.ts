@@ -1,8 +1,7 @@
 import { type ChildProcessWithoutNullStreams, spawn } from "node:child_process"
 import path from "node:path"
 import { LocalEnvironment } from "./LocalEnvironment"
-import { bootstrapDaemonToContainer } from "./remote/docker/bootstrap"
-import { dockerTransport } from "./remote/docker/dockerTransport"
+import { DockerSession } from "./remote/docker/DockerSession"
 import { RemoteEnvironment } from "./remote/RemoteEnvironment"
 import { SshRemoteSession } from "./remote/ssh/SshRemoteSession"
 import { subprocessTransport } from "./remote/transport"
@@ -28,14 +27,10 @@ export function resolveEnvironment(opts: ResolveEnvironmentOptions): Environment
 		const idx = rest.lastIndexOf(":")
 		const container = idx === -1 ? rest : rest.slice(0, idx)
 		const wsPath = idx === -1 ? opts.cwd : rest.slice(idx + 1)
-		const remoteDaemon = "/tmp/lisael-daemon.js"
-		const localBundle = path.join(__dirname, "lisael-daemon.js")
-		// Best-effort daemon copy; runs concurrently with the exec. If the bundle is
-		// already present (or the user pre-seeded it), a cp failure is non-fatal.
-		void bootstrapDaemonToContainer(container, localBundle, remoteDaemon).catch(() => {})
-		return new RemoteEnvironment(dockerTransport(container, remoteDaemon, wsPath), wsPath, {
-			id: `docker:${container}`,
-		})
+		// Lazy-init: the daemon bundle is copied in (docker cp) and awaited before
+		// the first op, so the first `docker exec` never races ahead of the cp.
+		// Bind-mounted workspace -> no sync (no seed/pull/conflict), unlike ssh.
+		return DockerSession.create(container, wsPath)
 	}
 	// Opt-in remote path: spawn the bundled daemon and talk to it over stdio.
 	// Default (and every existing caller) stays on LocalEnvironment, unchanged.
