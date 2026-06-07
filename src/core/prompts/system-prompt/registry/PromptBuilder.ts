@@ -1,8 +1,9 @@
+import { SkillMetadata } from "@/shared/skills"
+import { formatMemoriesSection, loadRelevantMemories } from "@/utils/ailiance-memory"
 import { SYSTEM_PROMPT } from "../template"
 import { TemplateEngine } from "../templates/TemplateEngine"
 import type { SystemPromptContext } from "../types"
-import { SkillMetadata } from "@/shared/skills"
-import { formatMemoriesSection, loadRelevantMemories } from "@/utils/ailiance-memory"
+import { selectMemoryRanker } from "./memoryRanker"
 
 export class PromptBuilder {
 	private templateEngine: TemplateEngine
@@ -50,7 +51,11 @@ export class PromptBuilder {
 		placeholders["MEMORIES_SECTION"] = ""
 		if (!this.context.isTesting) {
 			try {
-				const loaded = await loadRelevantMemories(this.context.cwd, this.context.userPromptText)
+				// Semantic ranker is gated behind ISAAC_MEM_EMBEDDINGS; default
+				// returns undefined ⇒ loadRelevantMemories token-overlap path is
+				// byte-identical to before (the call is the same as a 2-arg call).
+				const ranker = selectMemoryRanker()
+				const loaded = await loadRelevantMemories(this.context.cwd, this.context.userPromptText, ranker)
 				placeholders["MEMORIES_SECTION"] = formatMemoriesSection(loaded)
 			} catch {
 				// best-effort; never break system-prompt assembly
@@ -88,7 +93,6 @@ export class PromptBuilder {
 			.replace(/\n\s*\n\s*\n/g, "\n\n") // Clean up any multiple empty lines created by header removal
 			.trim() // Final trim
 	}
-
 
 	private formatSkillsSection(skills: SkillMetadata[]): string {
 		if (skills.length === 0) return ""

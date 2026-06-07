@@ -5,6 +5,19 @@ export interface SynthDeps {
 	createMessage: (systemPrompt: string, content: string) => AsyncIterable<{ type: string; text?: string }>
 }
 
+/**
+ * Result of synthesizing a transcript:
+ *   - `created`: brand-new candidates whose (slugified) name did not match
+ *     any existing memory — to be saved.
+ *   - `reobserved`: slugified names that matched an existing memory. These
+ *     are no longer silently skipped; the caller bumps their `lastSeenAt`
+ *     so re-confirmed memories stay fresh under the TTL sweep.
+ */
+export interface SynthResult {
+	created: MemoryCandidate[]
+	reobserved: string[]
+}
+
 const SYSTEM_PROMPT =
 	"You distill durable memory from a coding session transcript. Output ONLY a JSON array of " +
 	'{scope,type,name,description,body}. scope is "global" (about the user) or "project:<slug>" ' +
@@ -15,28 +28,40 @@ export async function synthesizeMemories(
 	condensed: string,
 	existing: Array<{ name: string }>,
 	deps: SynthDeps,
-): Promise<MemoryCandidate[]> {
+): Promise<SynthResult> {
 	let text = ""
 	try {
 		for await (const chunk of deps.createMessage(SYSTEM_PROMPT, condensed)) {
 			if (chunk.type === "text" && chunk.text) text += chunk.text
 		}
 	} catch {
-		return []
+		return { created: [], reobserved: [] }
 	}
 	const arr = parseJsonArray(text)
-	if (!arr) return []
+	if (!arr) return { created: [], reobserved: [] }
 	const existingNames = new Set(existing.map((e) => e.name))
-	const out: MemoryCandidate[] = []
+	const created: MemoryCandidate[] = []
+	const reobserved: string[] = []
+	const seenReobserved = new Set<string>()
 	for (const c of arr) {
 		if (!c || typeof c.name !== "string" || typeof c.body !== "string") continue
 		// Slugify so the name always satisfies saveMemory's /^[a-z0-9][a-z0-9_-]*$/i.
 		// A non-conforming name (spaces, accents) makes saveMemory throw, which —
 		// caught per-run without advancing the cursor — re-synthesizes that run forever.
 		const name = slugifyName(c.name)
-		if (!name || existingNames.has(name)) continue
+		if (!name) continue
+		// A candidate whose name matches an existing memory is "re-observed":
+		// surface it (deduped) so the worker can bump its freshness instead of
+		// dropping it silently. New names are collected for saving.
+		if (existingNames.has(name)) {
+			if (!seenReobserved.has(name)) {
+				seenReobserved.add(name)
+				reobserved.push(name)
+			}
+			continue
+		}
 		existingNames.add(name)
-		out.push({
+		created.push({
 			scope: c.scope === "global" || String(c.scope).startsWith("project:") ? c.scope : "global",
 			type: ["project", "user", "feedback", "reference"].includes(c.type) ? c.type : "project",
 			name,
@@ -44,7 +69,7 @@ export async function synthesizeMemories(
 			body: c.body,
 		})
 	}
-	return out
+	return { created, reobserved }
 }
 
 /** Coerce an LLM-proposed name into a safe kebab slug accepted by saveMemory. */
