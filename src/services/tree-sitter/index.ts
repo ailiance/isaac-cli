@@ -17,12 +17,12 @@ export async function parseFile(
 	filePath: string,
 	languageParsers: LanguageParser,
 	isaacIgnoreController?: IsaacIgnoreController,
-	options?: { showCallGraph?: boolean },
+	options?: { showCallGraph?: boolean; readFile?: (p: string) => Promise<string> },
 ): Promise<ParsedDefinition[] | null> {
 	if (isaacIgnoreController && !isaacIgnoreController.validateAccess(filePath)) {
 		return null
 	}
-	const fileContent = await fs.readFile(filePath, "utf8")
+	const fileContent = options?.readFile ? await options.readFile(filePath) : await fs.readFile(filePath, "utf8")
 	const ext = path.extname(filePath).toLowerCase().slice(1)
 
 	const { parser, query } = languageParsers[ext] || {}
