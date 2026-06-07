@@ -6,6 +6,7 @@ import {
 	EnvironmentError,
 	type EnvStat,
 	type ExecHandle,
+	type FileInfo,
 	type Match,
 } from "./types"
 
@@ -91,10 +92,14 @@ export class InMemoryEnvironment implements Environment {
 	}
 	runCommand: CommandRunner = async () => [false, ""]
 
-	async listFilesNative(p: string, recursive: boolean, limit: number): Promise<[string[], boolean]> {
+	async listFilesNative(p: string, recursive: boolean, limit: number): Promise<[FileInfo[], boolean]> {
 		const entries = await this.list(p, { recursive })
-		const paths = entries.map((e) => `${this.key(p)}/${e.name}`)
-		return [paths.slice(0, limit), paths.length > limit]
+		const infos: FileInfo[] = entries.map((e) => ({
+			path: `${this.key(p)}/${e.name}`,
+			mtime: 0,
+			isDirectory: e.isDir,
+		}))
+		return [infos.slice(0, limit), infos.length > limit]
 	}
 
 	async searchFormatted(): Promise<string> {

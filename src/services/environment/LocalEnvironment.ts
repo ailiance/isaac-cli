@@ -10,6 +10,7 @@ import {
 	type EnvStat,
 	type ExecHandle,
 	type ExecOpts,
+	type FileInfo,
 	type Match,
 	type SearchOpts,
 } from "./types"
@@ -129,10 +130,14 @@ export class LocalEnvironment implements Environment {
 		return this.commandRunner(command, timeoutSeconds, opts)
 	}
 
-	async listFilesNative(p: string, recursive: boolean, limit: number, abortSignal?: AbortSignal): Promise<[string[], boolean]> {
+	async listFilesNative(
+		p: string,
+		recursive: boolean,
+		limit: number,
+		abortSignal?: AbortSignal,
+	): Promise<[FileInfo[], boolean]> {
 		const { listFiles } = await import("@services/glob/list-files")
-		const [infos, didHitLimit] = await listFiles(this.abs(p), recursive, limit, abortSignal)
-		return [infos.map((info) => info.path), didHitLimit]
+		return listFiles(this.abs(p), recursive, limit, abortSignal)
 	}
 
 	async searchFormatted(

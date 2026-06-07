@@ -2,6 +2,7 @@ import { strict as assert } from "node:assert"
 import fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
+import { LocalEnvironment } from "@services/environment/LocalEnvironment"
 import { IsaacDefaultTool } from "@shared/tools"
 import { AnchorStateManager } from "@utils/AnchorStateManager"
 import * as pathUtils from "@utils/path"
@@ -108,6 +109,7 @@ function createConfig() {
 		},
 		callbacks,
 		coordinator: { getHandler: sinon.stub() },
+		environment: new LocalEnvironment(tmpDir),
 	} as unknown as TaskConfig
 
 	const validator = new ToolValidator({ validateAccess: () => true } as any)

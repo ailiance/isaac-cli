@@ -4,7 +4,7 @@ import { formatResponse } from "@core/prompts/responses"
 import { defineTool, readParam } from "@core/prompts/system-prompt/tool-unit"
 import { list_files } from "@core/prompts/system-prompt/tools/list_files"
 import { getWorkspaceBasename, resolveWorkspacePath } from "@core/workspace"
-import { type FileInfo, listFiles } from "@services/glob/list-files"
+import type { FileInfo } from "@services/glob/list-files"
 import { arePathsEqual, getReadablePath, isLocatedInWorkspace } from "@utils/path"
 import { telemetryService } from "@/services/telemetry"
 import { Logger } from "@/shared/services/Logger"
@@ -128,7 +128,7 @@ export class ListFilesToolHandler implements IFullyManagedTool {
 					typeof pathResult === "string" ? { absolutePath: pathResult, displayPath: relDirPath } : pathResult
 				const usedWorkspaceHint = typeof pathResult !== "string"
 
-				const [fileInfos, didHitLimit] = await listFiles(
+				const [fileInfos, didHitLimit] = await config.environment.listFilesNative(
 					absolutePath,
 					recursive,
 					ListFilesToolHandler.MAX_FILES_LIMIT,

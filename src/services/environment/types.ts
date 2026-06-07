@@ -1,3 +1,7 @@
+import type { FileInfo } from "@services/glob/list-files"
+
+export type { FileInfo }
+
 export interface EnvStat {
 	isDir: boolean
 	size: number
@@ -76,7 +80,7 @@ export interface Environment {
 	search(pattern: string, opts?: SearchOpts): Promise<Match[]>
 	exec(cmd: string, opts?: ExecOpts): ExecHandle
 	runCommand: CommandRunner
-	listFilesNative(path: string, recursive: boolean, limit: number, abortSignal?: AbortSignal): Promise<[string[], boolean]>
+	listFilesNative(path: string, recursive: boolean, limit: number, abortSignal?: AbortSignal): Promise<[FileInfo[], boolean]>
 	searchFormatted(
 		directoryPath: string,
 		regex: string,
