@@ -19,10 +19,36 @@ import type { ApiConfiguration } from "@/shared/api"
 import type { Mode } from "@/shared/storage/types"
 import type { MemoryType } from "@/utils/ailiance-memory"
 import { deleteMemory, listMemories, projectScopeFromCwd, saveMemory } from "@/utils/ailiance-memory"
+import { embedText } from "../embeddings/embedClient"
+import { embedConfigFromEnv } from "../embeddings/embedEnvConfig"
+import { EMBEDDINGS_INDEX_FILE, loadIndex, saveIndex } from "../embeddings/vectorIndex"
 import type { DreamDeps, RunRef } from "./DreamWorker"
 import { isStale } from "./decay"
 import { synthesizeMemories } from "./MemorySynthesizer"
 import { condenseRun } from "./transcriptReader"
+
+/**
+ * Injectable embedding hooks for `buildDreamDeps`. Defaults wire the real
+ * gateway embed + sidecar index; tests inject fakes so the indexing path is
+ * exercised without network or real filesystem. Gating is unchanged: when
+ * `embedConfigFromEnv()` returns null (default, ISAAC_MEM_EMBEDDINGS !== "1")
+ * none of these are ever called and `save` is byte-identical to before.
+ */
+export interface EmbedHooks {
+	embed: typeof embedText
+	loadIndex: typeof loadIndex
+	saveIndex: typeof saveIndex
+	indexFile: string
+	env: NodeJS.ProcessEnv
+}
+
+const DEFAULT_EMBED_HOOKS: EmbedHooks = {
+	embed: embedText,
+	loadIndex,
+	saveIndex,
+	indexFile: EMBEDDINGS_INDEX_FILE,
+	env: process.env,
+}
 
 const CURSOR_FILE = path.join(os.homedir(), ".ailiance-agent", "memory", ".dream-cursor.json")
 
@@ -63,7 +89,12 @@ async function listRunsForRoot(root: string): Promise<RunRef[]> {
  * @param getMode lazily resolves the current mode ("plan" | "act")
  * @param searchRoots directories whose `.ailiance-agent/runs/` are scanned
  */
-export function buildDreamDeps(getApiConfig: () => ApiConfiguration, getMode: () => Mode, searchRoots: string[]): DreamDeps {
+export function buildDreamDeps(
+	getApiConfig: () => ApiConfiguration,
+	getMode: () => Mode,
+	searchRoots: string[],
+	embedHooks: EmbedHooks = DEFAULT_EMBED_HOOKS,
+): DreamDeps {
 	return {
 		cursorFile: CURSOR_FILE,
 		listRuns: async () => {
@@ -91,6 +122,22 @@ export function buildDreamDeps(getApiConfig: () => ApiConfiguration, getMode: ()
 				source: "dreamed",
 				lastSeenAt: new Date().toISOString(),
 			})
+			// Best-effort index-on-save, gated behind ISAAC_MEM_EMBEDDINGS.
+			// Default OFF ⇒ embedConfigFromEnv() === null ⇒ no embed, no index
+			// write — identical to before. A failure here never aborts the save.
+			const cfg = embedConfigFromEnv(embedHooks.env)
+			if (cfg) {
+				try {
+					const v = await embedHooks.embed(c.body, cfg)
+					if (v) {
+						const idx = await embedHooks.loadIndex(embedHooks.indexFile)
+						idx[c.name] = { vector: v, scope: String(c.scope) }
+						await embedHooks.saveIndex(embedHooks.indexFile, idx)
+					}
+				} catch {
+					// indexing is best-effort; the memory was already saved
+				}
+			}
 		},
 		// Re-save an existing memory with a fresh lastSeenAt so re-confirmed
 		// entries survive the TTL sweep. Re-uses saveMemory (overwrites by name+scope).

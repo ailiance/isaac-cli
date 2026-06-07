@@ -1,6 +1,10 @@
 // src/services/memory/embeddings/vectorIndex.ts
 import fs from "node:fs/promises"
+import os from "node:os"
 import path from "node:path"
+
+/** Canonical sidecar vector-index path, alongside the memory store. */
+export const EMBEDDINGS_INDEX_FILE = path.join(os.homedir(), ".ailiance-agent", "memory", ".embeddings-index.json")
 
 export interface IndexEntry {
 	vector: number[]
