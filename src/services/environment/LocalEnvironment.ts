@@ -1,7 +1,6 @@
 import { type ChildProcess, spawn } from "node:child_process"
 import fs from "node:fs/promises"
 import path from "node:path"
-import { regexSearchFiles } from "@services/ripgrep"
 import {
 	type CommandRunner,
 	type DirEntry,
@@ -11,7 +10,6 @@ import {
 	type ExecHandle,
 	type ExecOpts,
 	type FileInfo,
-	type Match,
 	type SearchOpts,
 } from "./types"
 
@@ -97,22 +95,6 @@ export class LocalEnvironment implements Environment {
 		}
 	}
 
-	async search(pattern: string, opts?: SearchOpts): Promise<Match[]> {
-		const dir = this.abs(opts?.path ?? ".")
-		const raw = await regexSearchFiles(
-			this.cwd,
-			dir,
-			pattern,
-			opts?.glob,
-			undefined,
-			undefined,
-			opts?.contextLines,
-			undefined,
-			opts?.abortSignal,
-		)
-		return parseRipgrepOutput(raw)
-	}
-
 	exec(cmd: string, opts?: ExecOpts): ExecHandle {
 		const cwd = opts?.cwd ? this.abs(opts.cwd) : this.cwd
 		const child = spawn(cmd, {
@@ -162,18 +144,6 @@ export class LocalEnvironment implements Environment {
 	async dispose(): Promise<void> {}
 }
 
-/** Best-effort parse of "path:line:col:text" lines into structured matches. */
-export function parseRipgrepOutput(raw: string): Match[] {
-	const matches: Match[] = []
-	for (const line of raw.split("\n")) {
-		const m = line.match(/^(.+?):(\d+):(\d+):(.*)$/)
-		if (m) {
-			matches.push({ file: m[1], line: Number(m[2]), column: Number(m[3]), text: m[4] })
-		}
-	}
-	return matches
-}
-
 class LocalExecHandle implements ExecHandle {
 	readonly stdout: AsyncIterable<string>
 	readonly stderr: AsyncIterable<string>
@@ -185,7 +155,9 @@ class LocalExecHandle implements ExecHandle {
 		this.stdout = streamFrom(child, "stdout")
 		this.stderr = streamFrom(child, "stderr")
 		this.exitCode = new Promise<number>((resolve) => {
-			child.on("close", (code) => resolve(code ?? 0))
+			// code is null when the process was terminated by a signal (e.g. our own
+			// kill() on timeout/abort) — surface that as non-zero, not success.
+			child.on("close", (code, signal) => resolve(code ?? (signal ? 1 : 0)))
 		})
 		if (opts?.abortSignal) {
 			opts.abortSignal.addEventListener("abort", () => this.kill(), { once: true })

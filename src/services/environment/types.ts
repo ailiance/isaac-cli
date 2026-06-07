@@ -14,13 +14,6 @@ export interface DirEntry {
 	isDir: boolean
 }
 
-export interface Match {
-	file: string
-	line: number
-	column: number
-	text: string
-}
-
 export interface SearchOpts {
 	path?: string
 	glob?: string
@@ -81,7 +74,6 @@ export interface Environment {
 	mkdir(path: string, opts?: { recursive?: boolean }): Promise<void>
 	delete(path: string, opts?: { recursive?: boolean }): Promise<void>
 	rename(from: string, to: string): Promise<void>
-	search(pattern: string, opts?: SearchOpts): Promise<Match[]>
 	exec(cmd: string, opts?: ExecOpts): ExecHandle
 	runCommand: CommandRunner
 	listFilesNative(path: string, recursive: boolean, limit: number, abortSignal?: AbortSignal): Promise<[FileInfo[], boolean]>

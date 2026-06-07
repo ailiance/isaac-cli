@@ -7,7 +7,6 @@ import {
 	type EnvStat,
 	type ExecHandle,
 	type FileInfo,
-	type Match,
 } from "./types"
 
 export class InMemoryEnvironment implements Environment {
@@ -76,9 +75,6 @@ export class InMemoryEnvironment implements Environment {
 		const v = await this.readFile(from)
 		await this.writeFile(to, v)
 		await this.delete(from)
-	}
-	async search(): Promise<Match[]> {
-		return []
 	}
 	exec(): ExecHandle {
 		const empty = (async function* () {})()
