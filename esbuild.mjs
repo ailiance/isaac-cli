@@ -250,6 +250,16 @@ const standaloneConfig = {
 	external: ["vscode", "web-tree-sitter", "@grpc/reflection", "grpc-health-check", "better-sqlite3"],
 }
 
+// LISAEL remote daemon configuration (bundled standalone Node entry).
+// Spawned by resolveEnvironment when ISAAC_ENV=remote-local.
+const daemonConfig = {
+	...baseConfig,
+	entryPoints: ["src/services/environment/remote/daemon.ts"],
+	outfile: `${destDir}/lisael-daemon.js`,
+	external: ["better-sqlite3", "onnxruntime-node", "web-tree-sitter"],
+	plugins: [aliasResolverPlugin, esbuildProblemMatcherPlugin],
+}
+
 // E2E build script configuration
 const e2eBuildConfig = {
 	...baseConfig,
@@ -262,12 +272,19 @@ const e2eBuildConfig = {
 
 async function main() {
 	const config = standalone ? standaloneConfig : e2eBuild ? e2eBuildConfig : extensionConfig
-	const extensionCtx = await esbuild.context(config)
+	// The daemon is bundled alongside the main extension/standalone builds, but
+	// not for the dedicated e2e-build pass (that targets a single helper script).
+	const configs = e2eBuild ? [config] : [config, daemonConfig]
+	const contexts = await Promise.all(configs.map((c) => esbuild.context(c)))
 	if (watch) {
-		await extensionCtx.watch()
+		await Promise.all(contexts.map((ctx) => ctx.watch()))
 	} else {
-		await extensionCtx.rebuild()
-		await extensionCtx.dispose()
+		await Promise.all(
+			contexts.map(async (ctx) => {
+				await ctx.rebuild()
+				await ctx.dispose()
+			}),
+		)
 	}
 }
 

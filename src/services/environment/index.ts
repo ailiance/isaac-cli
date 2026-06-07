@@ -1,4 +1,6 @@
 export { InMemoryEnvironment } from "./InMemoryEnvironment"
 export { LocalEnvironment } from "./LocalEnvironment"
+export { RemoteEnvironment } from "./remote/RemoteEnvironment"
+export { inProcessTransportPair, subprocessTransport } from "./remote/transport"
 export { resolveEnvironment } from "./resolveEnvironment"
 export * from "./types"
