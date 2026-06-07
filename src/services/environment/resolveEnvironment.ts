@@ -1,6 +1,7 @@
 import { type ChildProcessWithoutNullStreams, spawn } from "node:child_process"
 import path from "node:path"
 import { LocalEnvironment } from "./LocalEnvironment"
+import { DockerSession } from "./remote/docker/DockerSession"
 import { RemoteEnvironment } from "./remote/RemoteEnvironment"
 import { SshRemoteSession } from "./remote/ssh/SshRemoteSession"
 import { subprocessTransport } from "./remote/transport"
@@ -17,6 +18,19 @@ export function resolveEnvironment(opts: ResolveEnvironmentOptions): Environment
 	const isaacEnv = process.env.ISAAC_ENV
 	if (isaacEnv?.startsWith("ssh:")) {
 		return SshRemoteSession.create(isaacEnv.slice("ssh:".length), opts.cwd)
+	}
+	// Opt-in Docker path: run tool I/O inside a running container via `docker exec`.
+	// ISAAC_ENV=docker:<container>:<wsPathInContainer>. The workspace is bind-mounted
+	// by the user (shared FS → no sync); only the daemon bundle needs copying in.
+	if (isaacEnv?.startsWith("docker:")) {
+		const rest = isaacEnv.slice("docker:".length)
+		const idx = rest.lastIndexOf(":")
+		const container = idx === -1 ? rest : rest.slice(0, idx)
+		const wsPath = idx === -1 ? opts.cwd : rest.slice(idx + 1)
+		// Lazy-init: the daemon bundle is copied in (docker cp) and awaited before
+		// the first op, so the first `docker exec` never races ahead of the cp.
+		// Bind-mounted workspace -> no sync (no seed/pull/conflict), unlike ssh.
+		return DockerSession.create(container, wsPath)
 	}
 	// Opt-in remote path: spawn the bundled daemon and talk to it over stdio.
 	// Default (and every existing caller) stays on LocalEnvironment, unchanged.
