@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import * as fs from "fs/promises"
 import * as path from "path"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
 	deleteMemory,
 	findMemories,
@@ -24,12 +24,7 @@ const TEST_ROOT = getMemoryRoot()
 describe("ailiance-memory", () => {
 	beforeEach(async () => {
 		// Make sure we start clean for the keys this test will use.
-		const namesToClear = [
-			"test-user-pref",
-			"test-feedback-no-amend",
-			"test-project-repo-convention",
-			"another-memory",
-		]
+		const namesToClear = ["test-user-pref", "test-feedback-no-amend", "test-project-repo-convention", "another-memory"]
 		for (const name of namesToClear) {
 			await deleteMemory(name)
 		}
@@ -37,15 +32,35 @@ describe("ailiance-memory", () => {
 
 	afterEach(async () => {
 		// Symmetric cleanup so files don't accumulate in dev environments.
-		const namesToClear = [
-			"test-user-pref",
-			"test-feedback-no-amend",
-			"test-project-repo-convention",
-			"another-memory",
-		]
+		const namesToClear = ["test-user-pref", "test-feedback-no-amend", "test-project-repo-convention", "another-memory"]
 		for (const name of namesToClear) {
 			await deleteMemory(name)
 		}
+	})
+
+	it("round-trips optional source + lastSeenAt and tolerates legacy entries", async () => {
+		await saveMemory({
+			name: "test-user-pref",
+			description: "x",
+			type: "project",
+			scope: "global",
+			body: "b",
+			source: "dreamed",
+			lastSeenAt: "2026-06-07T00:00:00.000Z",
+		} as any)
+		const m: any = (await listMemories({})).find((e: any) => e.name === "test-user-pref")
+		expect(m.source).toBe("dreamed")
+		expect(m.lastSeenAt).toBe("2026-06-07T00:00:00.000Z")
+		await saveMemory({
+			name: "another-memory",
+			description: "y",
+			type: "user",
+			scope: "global",
+			body: "b2",
+		} as any)
+		const h: any = (await listMemories({})).find((e: any) => e.name === "another-memory")
+		expect(h.source).toBeUndefined()
+		expect(h.lastSeenAt).toBeUndefined()
 	})
 
 	it("saves and reads back a global memory", async () => {
@@ -177,9 +192,7 @@ describe("ailiance-memory", () => {
 			// empty-after-project-filter result.
 			if (loaded !== null) {
 				// At minimum no project-scoped memories for our random cwd:
-				const projectScoped = loaded.memories.filter((m) =>
-					m.scope.startsWith("project:nonexistent-project-zzz9999"),
-				)
+				const projectScoped = loaded.memories.filter((m) => m.scope.startsWith("project:nonexistent-project-zzz9999"))
 				expect(projectScoped).toEqual([])
 			}
 		})
@@ -238,13 +251,7 @@ describe("ailiance-memory", () => {
 	})
 
 	describe("atomic writes and concurrency (issue #23)", () => {
-		const parallelNames = [
-			"test-parallel-a",
-			"test-parallel-b",
-			"test-parallel-c",
-			"test-parallel-d",
-			"test-parallel-e",
-		]
+		const parallelNames = ["test-parallel-a", "test-parallel-b", "test-parallel-c", "test-parallel-d", "test-parallel-e"]
 
 		afterEach(async () => {
 			for (const n of parallelNames) await deleteMemory(n)
@@ -418,10 +425,7 @@ describe("ailiance-memory", () => {
 				type: "user",
 				body: "Always reply in French.",
 			})
-			const loaded = await loadRelevantMemories(
-				"/tmp/test-relevance-A",
-				"How do I deploy a kubernetes service?",
-			)
+			const loaded = await loadRelevantMemories("/tmp/test-relevance-A", "How do I deploy a kubernetes service?")
 			expect(loaded).not.toBeNull()
 			const names = loaded!.memories.map((m) => m.name)
 			const matchIdx = names.indexOf("another-memory")
@@ -469,10 +473,7 @@ describe("ailiance-memory", () => {
 				type: "user",
 				body: "knitting pattern notes",
 			})
-			const loaded = await loadRelevantMemories(
-				"/tmp/test-relevance-C",
-				"explain quantum entanglement to me",
-			)
+			const loaded = await loadRelevantMemories("/tmp/test-relevance-C", "explain quantum entanglement to me")
 			expect(loaded).not.toBeNull()
 			const names = loaded!.memories.map((m) => m.name)
 			const newerIdx = names.indexOf("test-user-pref")

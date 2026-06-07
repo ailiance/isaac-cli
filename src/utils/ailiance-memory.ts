@@ -30,8 +30,8 @@
 // `cli/src/commands/memory.ts`.
 
 import * as fs from "fs/promises"
-import * as path from "path"
 import * as os from "os"
+import * as path from "path"
 import { Logger } from "@/shared/services/Logger"
 
 export type MemoryType = "user" | "feedback" | "project" | "reference"
@@ -43,6 +43,10 @@ export interface MemoryFrontmatter {
 	type: MemoryType
 	scope: MemoryScope
 	created: string
+	/** Provenance marker for entries written by the dreaming worker. */
+	source?: "dreamed"
+	/** ISO timestamp of the last time this memory was confirmed relevant. */
+	lastSeenAt?: string
 }
 
 export interface Memory extends MemoryFrontmatter {
@@ -104,6 +108,8 @@ async function parseMemory(filePath: string): Promise<Memory | null> {
 			else if (key === "type") fm.type = value as MemoryType
 			else if (key === "scope") fm.scope = value as MemoryScope
 			else if (key === "created") fm.created = value
+			else if (key === "source") fm.source = value as "dreamed"
+			else if (key === "lastSeenAt") fm.lastSeenAt = value
 		}
 		if (!fm.name || !fm.description || !fm.type || !fm.scope || !fm.created) {
 			await quarantineCorruptMemory(filePath, "missing required frontmatter fields")
@@ -115,6 +121,8 @@ async function parseMemory(filePath: string): Promise<Memory | null> {
 			type: fm.type,
 			scope: fm.scope,
 			created: fm.created,
+			...(fm.source ? { source: fm.source } : {}),
+			...(fm.lastSeenAt ? { lastSeenAt: fm.lastSeenAt } : {}),
 			body: body.trim(),
 			filePath,
 		}
@@ -153,6 +161,8 @@ export async function saveMemory(input: {
 	type: MemoryType
 	scope?: MemoryScope
 	body: string
+	source?: "dreamed"
+	lastSeenAt?: string
 }): Promise<string> {
 	await ensureMemoryRoot()
 	const scope: MemoryScope = input.scope ?? "global"
@@ -168,6 +178,8 @@ export async function saveMemory(input: {
 		`type: ${input.type}`,
 		`scope: ${scope}`,
 		`created: ${new Date().toISOString()}`,
+		...(input.source ? [`source: ${input.source}`] : []),
+		...(input.lastSeenAt ? [`lastSeenAt: ${input.lastSeenAt}`] : []),
 		"---",
 		"",
 		input.body.trim(),
@@ -226,11 +238,7 @@ async function acquireRebuildLock(): Promise<() => Promise<void>> {
 			await fs.mkdir(LOCK_DIR)
 			// Drop a PID file inside for diagnostics — best-effort.
 			try {
-				await fs.writeFile(
-					path.join(LOCK_DIR, "owner"),
-					JSON.stringify({ pid: process.pid, ts: Date.now() }),
-					"utf-8",
-				)
+				await fs.writeFile(path.join(LOCK_DIR, "owner"), JSON.stringify({ pid: process.pid, ts: Date.now() }), "utf-8")
 			} catch {
 				// ignore
 			}
@@ -264,10 +272,7 @@ async function acquireRebuildLock(): Promise<() => Promise<void>> {
  * List all memories, optionally filtered by scope and/or type.
  * Returns them sorted by created (newest first).
  */
-export async function listMemories(filter?: {
-	scope?: MemoryScope
-	type?: MemoryType
-}): Promise<Memory[]> {
+export async function listMemories(filter?: { scope?: MemoryScope; type?: MemoryType }): Promise<Memory[]> {
 	await ensureMemoryRoot()
 	const memories: Memory[] = []
 	// Top-level (global) memories.
@@ -332,9 +337,7 @@ export async function findMemories(query: string): Promise<Memory[]> {
 	const q = query.toLowerCase().trim()
 	if (!q) return []
 	const memories = await listMemories()
-	return memories.filter(
-		(m) => m.name.toLowerCase().includes(q) || m.description.toLowerCase().includes(q),
-	)
+	return memories.filter((m) => m.name.toLowerCase().includes(q) || m.description.toLowerCase().includes(q))
 }
 
 // Minimal bilingual (EN + FR) stop-word list for memory relevance scoring.
@@ -344,16 +347,85 @@ export async function findMemories(query: string): Promise<Memory[]> {
 // reach the filter — this list catches the longer ones.
 const MEMORY_STOPWORDS = new Set<string>([
 	// English
-	"the", "and", "for", "with", "from", "this", "that", "these", "those",
-	"are", "was", "were", "have", "has", "had", "but", "not", "you", "your",
-	"yours", "they", "them", "their", "what", "when", "where", "which",
-	"who", "whom", "how", "why", "into", "over", "under", "than", "then",
-	"there", "here", "about", "would", "could", "should", "will", "shall",
+	"the",
+	"and",
+	"for",
+	"with",
+	"from",
+	"this",
+	"that",
+	"these",
+	"those",
+	"are",
+	"was",
+	"were",
+	"have",
+	"has",
+	"had",
+	"but",
+	"not",
+	"you",
+	"your",
+	"yours",
+	"they",
+	"them",
+	"their",
+	"what",
+	"when",
+	"where",
+	"which",
+	"who",
+	"whom",
+	"how",
+	"why",
+	"into",
+	"over",
+	"under",
+	"than",
+	"then",
+	"there",
+	"here",
+	"about",
+	"would",
+	"could",
+	"should",
+	"will",
+	"shall",
 	// French
-	"les", "des", "une", "aux", "que", "qui", "quoi", "dont", "pour", "par",
-	"mais", "donc", "car", "avec", "sans", "sous", "sur", "vers", "chez",
-	"être", "etre", "avoir", "fait", "faire", "cette", "cela", "ceux",
-	"leur", "leurs", "nous", "vous", "ils", "elles", "elle",
+	"les",
+	"des",
+	"une",
+	"aux",
+	"que",
+	"qui",
+	"quoi",
+	"dont",
+	"pour",
+	"par",
+	"mais",
+	"donc",
+	"car",
+	"avec",
+	"sans",
+	"sous",
+	"sur",
+	"vers",
+	"chez",
+	"être",
+	"etre",
+	"avoir",
+	"fait",
+	"faire",
+	"cette",
+	"cela",
+	"ceux",
+	"leur",
+	"leurs",
+	"nous",
+	"vous",
+	"ils",
+	"elles",
+	"elle",
 ])
 
 /**
@@ -411,12 +483,7 @@ async function rebuildIndex(): Promise<void> {
 		const release = await acquireRebuildLock()
 		try {
 			const memories = await listMemories()
-			const lines: string[] = [
-				"# Memory Index",
-				"",
-				`_Generated ${new Date().toISOString()} — do not edit by hand._`,
-				"",
-			]
+			const lines: string[] = ["# Memory Index", "", `_Generated ${new Date().toISOString()} — do not edit by hand._`, ""]
 			if (memories.length === 0) {
 				lines.push("_No memories yet. Use `/remember <topic>` to add one._")
 			} else {
@@ -457,7 +524,11 @@ export function getMemoryRoot(): string {
  */
 export function projectScopeFromCwd(cwd: string | undefined): MemoryScope | null {
 	if (!cwd) return null
-	const base = path.basename(cwd).toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "")
+	const base = path
+		.basename(cwd)
+		.toLowerCase()
+		.replace(/[^a-z0-9_-]+/g, "-")
+		.replace(/^-+|-+$/g, "")
 	if (!base) return null
 	return `project:${base}` as MemoryScope
 }
@@ -541,10 +612,12 @@ export async function loadRelevantMemories(
  * string when there is nothing to inject — the caller can drop the
  * placeholder cleanly.
  */
-export function formatMemoriesSection(loaded: {
-	memories: Memory[]
-	truncated: boolean
-} | null): string {
+export function formatMemoriesSection(
+	loaded: {
+		memories: Memory[]
+		truncated: boolean
+	} | null,
+): string {
 	if (!loaded || loaded.memories.length === 0) return ""
 	const lines: string[] = [
 		"",
