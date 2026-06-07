@@ -1,5 +1,6 @@
 // src/services/memory/dreaming/DreamWorker.ts
 import { isProcessed, loadCursor, markProcessed, saveCursor } from "./corpusCursor"
+import type { SynthResult } from "./MemorySynthesizer"
 import type { MemoryCandidate } from "./types"
 
 export interface RunRef {
@@ -13,8 +14,12 @@ export interface DreamDeps {
 	listRuns: () => Promise<RunRef[]>
 	condense: (runDir: string) => Promise<string>
 	listExisting: (scope?: string) => Promise<Array<{ name: string }>>
-	synthesize: (condensed: string, existing: Array<{ name: string }>) => Promise<MemoryCandidate[]>
+	synthesize: (condensed: string, existing: Array<{ name: string }>) => Promise<SynthResult>
 	save: (c: MemoryCandidate) => Promise<void>
+	/** Refresh `lastSeenAt` of a re-observed memory so it stays fresh. Optional/injectable. */
+	bump?: (name: string) => Promise<void>
+	/** Sweep TTL-stale memories (deleteMemory). Runs once per pass. Optional/injectable. */
+	expire?: () => Promise<void>
 }
 
 export async function runDreamOnce(deps: DreamDeps): Promise<void> {
@@ -29,7 +34,8 @@ export async function runDreamOnce(deps: DreamDeps): Promise<void> {
 			const condensed = await deps.condense(run.runDir)
 			if (condensed.trim()) {
 				const existing = await deps.listExisting()
-				for (const c of await deps.synthesize(condensed, existing)) {
+				const { created, reobserved } = await deps.synthesize(condensed, existing)
+				for (const c of created) {
 					// Drop a bad candidate (e.g. saveMemory rejects an odd name) without
 					// aborting the run — otherwise the cursor never advances and this run
 					// is re-synthesized (a full LLM call) on every tick forever.
@@ -39,11 +45,30 @@ export async function runDreamOnce(deps: DreamDeps): Promise<void> {
 						// skip this candidate
 					}
 				}
+				// Bump freshness of re-observed memories so they survive the TTL sweep.
+				// Best-effort: a failing bump must not block cursor advance.
+				if (deps.bump) {
+					for (const name of reobserved) {
+						try {
+							await deps.bump(name)
+						} catch {
+							// skip this bump
+						}
+					}
+				}
 			}
 			cursor = markProcessed(cursor, run.projectKey, run.taskId)
 			await saveCursor(deps.cursorFile, cursor)
 		} catch {
 			// run-level failure (e.g. condense/list) — do not advance cursor; retry next pass
+		}
+	}
+	// TTL sweep once per pass, after all runs. Best-effort: never throws out.
+	if (deps.expire) {
+		try {
+			await deps.expire()
+		} catch {
+			// best-effort sweep
 		}
 	}
 }

@@ -19,22 +19,39 @@ describe("synthesizeMemories", () => {
 			},
 			{ scope: "global", type: "user", name: "prefers-fr", description: "FR", body: "User converses in French." },
 		])
-		const candidates = await synthesizeMemories("transcript", [{ name: "uses-vitest" }], {
+		const { created, reobserved } = await synthesizeMemories("transcript", [{ name: "uses-vitest" }], {
 			createMessage: () => fakeStream(modelJson),
 		})
 		assert.deepEqual(
-			candidates.map((c) => c.name),
+			created.map((c) => c.name),
 			["prefers-fr"],
 		)
+		// The name matching an existing memory is surfaced as re-observed, not dropped.
+		assert.deepEqual(reobserved, ["uses-vitest"])
 	})
-	it("returns [] on unparseable output", async () => {
-		assert.deepEqual(await synthesizeMemories("x", [], { createMessage: () => fakeStream("not json") }), [])
+	it("returns empty result on unparseable output", async () => {
+		assert.deepEqual(await synthesizeMemories("x", [], { createMessage: () => fakeStream("not json") }), {
+			created: [],
+			reobserved: [],
+		})
+	})
+	it("dedups re-observed names", async () => {
+		const modelJson = JSON.stringify([
+			{ scope: "global", type: "user", name: "uses-vitest", description: "d", body: "b" },
+			{ scope: "global", type: "user", name: "uses-vitest", description: "d2", body: "b2" },
+		])
+		const { created, reobserved } = await synthesizeMemories("t", [{ name: "uses-vitest" }], {
+			createMessage: () => fakeStream(modelJson),
+		})
+		assert.deepEqual(created, [])
+		assert.deepEqual(reobserved, ["uses-vitest"])
 	})
 	it("slugifies odd names so saveMemory never rejects them (poison-loop guard)", async () => {
 		const modelJson = JSON.stringify([
 			{ scope: "global", type: "user", name: "prefers Français!", description: "d", body: "b" },
 		])
-		const [c] = await synthesizeMemories("t", [], { createMessage: () => fakeStream(modelJson) })
+		const { created } = await synthesizeMemories("t", [], { createMessage: () => fakeStream(modelJson) })
+		const [c] = created
 		assert.match(c.name, /^[a-z0-9][a-z0-9_-]*$/)
 		assert.equal(c.name, "prefers-francais")
 	})

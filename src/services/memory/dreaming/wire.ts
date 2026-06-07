@@ -18,8 +18,9 @@ import { TRACING_DIR_NAME } from "@/core/tracing/JsonlTracer"
 import type { ApiConfiguration } from "@/shared/api"
 import type { Mode } from "@/shared/storage/types"
 import type { MemoryType } from "@/utils/ailiance-memory"
-import { listMemories, projectScopeFromCwd, saveMemory } from "@/utils/ailiance-memory"
+import { deleteMemory, listMemories, projectScopeFromCwd, saveMemory } from "@/utils/ailiance-memory"
 import type { DreamDeps, RunRef } from "./DreamWorker"
+import { isStale } from "./decay"
 import { synthesizeMemories } from "./MemorySynthesizer"
 import { condenseRun } from "./transcriptReader"
 
@@ -90,6 +91,33 @@ export function buildDreamDeps(getApiConfig: () => ApiConfiguration, getMode: ()
 				source: "dreamed",
 				lastSeenAt: new Date().toISOString(),
 			})
+		},
+		// Re-save an existing memory with a fresh lastSeenAt so re-confirmed
+		// entries survive the TTL sweep. Re-uses saveMemory (overwrites by name+scope).
+		bump: async (name) => {
+			const all = await listMemories({})
+			const m = all.find((x) => x.name === name)
+			if (!m) {
+				return
+			}
+			await saveMemory({
+				name: m.name,
+				description: m.description,
+				type: m.type,
+				scope: m.scope,
+				body: m.body,
+				source: m.source,
+				lastSeenAt: new Date().toISOString(),
+			})
+		},
+		// TTL sweep: delete memories whose freshness exceeds MEMORY_TTL_DAYS.
+		expire: async () => {
+			const all = await listMemories({})
+			for (const m of all) {
+				if (isStale(m)) {
+					await deleteMemory(m.name)
+				}
+			}
 		},
 	}
 }
