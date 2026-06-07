@@ -177,8 +177,8 @@ if (production) {
 }
 // Set the environment and telemetry env vars. The API key env vars need to be populated in the GitHub
 // workflows from the secrets.
-if (process.env.DIRAC_ENVIRONMENT) {
-	buildEnvVars["process.env.DIRAC_ENVIRONMENT"] = JSON.stringify(process.env.DIRAC_ENVIRONMENT)
+if (process.env.ISAAC_ENVIRONMENT) {
+	buildEnvVars["process.env.ISAAC_ENVIRONMENT"] = JSON.stringify(process.env.ISAAC_ENVIRONMENT)
 }
 if (process.env.TELEMETRY_SERVICE_API_KEY) {
 	buildEnvVars["process.env.TELEMETRY_SERVICE_API_KEY"] = JSON.stringify(process.env.TELEMETRY_SERVICE_API_KEY)

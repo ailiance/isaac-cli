@@ -89,3 +89,4 @@ storybook-static
 .claude/
 locales/**
 dist/node_modules/**/*.d.ts
+.serena/**
