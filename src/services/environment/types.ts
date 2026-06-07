@@ -84,7 +84,7 @@ export interface Environment {
 	searchFormatted(
 		directoryPath: string,
 		regex: string,
-		opts?: SearchOpts & { isaacIgnoreController?: unknown; taskId?: string },
+		opts?: SearchOpts & { isaacIgnoreController?: unknown; taskId?: string; cwd?: string },
 	): Promise<string>
 	dispose(): Promise<void>
 }

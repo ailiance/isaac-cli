@@ -1,6 +1,5 @@
 // tool call test comment
 import type { ToolUse } from "@core/assistant-message"
-import { regexSearchFiles } from "@services/ripgrep"
 import { IsaacSayTool } from "@shared/ExtensionMessage"
 import { stripHashes } from "@utils/line-hashing"
 import { arePathsEqual, getReadablePath, isLocatedInWorkspace } from "@utils/path"
@@ -107,17 +106,15 @@ export class SearchFilesToolHandler implements IFullyManagedTool {
 			// Use workspace root for relative path calculation, fallback to cwd
 			const basePathForRelative = workspaceRoot || config.cwd
 
-			const workspaceResults = await regexSearchFiles(
-				basePathForRelative,
-				absolutePath,
-				regex,
+			const workspaceResults = await config.environment.searchFormatted(absolutePath, regex, {
+				cwd: basePathForRelative,
 				filePattern,
-				config.services.isaacIgnoreController,
-				config.ulid,
+				isaacIgnoreController: config.services.isaacIgnoreController,
+				taskId: config.ulid,
 				contextLines,
 				excludeFilePatterns,
 				abortSignal,
-			)
+			})
 
 			// Parse the result count from the first line
 			const firstLine = workspaceResults.split("\n")[0]

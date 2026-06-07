@@ -143,11 +143,11 @@ export class LocalEnvironment implements Environment {
 	async searchFormatted(
 		directoryPath: string,
 		regex: string,
-		opts?: SearchOpts & { isaacIgnoreController?: any; taskId?: string },
+		opts?: SearchOpts & { isaacIgnoreController?: any; taskId?: string; cwd?: string },
 	): Promise<string> {
 		const { regexSearchFiles: rg } = await import("@services/ripgrep")
 		return rg(
-			this.cwd,
+			opts?.cwd ?? this.cwd,
 			this.abs(directoryPath),
 			regex,
 			opts?.filePattern ?? opts?.glob,
