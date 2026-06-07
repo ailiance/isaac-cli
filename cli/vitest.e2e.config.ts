@@ -1,40 +1,26 @@
 import path from "path"
 import { defineConfig } from "vitest/config"
 
+/**
+ * Dedicated config for CLI E2E tests.
+ *
+ * These spawn the built `dist/cli.mjs` binary against a local mock LLM server,
+ * so they are slow and require a prior build. They are intentionally NOT part
+ * of the default `npm test` run (see vitest.config.ts, which excludes
+ * `tests/e2e/**`). Invoke via `npm run test:e2e`.
+ */
 export default defineConfig({
 	test: {
 		globals: true,
 		environment: "node",
-		setupFiles: ["./vitest.setup.ts"],
-		coverage: {
-			reporter: ["text", "json", "html"],
-			exclude: ["node_modules/", "dist/"],
-		},
-		projects: [
-			{
-				extends: true,
-				test: {
-					name: "unit",
-					include: ["src/**/*.test.{ts,tsx}", "tests/**/*.test.{ts,tsx}"],
-					// E2E tests are slow and require a prior build; run them via
-					// `npm run test:e2e` (vitest.e2e.config.ts), never in the default gate.
-					exclude: ["src/**/*.markdown.test.tsx", "tests/e2e/**"],
-				},
-			},
-			{
-				extends: true,
-				test: {
-					name: "markdown",
-					include: ["src/**/*.markdown.test.tsx"],
-					env: { FORCE_COLOR: "3" },
-				},
-			},
-		],
+		include: ["tests/e2e/**/*.e2e.test.ts"],
+		// Cold start (~1-2s) plus the two-turn agent loop; give it room.
+		testTimeout: 60_000,
+		hookTimeout: 60_000,
 	},
 	resolve: {
 		alias: {
 			vscode: path.resolve(__dirname, "src/vscode-shim.ts"),
-			// Match tsconfig paths - baseUrl is parent directory
 			"@": path.resolve(__dirname, "../src"),
 			"@api": path.resolve(__dirname, "../src/core/api"),
 			"@core": path.resolve(__dirname, "../src/core"),

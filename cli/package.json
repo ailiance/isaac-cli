@@ -45,7 +45,8 @@
 		"link": "npm run build && npm link",
 		"unlink": "npm unlink -g isaac-cli",
 		"test": "vitest",
-		"test:run": "vitest run"
+		"test:run": "vitest run",
+		"test:e2e": "npm run build && vitest run --config vitest.e2e.config.ts"
 	},
 	"keywords": [
 		"isaac",
