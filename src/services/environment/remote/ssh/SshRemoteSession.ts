@@ -28,13 +28,19 @@ export class SshRemoteSession implements Environment {
 		this.id = "ssh"
 		this.cwd = remoteCwd
 		this.ready = this.init()
+		// Mark the eager promise as handled so a pre-first-op init failure does not
+		// surface as an unhandledRejection; use()/dispose() still await + surface it.
+		this.ready.catch(() => {})
 	}
 
 	/** Synchronous factory: keeps resolveEnvironment sync; init runs lazily on first op. */
 	static create(host: string, localCwd: string, hooksOverride?: Partial<SshRemoteHooks>): SshRemoteSession {
 		const sessionId = `${process.pid}-${localCwd.replace(/[^a-zA-Z0-9]/g, "_")}`
 		const remoteCwd = `~/.isaac/workspaces/${sessionId}`
-		const localBundle = path.join(__dirname, "..", "..", "..", "..", "..", "dist", "lisael-daemon.js")
+		// Sibling of the bundled output (dist/lisael-daemon.js), like the
+		// remote-local branch in resolveEnvironment. At bundled runtime __dirname
+		// IS dist/; a 5-up source-tree path would resolve above the repo root.
+		const localBundle = path.join(__dirname, "lisael-daemon.js")
 		const hooks: SshRemoteHooks = {
 			bootstrap: () => runRsync(buildBootstrap(host, localBundle, REMOTE_DAEMON)),
 			push: () => runRsync(buildRsyncPush(host, localCwd, remoteCwd, DEFAULT_EXCLUDES)),
