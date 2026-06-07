@@ -1,4 +1,5 @@
 import { strict as assert } from "node:assert"
+import { LocalEnvironment } from "@services/environment"
 import { describe, it } from "mocha"
 import sinon from "sinon"
 import { IsaacDefaultTool } from "@/shared/tools"
@@ -9,12 +10,13 @@ import { ExecuteCommandToolHandler } from "../ExecuteCommandToolHandler"
 
 function createConfig() {
 	const taskState = new TaskState()
+	const runCommandStub = sinon.stub().resolves([false, "ok"])
 	const callbacks = {
 		say: sinon.stub().resolves(undefined),
 		ask: sinon.stub().resolves({ response: "yesButtonClicked" }),
 		sayAndCreateMissingParamError: sinon.stub().resolves("missing"),
 		removeLastPartialMessageIfExistsWithType: sinon.stub().resolves(),
-		executeCommandTool: sinon.stub().resolves([false, "ok"]),
+		executeCommandTool: runCommandStub,
 		getIsaacMessages: sinon.stub().returns([]),
 		updateIsaacMessage: sinon.stub().resolves(),
 	}
@@ -23,6 +25,7 @@ function createConfig() {
 		taskId: "task-1",
 		ulid: "ulid-1",
 		cwd: "/tmp",
+		environment: new LocalEnvironment("/tmp", runCommandStub),
 		mode: "act",
 		yoloModeToggled: true,
 		taskState,

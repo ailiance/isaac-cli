@@ -566,7 +566,7 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 
 			const execPromise = (async () => {
 				try {
-					const [userRejected, result] = await config.callbacks.executeCommandTool(finalCommand, timeoutSeconds, {
+					const [userRejected, result] = await config.environment.runCommand(finalCommand, timeoutSeconds, {
 						suppressUserInteraction: true,
 						useBackgroundExecution: true,
 						onOutputLine,

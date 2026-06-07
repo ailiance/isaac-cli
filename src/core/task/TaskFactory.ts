@@ -412,9 +412,10 @@ export function buildTaskManagers(inputs: TaskManagerInputs): TaskManagers {
 		recordEnvironment,
 	} = inputs
 
-	// Resolve the execution environment for tool I/O. commandRunner wiring is
-	// deferred to Task 11 (executeCommandTool signature differs from CommandRunner).
-	const environment = resolveEnvironment({ cwd })
+	// Resolve the execution environment for tool I/O. execute_command routes
+	// through environment.runCommand, which delegates to the same
+	// executeCommandTool callback used everywhere else (identical behavior).
+	const environment = resolveEnvironment({ cwd, commandRunner: executeCommandTool })
 
 	const toolExecutor = new ToolExecutor(
 		taskState,

@@ -1,3 +1,4 @@
+import type { CommandExecutionOptions } from "@integrations/terminal"
 import type { FileInfo } from "@services/glob/list-files"
 
 export type { FileInfo }
@@ -44,16 +45,19 @@ export interface ExecHandle {
 	readonly exitCode: Promise<number>
 }
 
+/**
+ * Runs a shell command through the host's command execution pipeline.
+ *
+ * Signature is kept identical to `Task.executeCommandTool` (see
+ * `TaskCallbacks.executeCommandTool` in
+ * `core/task/tools/types/TaskConfig.ts`) so the live callback can be passed
+ * to `resolveEnvironment({ commandRunner })` without any cast.
+ */
 export type CommandRunner = (
 	command: string,
-	timeoutSeconds: number,
-	opts: {
-		onOutputLine?: (line: string) => void
-		abortSignal?: AbortSignal
-		useBackgroundExecution?: boolean
-		suppressUserInteraction?: boolean
-	},
-) => Promise<[boolean, string]>
+	timeoutSeconds: number | undefined,
+	options?: CommandExecutionOptions,
+) => Promise<[boolean, any]>
 
 export class EnvironmentError extends Error {
 	constructor(
