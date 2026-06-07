@@ -536,6 +536,17 @@ export function projectScopeFromCwd(cwd: string | undefined): MemoryScope | null
 const MEMORY_BUDGET_CHARS = 8_000 // ~2000 tokens at ~4 chars/token average
 
 /**
+ * Optional semantic re-ranker injected into `loadRelevantMemories`. When
+ * present and `rank()` resolves to a non-null score map, memories are
+ * ordered by descending score. A `null` result (no index, no network,
+ * embed failure) makes the caller fall back to the token-overlap path —
+ * so the no-ranker / failed-ranker behavior is identical to today's.
+ */
+export interface SemanticRanker {
+	rank(query: string, names: string[]): Promise<Map<string, number> | null>
+}
+
+/**
  * Load global + project-scoped memories for a given cwd, sorted by
  * relevance (project memories first, then global, both newest-first
  * within each bucket). Truncates the combined output at
@@ -550,6 +561,7 @@ const MEMORY_BUDGET_CHARS = 8_000 // ~2000 tokens at ~4 chars/token average
 export async function loadRelevantMemories(
 	cwd?: string,
 	userPrompt?: string,
+	ranker?: SemanticRanker,
 ): Promise<{
 	memories: Memory[]
 	totalChars: number
@@ -562,6 +574,41 @@ export async function loadRelevantMemories(
 	// already newest-first from listMemories().
 	let combined = [...projectList, ...globalList]
 	if (combined.length === 0) return null
+	// Semantic re-rank (opt-in via injected ranker). On any non-null score
+	// map we order by descending score, with the existing project-over-global
+	// tie-break preserved for unscored / equal entries. A null result (no
+	// index / no network / embed failure) drops through to the unchanged
+	// token-overlap path below — so the no-ranker call is identical to today.
+	if (ranker && userPrompt) {
+		let scores: Map<string, number> | null = null
+		try {
+			scores = await ranker.rank(
+				userPrompt,
+				combined.map((m) => m.name),
+			)
+		} catch {
+			scores = null
+		}
+		if (scores) {
+			const ordered = combined
+				.map((m, idx) => ({
+					m,
+					idx,
+					projectBonus: m.scope !== "global" ? 0.05 : 0,
+					score: scores.get(m.name) ?? 0,
+				}))
+				.sort((a, b) => {
+					const sa = a.score + a.projectBonus
+					const sb = b.score + b.projectBonus
+					if (sb !== sa) return sb - sa
+					// Tie-break: original combined order (project-first, newest-first).
+					return a.idx - b.idx
+				})
+			combined = ordered.map((s) => s.m)
+			return clampToBudget(combined)
+		}
+		// scores === null → fall through to the token-overlap path (unchanged).
+	}
 	// When a user prompt is provided, re-rank by token-overlap relevance.
 	// Project-vs-global bucket bias is preserved by adding a small bonus
 	// to project-scoped memories so a barely-matching global doesn't jump
@@ -587,6 +634,16 @@ export async function loadRelevantMemories(
 		}
 		// else: leave combined as-is (project-first, newest-first)
 	}
+	return clampToBudget(combined)
+}
+
+/**
+ * Truncate an ordered memory list at MEMORY_BUDGET_CHARS so an unbounded
+ * store cannot dominate the system prompt. Shared by the semantic and
+ * token-overlap ranking paths so both apply an identical budget. Returns
+ * null when nothing fits (caller skips the section).
+ */
+function clampToBudget(combined: Memory[]): { memories: Memory[]; totalChars: number; truncated: boolean } | null {
 	const included: Memory[] = []
 	let totalChars = 0
 	let truncated = false

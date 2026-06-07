@@ -483,4 +483,60 @@ describe("ailiance-memory", () => {
 			expect(newerIdx).toBeLessThan(olderIdx)
 		})
 	})
+
+	describe("loadRelevantMemories semantic ranker (injected)", () => {
+		it("orders memories by the injected ranker's scores", async () => {
+			await saveMemory({
+				name: "another-memory",
+				description: "first",
+				type: "user",
+				body: "alpha content",
+			})
+			await new Promise((resolve) => setTimeout(resolve, 10))
+			await saveMemory({
+				name: "test-user-pref",
+				description: "second",
+				type: "user",
+				body: "beta content",
+			})
+			// Ranker scores the older "another-memory" higher than the newer one,
+			// so semantic order must override the default newest-first order.
+			const ranker = {
+				rank: vi.fn(async (_q: string, names: string[]) => {
+					const m = new Map<string, number>()
+					for (const n of names) m.set(n, n === "another-memory" ? 0.9 : 0.1)
+					return m
+				}),
+			}
+			const loaded = await loadRelevantMemories("/tmp/test-sem-A", "anything", ranker)
+			expect(loaded).not.toBeNull()
+			expect(ranker.rank).toHaveBeenCalledOnce()
+			const names = loaded!.memories.map((m) => m.name)
+			expect(names.indexOf("another-memory")).toBeLessThan(names.indexOf("test-user-pref"))
+		})
+
+		it("falls back to token-overlap when the ranker returns null", async () => {
+			await saveMemory({
+				name: "another-memory",
+				description: "kubernetes deployment notes",
+				type: "reference",
+				body: "Use kubectl apply -f manifests/ then kubectl rollout status.",
+			})
+			await new Promise((resolve) => setTimeout(resolve, 10))
+			await saveMemory({
+				name: "test-user-pref",
+				description: "prefers French",
+				type: "user",
+				body: "Always reply in French.",
+			})
+			const nullRanker = { rank: vi.fn(async () => null) }
+			const loaded = await loadRelevantMemories("/tmp/test-sem-B", "How do I deploy a kubernetes service?", nullRanker)
+			expect(loaded).not.toBeNull()
+			expect(nullRanker.rank).toHaveBeenCalledOnce()
+			// null result => identical to the token-overlap path: the matching
+			// memory ranks ahead of the more recent non-matching one.
+			const names = loaded!.memories.map((m) => m.name)
+			expect(names.indexOf("another-memory")).toBeLessThan(names.indexOf("test-user-pref"))
+		})
+	})
 })
