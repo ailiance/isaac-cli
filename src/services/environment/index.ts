@@ -1,6 +1,8 @@
 export { InMemoryEnvironment } from "./InMemoryEnvironment"
 export { LocalEnvironment } from "./LocalEnvironment"
 export { RemoteEnvironment } from "./remote/RemoteEnvironment"
+export { SshRemoteSession } from "./remote/ssh/SshRemoteSession"
+export { sshTransport } from "./remote/ssh/sshTransport"
 export { inProcessTransportPair, subprocessTransport } from "./remote/transport"
 export { resolveEnvironment } from "./resolveEnvironment"
 export * from "./types"
