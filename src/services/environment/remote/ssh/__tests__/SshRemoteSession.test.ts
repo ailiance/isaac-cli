@@ -6,6 +6,9 @@ describe("SshRemoteSession", () => {
 	it("bootstraps + seeds before the first op, pulls + cleans on dispose", async () => {
 		const calls: string[] = []
 		const env = SshRemoteSession.create("studio", "/local/wd", {
+			gc: async () => {
+				calls.push("gc")
+			},
 			bootstrap: async () => {
 				calls.push("bootstrap")
 			},
@@ -33,7 +36,7 @@ describe("SshRemoteSession", () => {
 		})
 		const data = await env.readFile("a.txt")
 		assert.equal(data, "data")
-		assert.deepEqual(calls, ["bootstrap", "push", "readFile"])
+		assert.deepEqual(calls, ["gc", "bootstrap", "push", "readFile"])
 		await env.dispose()
 		assert.deepEqual(calls.slice(-3), ["env.dispose", "pull", "cleanup"])
 	})

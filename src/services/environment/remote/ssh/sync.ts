@@ -21,6 +21,11 @@ export function buildBootstrap(host: string, localFile: string, remotePath: stri
 	return ["-az", "-e", "ssh", localFile, `${host}:${remotePath}`]
 }
 
+/** Remote shell command that GCs orphan workspace dirs older than ttlDays. */
+export function buildGcCommand(ttlDays: number): string {
+	return `find ~/.isaac/workspaces -mindepth 1 -maxdepth 1 -type d -mtime +${ttlDays} -exec rm -rf {} +`
+}
+
 export function runRsync(args: string[]): Promise<void> {
 	return new Promise((resolve, reject) => {
 		const child = spawn("rsync", args)

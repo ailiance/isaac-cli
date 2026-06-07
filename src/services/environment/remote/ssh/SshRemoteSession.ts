@@ -2,11 +2,12 @@ import path from "node:path"
 import type { DirEntry, Environment, EnvStat, ExecHandle, ExecOpts, FileInfo, SearchOpts } from "../../types"
 import { RemoteEnvironment } from "../RemoteEnvironment"
 import { sshTransport } from "./sshTransport"
-import { buildBootstrap, buildRsyncPull, buildRsyncPush, DEFAULT_EXCLUDES, runRsync, runSsh } from "./sync"
+import { buildBootstrap, buildGcCommand, buildRsyncPull, buildRsyncPush, DEFAULT_EXCLUDES, runRsync, runSsh } from "./sync"
 
 const REMOTE_DAEMON = "~/.isaac/lisael-daemon.js"
 
 export interface SshRemoteHooks {
+	gc: () => Promise<void>
 	bootstrap: () => Promise<void>
 	push: () => Promise<void>
 	pull: () => Promise<void>
@@ -42,6 +43,7 @@ export class SshRemoteSession implements Environment {
 		// IS dist/; a 5-up source-tree path would resolve above the repo root.
 		const localBundle = path.join(__dirname, "lisael-daemon.js")
 		const hooks: SshRemoteHooks = {
+			gc: () => runSsh(host, buildGcCommand(7)),
 			bootstrap: () => runRsync(buildBootstrap(host, localBundle, REMOTE_DAEMON)),
 			push: () => runRsync(buildRsyncPush(host, localCwd, remoteCwd, DEFAULT_EXCLUDES)),
 			pull: () => runRsync(buildRsyncPull(host, remoteCwd, localCwd, DEFAULT_EXCLUDES)),
@@ -53,6 +55,10 @@ export class SshRemoteSession implements Environment {
 	}
 
 	private async init(): Promise<void> {
+		// Best-effort GC of orphan workspaces; never blocks the session.
+		try {
+			await this.hooks.gc()
+		} catch {}
 		await this.hooks.bootstrap()
 		await this.hooks.push()
 		this.env = this.hooks.makeEnv()

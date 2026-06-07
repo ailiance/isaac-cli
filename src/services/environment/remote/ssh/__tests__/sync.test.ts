@@ -1,8 +1,15 @@
 import { strict as assert } from "node:assert"
 import { describe, it } from "mocha"
-import { buildBootstrap, buildRsyncPull, buildRsyncPush, DEFAULT_EXCLUDES } from "../sync"
+import { buildBootstrap, buildGcCommand, buildRsyncPull, buildRsyncPush, DEFAULT_EXCLUDES } from "../sync"
 
 describe("ssh sync arg builders", () => {
+	it("buildGcCommand removes workspace dirs older than ttl", () => {
+		const cmd = buildGcCommand(7)
+		assert.match(cmd, /find ~\/\.isaac\/workspaces/)
+		assert.match(cmd, /-mtime \+7/)
+		assert.match(cmd, /rm -rf/)
+	})
+
 	it("push: rsync -az --delete -e ssh with excludes and trailing slashes", () => {
 		const args = buildRsyncPush("studio", "/local/wd", "~/.isaac/workspaces/w1", DEFAULT_EXCLUDES)
 		assert.ok(args.includes("-az") && args.includes("--delete"))
