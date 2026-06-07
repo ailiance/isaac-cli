@@ -7,6 +7,11 @@ export class RemoteEnvironment implements Environment {
 	readonly id: string
 	private peer: RpcPeer
 	private onClose?: () => void
+	// Per-call output routing. The client owns the streamId so concurrent
+	// runCommand calls never cross-route their output. The output handler is
+	// registered ONCE in the constructor and demultiplexes on params.streamId.
+	private streamCounter = 0
+	private outputSinks = new Map<string, (line: string) => void>()
 	constructor(
 		transport: Transport,
 		readonly cwd: string,
@@ -15,6 +20,11 @@ export class RemoteEnvironment implements Environment {
 		this.id = opts?.id ?? "remote"
 		this.onClose = opts?.onClose
 		this.peer = new RpcPeer(transport)
+		this.peer.onNotify(NOTIFY.output, (params: any) => {
+			if (params?.stream === "stdout" && typeof params?.streamId === "string") {
+				this.outputSinks.get(params.streamId)?.(params.chunk)
+			}
+		})
 	}
 
 	readFile(p: string): Promise<string> {
@@ -66,21 +76,32 @@ export class RemoteEnvironment implements Environment {
 	}
 
 	runCommand: CommandRunner = (command, timeoutSeconds, opts) => {
-		this.peer.onNotify(NOTIFY.output, (params: any) => {
-			if (params?.stream === "stdout") {
-				opts?.onOutputLine?.(params.chunk)
-			}
-		})
+		const streamId = `c${++this.streamCounter}`
+		if (opts?.onOutputLine) {
+			this.outputSinks.set(streamId, opts.onOutputLine)
+		}
+		let onAbort: (() => void) | undefined
+		if (opts?.abortSignal) {
+			onAbort = () => this.peer.notify(NOTIFY.abort, { streamId })
+			opts.abortSignal.addEventListener("abort", onAbort, { once: true })
+		}
 		return this.peer
 			.request(RPC_METHODS.runCommand, {
 				command,
 				timeoutSeconds,
+				streamId,
 				opts: {
 					useBackgroundExecution: opts?.useBackgroundExecution,
 					suppressUserInteraction: opts?.suppressUserInteraction,
 				},
 			})
 			.then((r) => r as [boolean, any])
+			.finally(() => {
+				this.outputSinks.delete(streamId)
+				if (onAbort) {
+					opts?.abortSignal?.removeEventListener("abort", onAbort)
+				}
+			})
 	}
 
 	exec(_cmd: string, _opts?: ExecOpts): ExecHandle {
