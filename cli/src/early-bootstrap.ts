@@ -17,3 +17,18 @@ if (process.stdin.isTTY) {
 		// non-TTY, unsupported, or already raw — ignore
 	}
 }
+
+// Swallow EPIPE on stdout/stderr. When the consumer of our piped output closes
+// early (`isaac … | head`, quitting a pager, a closed SSH/TTY), an in-flight
+// async write (Ink render, spinner, SIGINT line-clear) throws EPIPE. Without an
+// 'error' listener Node escalates it to an uncaughtException, which the global
+// handler prints as a scary stack trace. A closed downstream is a normal
+// end-of-pipe, not a crash — exit cleanly instead. Attached here so the guard is
+// live before any write can happen.
+const swallowEpipe = (err: NodeJS.ErrnoException) => {
+	if (err.code === "EPIPE") {
+		process.exit(0)
+	}
+}
+process.stdout.on("error", swallowEpipe)
+process.stderr.on("error", swallowEpipe)

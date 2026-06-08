@@ -1,6 +1,6 @@
 import { shutdownEvent } from "../vscode-shim"
-import { activeContext, isShuttingDown, isPlainTextMode, setIsShuttingDown } from "./state"
 import { disposeCliContext } from "./cleanup"
+import { activeContext, isPlainTextMode, isShuttingDown, setIsShuttingDown } from "./state"
 
 export async function captureUnhandledException(reason: Error, context: string) {
 	try {
@@ -31,6 +31,13 @@ export async function captureUnhandledException(reason: Error, context: string) 
 
 const EXIT_TIMEOUT_MS = 3000
 export async function onUnhandledException(reason: unknown, context: string) {
+	// A closed downstream pipe (EPIPE) is a normal end-of-pipe, not a crash.
+	// Should the stream-level guard in early-bootstrap miss one, exit quietly
+	// here instead of printing a stack trace for the user.
+	if (reason instanceof Error && (reason as NodeJS.ErrnoException).code === "EPIPE") {
+		process.exit(0)
+	}
+
 	const { Logger } = await import("@/shared/services/Logger")
 	const { restoreConsole } = await import("./console")
 	Logger.error("Unhandled exception:", reason)
