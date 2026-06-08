@@ -26,6 +26,12 @@ export const BASE_SLASH_COMMANDS: SlashCommand[] = [
 		cliCompatible: true,
 	},
 	{
+		name: "init",
+		description: "Analyze the codebase and generate an ISAAC.md project guide",
+		section: "default",
+		cliCompatible: true,
+	},
+	{
 		name: "reportbug",
 		description: "Create a Github issue with ISAAC",
 		section: "default",

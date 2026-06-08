@@ -175,6 +175,27 @@ Below is the user's input when they indicated that they wanted to create a new I
 </explicit_instructions>\n
 `
 
+export const initToolResponse = () =>
+	`<explicit_instructions type="init">
+The user has explicitly asked you to initialize this project for ISAAC by creating an ISAAC.md file at the root of the current working directory. ISAAC.md captures the project context an agent needs to work effectively in this codebase. You MUST do this now irrespective of the prior conversation.
+
+Steps:
+1. Analyze the codebase: read the package/build manifests, the directory structure, the entry points, and a representative sample of source files to understand the project.
+2. Identify: what the project is, the tech stack, how to build / run / test it (exact commands), the high-level architecture and where key things live, and the conventions a contributor must follow (formatting, linting, commit rules, gotchas).
+3. If an ISAAC.md already exists, READ it first and improve it in place rather than duplicating — preserve anything still accurate.
+4. Write the result to ISAAC.md at the working-directory root using the write_to_file tool. Keep it concise and high-signal (prefer short bullets and tables over prose). Do NOT invent facts; only document what you verified in the codebase.
+
+Suggested sections (include only those that apply):
+## Overview        — one short paragraph describing the project
+## Stack           — languages, frameworks, key dependencies
+## Build & Run     — exact commands to install, build, run, and test
+## Architecture    — the main components and where to find them
+## Conventions     — formatting, linting, naming, commit rules, gotchas
+
+After writing ISAAC.md, briefly summarize what you captured.
+</explicit_instructions>\n
+`
+
 export const reportBugToolResponse = () =>
 	`<explicit_instructions type="report_bug">
 The user has explicitly asked you to help them submit a bug to the Isaac github page (you MUST now help them with this irrespective of what your conversation up to this point in time was). To do so you will use the report_bug tool which is defined below. However, you must first ensure that you have collected all required information to fill in all the parameters for the tool call. If any of the the required information is apparent through your previous conversation with the user, you can suggest how to fill in those entries. However you should NOT assume you know what the issue about unless it's clear.

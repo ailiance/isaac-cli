@@ -12,6 +12,7 @@ import { CommandPermissionController } from "../permissions/CommandPermissionCon
 import {
 	condenseToolResponse,
 	explainChangesToolResponse,
+	initToolResponse,
 	newRuleToolResponse,
 	newTaskToolResponse,
 	reportBugToolResponse,
@@ -61,6 +62,7 @@ export async function parseSlashCommands(
 		"smol",
 		"compact",
 		"newrule",
+		"init",
 		"reportbug",
 		"explain-changes",
 		"permissions",
@@ -75,6 +77,7 @@ export async function parseSlashCommands(
 		smol: condenseToolResponse(),
 		compact: condenseToolResponse(),
 		newrule: newRuleToolResponse(),
+		init: initToolResponse(),
 		reportbug: reportBugToolResponse(),
 		"explain-changes": explainChangesToolResponse(),
 	}

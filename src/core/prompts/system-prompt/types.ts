@@ -28,6 +28,7 @@ export interface SystemPromptContext {
 	readonly localCursorRulesDirInstructions?: string
 	readonly localWindsurfRulesFileInstructions?: string
 	readonly localAgentsRulesFileInstructions?: string
+	readonly localIsaacMdRulesFileInstructions?: string
 	readonly isaacIgnoreInstructions?: string
 	readonly preferredLanguageInstructions?: string
 	readonly userInstructions?: string

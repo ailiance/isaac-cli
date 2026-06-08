@@ -4,6 +4,7 @@ import { checkContextWindowExceededError } from "@core/context/context-managemen
 import {
 	getLocalAgentsRules,
 	getLocalCursorRules,
+	getLocalIsaacMdRules,
 	getLocalWindsurfRules,
 	refreshExternalRulesToggles,
 } from "@core/context/instructions/user-instructions/external-rules"
@@ -99,6 +100,7 @@ export class ApiRequestHandler {
 		const localWindsurfRulesFileInstructions = await getLocalWindsurfRules(this.ctx.cwd, windsurfLocalToggles)
 
 		const localAgentsRulesFileInstructions = await getLocalAgentsRules(this.ctx.cwd, agentsLocalToggles)
+		const localIsaacMdRulesFileInstructions = await getLocalIsaacMdRules(this.ctx.cwd)
 		this.ctx.isaacIgnoreController.yoloMode = !!this.ctx.stateManager.getGlobalSettingsKey("yoloModeToggled")
 
 		const isYolo = !!this.ctx.stateManager.getGlobalSettingsKey("yoloModeToggled")
@@ -188,6 +190,7 @@ export class ApiRequestHandler {
 			localCursorRulesDirInstructions,
 			localWindsurfRulesFileInstructions,
 			localAgentsRulesFileInstructions,
+			localIsaacMdRulesFileInstructions,
 			isaacIgnoreInstructions,
 			preferredLanguageInstructions,
 			browserSettings: this.ctx.stateManager.getGlobalSettingsKey("browserSettings"),

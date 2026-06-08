@@ -65,6 +65,7 @@ export const GlobalFileNames = {
 	cursorRulesFile: ".cursorrules",
 	windsurfRules: ".windsurfrules",
 	agentsRulesFile: "AGENTS.md",
+	isaacMdFile: "ISAAC.md",
 	taskMetadata: "task_metadata.json",
 	// ailiance-agent fork: EU AI Act-compliant per-task JSONL trace dir
 	tracingDir: ".ailiance-agent/runs",

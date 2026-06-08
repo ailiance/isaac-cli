@@ -16,6 +16,7 @@ export const SYSTEM_PROMPT = (context: SystemPromptContext) => {
 		localCursorRulesDirInstructions,
 		localWindsurfRulesFileInstructions,
 		localAgentsRulesFileInstructions,
+		localIsaacMdRulesFileInstructions,
 		enableParallelToolCalling,
 		userInstructions,
 		isaacRules,
@@ -128,7 +129,8 @@ ${
 	localCursorRulesFileInstructions ||
 	localCursorRulesDirInstructions ||
 	localWindsurfRulesFileInstructions ||
-	localAgentsRulesFileInstructions
+	localAgentsRulesFileInstructions ||
+	localIsaacMdRulesFileInstructions
 		? `\n\n# USER'S CUSTOM INSTRUCTIONS\n\nThe following additional instructions are provided by the user.\n${
 				userInstructions ? `\n${userInstructions}` : ""
 			}${isaacRules ? `\n${isaacRules}` : ""}${preferredLanguageInstructions ? `\n${preferredLanguageInstructions}` : ""}${
@@ -139,7 +141,7 @@ ${
 				localCursorRulesDirInstructions ? `\n${localCursorRulesDirInstructions}` : ""
 			}${localWindsurfRulesFileInstructions ? `\n${localWindsurfRulesFileInstructions}` : ""}${
 				localAgentsRulesFileInstructions ? `\n${localAgentsRulesFileInstructions}` : ""
-			}`
+			}${localIsaacMdRulesFileInstructions ? `\n${localIsaacMdRulesFileInstructions}` : ""}`
 		: ""
 }
 `
