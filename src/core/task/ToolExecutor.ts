@@ -14,14 +14,14 @@ import { IsaacContent } from "@shared/messages/content"
 import { IsaacDefaultTool, toolUseNames } from "@shared/tools"
 import { IsaacAskResponse } from "@shared/WebviewMessage"
 import { isParallelToolCallingEnabled, modelDoesntSupportWebp } from "@/utils/model-utils"
-// ailiance-agent fork: source the version from package.json so trace meta and
+// ailiance-agent: source the version from package.json so trace meta and
 // the package binary never drift apart at release time.
 import { version as ISAAC_AGENT_VERSION } from "../../../package.json"
 import { ToolUse } from "../assistant-message"
 import { ContextManager } from "../context/context-management/ContextManager"
 import { formatResponse } from "../prompts/responses"
 import { StateManager } from "../storage/StateManager"
-// ailiance-agent fork: tracing hook
+// ailiance-agent: tracing hook
 import { JsonlTracer } from "../tracing"
 import { WorkspaceRootManager } from "../workspace"
 import { ToolResponse } from "."
@@ -47,7 +47,7 @@ export function canonicalizeAttemptCompletionParams(block: ToolUse): boolean {
 export class ToolExecutor {
 	private autoApprover: AutoApprove
 	private coordinator: ToolExecutorCoordinator
-	// ailiance-agent fork: tracing hook
+	// ailiance-agent: tracing hook
 	private tracer: JsonlTracer | null = null
 	private traceMetaWritten = false
 
@@ -141,7 +141,7 @@ export class ToolExecutor {
 		this.coordinator = new ToolExecutorCoordinator()
 		this.registerToolHandlers()
 
-		// ailiance-agent fork: tracing hook — per-task JSONL trace dir
+		// ailiance-agent: tracing hook — per-task JSONL trace dir
 		try {
 			this.tracer = new JsonlTracer(this.taskId, this.cwd)
 		} catch (_err) {
@@ -149,7 +149,7 @@ export class ToolExecutor {
 		}
 	}
 
-	// ailiance-agent fork: tracing hook helpers
+	// ailiance-agent: tracing hook helpers
 	private ensureTraceMeta(): void {
 		if (!this.tracer || this.traceMetaWritten) return
 		try {
@@ -206,7 +206,7 @@ export class ToolExecutor {
 		}
 	}
 
-	// ailiance-agent fork: expose planner-turn recorder so the Task's API request
+	// ailiance-agent: expose planner-turn recorder so the Task's API request
 	// loop can capture every roundtrip (not just successful tool calls).
 	public recordPlannerTurn(rawResponse: string, latencyMs: number, errors: string[] = []): void {
 		if (!this.tracer) return
@@ -706,7 +706,7 @@ export class ToolExecutor {
 
 			this.pushToolResult(toolResult, block)
 
-			// ailiance-agent fork: tracing hook (success path)
+			// ailiance-agent: tracing hook (success path)
 			this.recordToolTurn(block, toolResult, true, executionStartTime)
 			if (block.name === "attempt_completion") {
 				this.closeTrace("attempt_completion", 0)
@@ -736,7 +736,7 @@ export class ToolExecutor {
 			executionSuccess = false
 			toolResult = formatResponse.toolError(`Tool execution failed: ${error}`)
 
-			// ailiance-agent fork: tracing hook (error path)
+			// ailiance-agent: tracing hook (error path)
 			this.recordToolTurn(block, toolResult, false, executionStartTime, [String((error as Error)?.message ?? error)])
 
 			// Check abort before running PostToolUse hook (error path)

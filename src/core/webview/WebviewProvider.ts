@@ -122,7 +122,7 @@ export abstract class IsaacWebviewProvider {
 				</style>
 				<link rel="stylesheet" type="text/css" href="${stylesUrl}">
 				<link href="${codiconsUrl}" rel="stylesheet" />
-				<!-- ailiance-agent fork: CSP narrowed — drop *.dirac.run (telemetry off) -->
+				<!-- ailiance-agent: CSP narrowed — drop *.dirac.run (telemetry off) -->
 				<meta http-equiv="Content-Security-Policy" content="default-src 'none';
 					connect-src https://*.posthog.com;
 					font-src ${this.getCspSource()} data:; 

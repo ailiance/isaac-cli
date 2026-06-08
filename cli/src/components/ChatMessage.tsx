@@ -1,4 +1,4 @@
-// ailiance-agent fork: rebrand "Isaac" → "ISAAC" in user-visible tool labels
+// ailiance-agent: rebrand "Isaac" → "ISAAC" in user-visible tool labels
 /**
  * Claude Code style chat message component
  * Renders messages with:

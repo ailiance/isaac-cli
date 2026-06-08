@@ -1,4 +1,4 @@
-// isaac fork: /remember /forget /memories slash commands
+// ISAAC: /remember /forget /memories slash commands
 //
 // Surface the src/utils/ailiance-memory CRUD layer via CLI subcommands so
 // the user can manage cross-task memory from the terminal. Auto-injection
@@ -13,16 +13,16 @@
 //   isaac memory forget <name>
 
 import { exit } from "node:process"
-import { printError, printInfo, printSuccess, printWarning } from "../utils/display"
 import {
 	deleteMemory,
 	findMemories,
 	getMemoryRoot,
 	listMemories,
-	saveMemory,
 	type Memory,
 	type MemoryType,
+	saveMemory,
 } from "@/utils/ailiance-memory"
+import { printError, printInfo, printSuccess, printWarning } from "../utils/display"
 
 const VALID_TYPES: MemoryType[] = ["user", "feedback", "project", "reference"]
 
@@ -34,19 +34,16 @@ function classifyTypeFromInput(raw: string | undefined): MemoryType {
 }
 
 function slugify(title: string): string {
-	return title
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, "-")
-		.replace(/^-+|-+$/g, "")
-		.slice(0, 64) || `memory-${Date.now()}`
+	return (
+		title
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, "-")
+			.replace(/^-+|-+$/g, "")
+			.slice(0, 64) || `memory-${Date.now()}`
+	)
 }
 
-export async function runMemoryRemember(args: {
-	title: string
-	body?: string
-	type?: string
-	scope?: string
-}): Promise<void> {
+export async function runMemoryRemember(args: { title: string; body?: string; type?: string; scope?: string }): Promise<void> {
 	if (!args.title?.trim()) {
 		printError("usage: isaac memory remember <title> [body]")
 		exit(2)
@@ -55,9 +52,7 @@ export async function runMemoryRemember(args: {
 	const description = args.title.trim()
 	const body = (args.body || description).trim()
 	const type = classifyTypeFromInput(args.type)
-	const scope = (args.scope?.startsWith("project:") ? args.scope : "global") as
-		| "global"
-		| `project:${string}`
+	const scope = (args.scope?.startsWith("project:") ? args.scope : "global") as "global" | `project:${string}`
 	try {
 		const filePath = await saveMemory({ name, description, type, scope, body })
 		printSuccess(`Saved memory '${name}' (${type}, ${scope})`)
@@ -78,9 +73,7 @@ export async function runMemoryList(args: { type?: string; scope?: string }): Pr
 		filter.type = args.type as MemoryType
 	}
 	if (args.scope) {
-		filter.scope = args.scope.startsWith("project:")
-			? (args.scope as `project:${string}`)
-			: "global"
+		filter.scope = args.scope.startsWith("project:") ? (args.scope as `project:${string}`) : "global"
 	}
 	const memories = await listMemories(filter)
 	if (memories.length === 0) {
@@ -136,8 +129,7 @@ export async function runMemoryForget(args: { name: string }): Promise<void> {
 		exit(1)
 	}
 	printWarning(
-		`No exact match for '${args.name}'. Did you mean:\n` +
-			matches.map((m) => `  - ${m.name} — ${m.description}`).join("\n"),
+		`No exact match for '${args.name}'. Did you mean:\n` + matches.map((m) => `  - ${m.name} — ${m.description}`).join("\n"),
 	)
 	exit(1)
 }

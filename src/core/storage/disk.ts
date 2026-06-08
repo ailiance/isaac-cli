@@ -67,7 +67,7 @@ export const GlobalFileNames = {
 	agentsRulesFile: "AGENTS.md",
 	isaacMdFile: "ISAAC.md",
 	taskMetadata: "task_metadata.json",
-	// ailiance-agent fork: EU AI Act-compliant per-task JSONL trace dir
+	// ailiance-agent: EU AI Act-compliant per-task JSONL trace dir
 	tracingDir: ".ailiance-agent/runs",
 	remoteConfig: (orgId: string) => `remote_config_${orgId}.json`,
 }

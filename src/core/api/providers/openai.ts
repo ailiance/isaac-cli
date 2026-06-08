@@ -13,11 +13,11 @@ import { Logger } from "@/shared/services/Logger"
 import { ApiHandler, CommonApiHandlerOptions } from "../index"
 import { withRetry } from "../retry"
 import { convertToOpenAiMessages } from "../transform/openai-format"
+import { formatOpenAiCompatibleUsage } from "../transform/openai-usage"
 import { addReasoningContent, convertToR1Format } from "../transform/r1-format"
 import { ApiStream } from "../transform/stream"
 import { getOpenAIToolParams, ToolCallProcessor } from "../transform/tool-call-processor"
 import { readLocalRouterTimeouts } from "./utils/localRouterTimeouts"
-import { formatOpenAiCompatibleUsage } from "../transform/openai-usage"
 
 interface OpenAiHandlerOptions extends CommonApiHandlerOptions {
 	openAiApiKey?: string
@@ -283,7 +283,7 @@ export class OpenAiHandler implements ApiHandler {
 	getModel(): { id: string; info: ModelInfo } {
 		const id = this.options.openAiModelId ?? ""
 		let info = this.options.openAiModelInfo ?? openAiModelInfoSaneDefaults
-		// ailiance-agent fork: override info.contextWindow with the value
+		// ailiance-agent: override info.contextWindow with the value
 		// captured from the most recent gateway response's
 		// X-Ailiance-Context-Window header. Upstream's
 		// openAiModelInfoSaneDefaults assumes 128k for every unknown

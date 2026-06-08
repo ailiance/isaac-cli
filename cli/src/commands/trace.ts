@@ -1,4 +1,4 @@
-// ailiance-agent fork: `isaac trace` subcommand.
+// ailiance-agent: `isaac trace` subcommand.
 //
 // Subcommands:
 //   - isaac trace list                    : list all run directories
@@ -23,7 +23,7 @@ function resolveRunsDir(cwd?: string): string {
 export function parseSize(input: string): number {
 	const m = input.trim().match(/^(\d+(?:\.\d+)?)\s*([KMG]i?B?)?$/i)
 	if (!m) throw new Error(`invalid --max-size value: ${input}`)
-	const n = parseFloat(m[1])
+	const n = Number.parseFloat(m[1])
 	const unit = (m[2] || "").toUpperCase().replace("IB", "").replace("B", "")
 	const factor: Record<string, number> = { "": 1, K: 1024, M: 1024 ** 2, G: 1024 ** 3 }
 	const f = factor[unit]
@@ -56,11 +56,7 @@ export async function runTraceList(options: { cwd?: string }): Promise<void> {
 	}
 }
 
-export async function runTracePrune(options: {
-	cwd?: string
-	maxAge?: string
-	maxSize?: string
-}): Promise<void> {
+export async function runTracePrune(options: { cwd?: string; maxAge?: string; maxSize?: string }): Promise<void> {
 	const { prune } = await import("@core/tracing/pruner")
 	const dir = resolveRunsDir(options.cwd)
 	const maxAgeDays = options.maxAge ? Number(options.maxAge) : undefined
@@ -78,9 +74,7 @@ export async function runTracePrune(options: {
 		}
 	}
 	const result = await prune({ dir, maxAgeDays, maxTotalSizeBytes })
-	console.log(
-		`pruned: kept ${result.kept.length}, removed ${result.removed.length}, freed ${result.freedBytes} bytes`,
-	)
+	console.log(`pruned: kept ${result.kept.length}, removed ${result.removed.length}, freed ${result.freedBytes} bytes`)
 	if (result.removed.length > 0) {
 		for (const name of result.removed) {
 			console.log(`  - ${name}`)

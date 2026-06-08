@@ -1,4 +1,4 @@
-// ailiance-agent fork: trace rotation policy.
+// ailiance-agent: trace rotation policy.
 //
 // The tracer writes one directory per task under <cwd>/.ailiance-agent/runs/.
 // Without a prune step, that directory grows unbounded over months of

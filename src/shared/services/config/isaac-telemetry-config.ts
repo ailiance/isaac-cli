@@ -1,6 +1,6 @@
-// ailiance-agent fork: telemetry DISABLED.
+// ailiance-agent: telemetry DISABLED.
 // Upstream Isaac sends PostHog events to dirac.run / us.posthog.com.
-// The ailiance-agent fork is EU-sovereign by design and MUST NOT phone home.
+// The ailiance-agent is EU-sovereign by design and MUST NOT phone home.
 // To re-enable for testing only, restore the upstream apiKey and host
 // values from `git show upstream/master:src/shared/services/config/isaac-telemetry-config.ts`.
 import { BUILD_CONSTANTS } from "../../constants"
@@ -37,7 +37,7 @@ const _useDevEnv = process.env.IS_DEV === "true" || process.env.ISAAC_ENVIRONMEN
 
 /**
  * Isaac telemetry configuration.
- * ailiance-agent fork: all phone-home values are intentionally null/undefined so
+ * ailiance-agent: all phone-home values are intentionally null/undefined so
  * `isIsaacTelemetryConfigValid` always returns false and consumers (telemetry,
  * error tracking, feature flags) skip remote writes / fetches.
  */

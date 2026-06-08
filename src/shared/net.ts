@@ -123,7 +123,7 @@ export const fetch: typeof globalThis.fetch = (() => {
 		baseFetch = undiciFetch as any as typeof globalThis.fetch
 	}
 
-	// ailiance-agent fork: wrap so /chat/completions responses capture
+	// ailiance-agent: wrap so /chat/completions responses capture
 	// X-Ailiance-* headers into a session cache for UI display.
 	// Static import would create a cycle (utils -> shared -> utils);
 	// require here at module-init time avoids it. Failure-tolerant: if

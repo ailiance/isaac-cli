@@ -83,7 +83,7 @@ export async function initializeCli(options: InitOptions): Promise<CliContext> {
 			stateManager.setSessionOverride("planModeApiProvider", envProvider)
 		}
 	}
-	// ailiance-agent fork: ailiance default fallback (touches: cli/src/init.ts)
+	// ailiance-agent: ailiance default fallback (touches: cli/src/init.ts)
 	const { applyAilianceDefault } = await import("./utils/ailiance-default")
 	const ailianceDecision = applyAilianceDefault(stateManager)
 	if (ailianceDecision.applied) {
@@ -91,7 +91,7 @@ export async function initializeCli(options: InitOptions): Promise<CliContext> {
 	}
 	await ErrorService.initialize()
 
-	// ailiance-agent fork: prewarm gateway before the first prompt. Caches
+	// ailiance-agent: prewarm gateway before the first prompt. Caches
 	// the model list and surfaces connection failures at boot instead of
 	// on the first chat completion (where the user sees an opaque retry
 	// storm). Failure is non-fatal — the CLI must still boot so the user

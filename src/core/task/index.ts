@@ -590,7 +590,7 @@ export class Task {
 	}
 
 	async abortTask(reason = "aborted", exitCode = 130) {
-		// ailiance-agent fork: tracing close hook — finalise the JSONL trace meta
+		// ailiance-agent: tracing close hook — finalise the JSONL trace meta
 		// even when the task ends via abort/cancel/error rather than via a
 		// successful attempt_completion. Run before the lifecycle abort so
 		// that disposed dependencies cannot interfere; closeTrace itself is

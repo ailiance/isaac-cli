@@ -14,7 +14,7 @@ import type { Controller } from "../index"
  */
 export async function openWalkthrough(_controller: Controller, _request: EmptyRequest): Promise<Empty> {
 	try {
-		// ailiance-agent fork: walkthrough id rebrand
+		// ailiance-agent: walkthrough id rebrand
 		await vscode.commands.executeCommand(
 			"workbench.action.openWalkthrough",
 			`isaac-run.${ExtensionRegistryInfo.name}#AgentKikiWalkthrough`,

@@ -1,4 +1,4 @@
-// ailiance-agent fork: integration-style tests for AgentLoopRunner.
+// ailiance-agent: integration-style tests for AgentLoopRunner.
 //
 // Issue #21 — P0-2. These tests cover the two fork-critical paths in
 // AgentLoopRunner.makeRequest that previously had zero unit coverage:
@@ -17,7 +17,7 @@
 // sinon stubs. AgentLoopRunner is the real class.
 
 import { strict as assert } from "assert"
-import { describe, it, beforeEach, afterEach } from "mocha"
+import { afterEach, beforeEach, describe, it } from "mocha"
 import sinon from "sinon"
 import { AgentLoopRunner } from "../AgentLoopRunner"
 import { TaskState } from "../TaskState"

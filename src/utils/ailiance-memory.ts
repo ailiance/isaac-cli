@@ -1,4 +1,4 @@
-// ailiance-agent fork: cross-task memory store
+// ailiance-agent: cross-task memory store
 //
 // Persists user-level knowledge (preferences, repo conventions, gotchas)
 // across sessions. Modeled on Claude Code's memory system at

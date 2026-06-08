@@ -348,7 +348,7 @@ ${notice}`
 					}
 				})()
 
-				// ailiance-agent fork: skip auto-retry for permanent 4xx client
+				// ailiance-agent: skip auto-retry for permanent 4xx client
 				// errors. These cannot be fixed by retrying the same request
 				// (e.g. a 400 "model does not support tools" from Ollama, a 404
 				// "model not found", a 422 unprocessable). Retrying burns 3×

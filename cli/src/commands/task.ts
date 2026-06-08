@@ -32,7 +32,7 @@ export async function runTaskInPlainTextMode(
 	// In plain text mode we can't show the interactive auth flow
 	const hasAuth = await isAuthConfigured()
 	if (!hasAuth) {
-		// ailiance-agent fork: rebrand 'isaac auth' -> 'isaac auth'
+		// ailiance-agent: rebrand 'isaac auth' -> 'isaac auth'
 		printWarning("Not authenticated. Please run 'isaac auth' first to configure your API credentials.")
 		await disposeCliContext(ctx)
 		exit(1)
@@ -64,7 +64,7 @@ export async function runTaskInPlainTextMode(
 /**
  * Run a task with the given prompt - uses welcome view for consistent behavior
  */
-// ailiance-agent fork: greeting short-circuit
+// ailiance-agent: greeting short-circuit
 // Skip the agent loop on trivial prompts ("bonjour", "test", "hi"...) which
 // otherwise cause the model to spin in an infinite tool-call retry loop
 // because the agent runtime expects every user turn to produce a tool_call.
@@ -79,7 +79,7 @@ function isTrivialGreeting(prompt: string): boolean {
 }
 
 export async function runTask(prompt: string, options: TaskOptions & { images?: string[] }, existingContext?: CliContext) {
-	// ailiance-agent fork: short-circuit greetings before spinning up the full agent.
+	// ailiance-agent: short-circuit greetings before spinning up the full agent.
 	if (isTrivialGreeting(prompt)) {
 		// Use process.stdout directly — Ink isn't mounted yet.
 		process.stdout.write(

@@ -1,4 +1,4 @@
-// ailiance-agent fork: ailiance default fallback
+// ailiance-agent: ailiance default fallback
 //
 // When no provider is configured (no API key env vars, no persisted
 // auth state), default to the ailiance gateway via the OpenAI-compatible

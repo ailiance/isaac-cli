@@ -41,7 +41,7 @@ export class PromptBuilder {
 			placeholders["SKILLS_SECTION"] = ""
 		}
 
-		// ailiance-agent fork (v0.9.1): auto-inject cross-task memories
+		// ailiance-agent (v0.9.1): auto-inject cross-task memories
 		// saved at ~/.ailiance-agent/memory/ scoped to cwd. The memory
 		// store is best-effort — a corrupted file or missing directory
 		// returns null, and the placeholder collapses to the empty string

@@ -1,4 +1,4 @@
-// ailiance-agent fork: boot-time gateway prewarm
+// ailiance-agent: boot-time gateway prewarm
 //
 // Goal: by the time the first user prompt is accepted, the CLI has
 // already (1) resolved the configured gateway URL, (2) confirmed the
@@ -76,9 +76,8 @@ export async function prewarmAilianceGateway(stateManager: StateManager): Promis
 
 	const modelsUrl = baseUrl.endsWith("/v1") ? `${baseUrl}/models` : `${baseUrl}/v1/models`
 	const apiKey =
-		((stateManager.getSecretKey as unknown as (k: string) => string | undefined)("openAiApiKey") as
-			| string
-			| undefined) ?? "unused"
+		((stateManager.getSecretKey as unknown as (k: string) => string | undefined)("openAiApiKey") as string | undefined) ??
+		"unused"
 
 	const controller = new AbortController()
 	const timeout = setTimeout(() => controller.abort(), PREWARM_TIMEOUT_MS)

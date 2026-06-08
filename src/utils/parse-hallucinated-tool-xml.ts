@@ -1,4 +1,4 @@
-// ailiance-agent fork: parser for hallucinated XML tool-call format
+// ailiance-agent: parser for hallucinated XML tool-call format
 //
 // Background: some workers (Mistral-Medium-128B on MLX in particular)
 // receive a request with tools[] but their backend does not support
@@ -45,8 +45,7 @@ export interface XmlToolParseResult {
 const FUNCTION_BLOCK_RE = /<(function|invoke)=([a-zA-Z0-9_.-]+)>([\s\S]*?)<\/\1>/g
 // Inside a block, parameters are <parameter=KEY>VALUE</parameter>.
 // Some models drop the equals: <parameter name="KEY"> — accept both.
-const PARAM_RE =
-	/<parameter(?:=|\s+name=["'])([a-zA-Z0-9_.-]+)["']?\s*>([\s\S]*?)<\/parameter>/g
+const PARAM_RE = /<parameter(?:=|\s+name=["'])([a-zA-Z0-9_.-]+)["']?\s*>([\s\S]*?)<\/parameter>/g
 
 /**
  * Extract tool calls from an assistant text block.
@@ -56,7 +55,7 @@ const PARAM_RE =
  * `calls` is empty and `residualText` is the input untouched.
  */
 export function parseHallucinatedToolXml(text: string): XmlToolParseResult {
-	if (!text || !text.includes("<function") && !text.includes("<invoke")) {
+	if (!text || (!text.includes("<function") && !text.includes("<invoke"))) {
 		return { calls: [], residualText: text ?? "" }
 	}
 

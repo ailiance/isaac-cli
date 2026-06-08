@@ -1,4 +1,4 @@
-// ailiance-agent fork: tracing hook (EU AI Act-compliant per-task JSONL traces)
+// ailiance-agent: tracing hook (EU AI Act-compliant per-task JSONL traces)
 //
 // Mirrors the Python schema in ailiance-agent-py-archive/src/ailiance_agent/tracing/
 // at version 1.0.0. Field names are aligned (snake_case JSON, camelCase TS
@@ -20,7 +20,7 @@ export const TRACING_DIR_NAME = ".ailiance-agent/runs"
 // suffixed fields like aws_secret_access_key=... or api_key_v2: ....
 // Keyword set kept in sync with the object-key regex in scrubValue().
 //
-// ailiance-agent fork: the gateway (gateway.ailiance.fr) authenticates with a
+// ailiance-agent: the gateway (gateway.ailiance.fr) authenticates with a
 // bearer token carried as openAiApiKey/openAiCompatibleCustomApiKey and sent as
 // `Authorization: Bearer <token>` (BEARER_PATTERN) or surfaced in env/headers as
 // AILIANCE_*_API_KEY / x-api-key. Those land here via the api[_-]?key, token and
@@ -154,7 +154,7 @@ export class JsonlTracer {
 	private turn = 0
 	private closed = false
 	private readonly enabled: boolean
-	// ailiance-agent fork: serialise concurrent appendTurn calls.
+	// ailiance-agent: serialise concurrent appendTurn calls.
 	// When the planner dispatches parallel tool calls (`enableParallelToolCalls`),
 	// multiple appendTurn invocations race on both the `turn` counter AND the
 	// JSONL file write. We chain every write onto a single Promise so that
@@ -183,7 +183,7 @@ export class JsonlTracer {
 			} catch (_err) {
 				// Best-effort: tracing must never break a task.
 			}
-			// ailiance-agent fork: best-effort trace rotation. Never blocks task
+			// ailiance-agent: best-effort trace rotation. Never blocks task
 			// start — failures are swallowed.
 			void this.maybePruneAsync()
 		}
@@ -229,7 +229,7 @@ export class JsonlTracer {
 
 	appendTurn(input: Partial<TraceLine> & { phase: TracePhase }): TraceLine | null {
 		if (!this.enabled || this.closed) return null
-		// ailiance-agent fork: increment + serialise. The turn counter is bumped
+		// ailiance-agent: increment + serialise. The turn counter is bumped
 		// synchronously so callers see a stable line.turn, but the actual
 		// file append is queued onto writeChain to prevent interleaved bytes
 		// when parallel tool calls race here.
@@ -269,7 +269,7 @@ export class JsonlTracer {
 		await this.writeChain
 	}
 
-	// ailiance-agent fork: record an LLM API roundtrip ("planner" turn) so that
+	// ailiance-agent: record an LLM API roundtrip ("planner" turn) so that
 	// every API call shows up in trace.jsonl — even the ones that fail before
 	// any tool executes. The Python ailiance-agent captured raw text + latency_ms
 	// per planner response; we mirror that shape here.
@@ -316,7 +316,7 @@ export class JsonlTracer {
 
 	private persistMeta(): void {
 		if (!this.meta) return
-		// ailiance-agent fork: atomic meta.json write — write to a sibling .tmp
+		// ailiance-agent: atomic meta.json write — write to a sibling .tmp
 		// file then rename. rename(2) is atomic on POSIX, so a crash
 		// mid-write leaves either the previous valid meta.json or a stray
 		// .tmp (never a half-written meta.json). The Python ailiance-agent tracer
@@ -347,7 +347,7 @@ export class JsonlTracer {
 		}
 	}
 
-	// ailiance-agent fork: queue an append. We use the synchronous
+	// ailiance-agent: queue an append. We use the synchronous
 	// fs.appendFileSync so that callers get read-after-write semantics
 	// (existing tests + downstream readers rely on this), while ALSO
 	// chaining a resolved Promise onto writeChain so flush() can be

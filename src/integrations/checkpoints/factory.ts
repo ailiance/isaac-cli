@@ -76,7 +76,7 @@ export function buildCheckpointManager(args: BuildArgs): ICheckpointManager {
 	const enableCheckpoints = stateManager.getGlobalSettingsKey("enableCheckpointsSetting")
 
 	if (shouldUseMultiRoot({ workspaceManager, enableCheckpoints, stateManager })) {
-		// ailiance-agent fork (P1 #9): MultiRootCheckpointManager is an incomplete
+		// ailiance-agent (P1 #9): MultiRootCheckpointManager is an incomplete
 		// stub — restoreCheckpoint() is a no-op returning {} and
 		// doesLatestTaskCompletionHaveNewChanges() always returns false. Routing
 		// here silently loses checkpoints/restores for ALL roots. Until the

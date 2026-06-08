@@ -1,4 +1,4 @@
-// ailiance-agent fork: drain pending terminal-probe responses (CSI 14t / kitty Gi=31 / DA1)
+// ailiance-agent: drain pending terminal-probe responses (CSI 14t / kitty Gi=31 / DA1)
 // before Ink starts rendering. Probes are typically buffered by raw mode set early
 // (see installEarlyTtyHardening in index.ts). Here we only flush whatever bytes
 // look like escape sequences — preserving any user keystrokes (e.g. a quick Enter)
@@ -31,7 +31,7 @@ export async function runInkApp(element: any, cleanup: () => Promise<void>): Pro
 	const { render } = await import("ink")
 	const { restoreConsole } = await import("./console")
 
-	// ailiance-agent fork: consume probe replies that arrived during boot.
+	// ailiance-agent: consume probe replies that arrived during boot.
 	// Raw mode is already on (set in index.ts top-level), so probes were
 	// buffered without echoing to stdout. We discard escape sequences but
 	// preserve any keystrokes the user may have typed during boot.

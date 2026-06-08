@@ -1,4 +1,4 @@
-// ailiance-agent fork: rebrand "Isaac" → "ailiance-agent" in subagent status messages
+// ailiance-agent: rebrand "Isaac" → "ailiance-agent" in subagent status messages
 import type { IsaacAskUseSubagents, IsaacMessage, IsaacSaySubagentStatus } from "@shared/ExtensionMessage"
 import { Box, Text } from "ink"
 import Spinner from "ink-spinner"
@@ -68,7 +68,10 @@ function formatSubagentStatsValues(
 	const toolUses = safeToolCalls === 1 ? "tool use" : "tool uses"
 	const tokensUsed = formatCompactTokens(contextTokens || 0)
 	const formattedCost = formatCompactCost(totalCost || 0)
-	const cacheInfo = (cacheWrites || cacheReads) ? ` · cache: ${formatCompactTokens(cacheReads || 0)}r/${formatCompactTokens(cacheWrites || 0)}w` : ""
+	const cacheInfo =
+		cacheWrites || cacheReads
+			? ` · cache: ${formatCompactTokens(cacheReads || 0)}r/${formatCompactTokens(cacheWrites || 0)}w`
+			: ""
 	const stats = `${safeToolCalls} ${toolUses} · ${tokensUsed} tokens${cacheInfo} · ${formattedCost}`
 	const latestTool = latestToolCall?.trim()
 	return latestTool ? `${latestTool} · ${stats}` : stats

@@ -1,7 +1,7 @@
 /**
  * Help panel content for inline display in ChatView
  * Explains ISAAC CLI features and links to documentation
- * ailiance-agent fork: rebrand
+ * ailiance-agent: rebrand
  */
 
 import { Box, Text, useInput } from "ink"
@@ -33,9 +33,7 @@ export const HelpPanelContent: React.FC<HelpPanelContentProps> = ({ onClose }) =
 	return (
 		<Panel label="Help">
 			<Box flexDirection="column" gap={1}>
-				<Text>
-						ISAAC can edit files, run terminal commands, use the browser, and more with your permission.
-					</Text>
+				<Text>ISAAC can edit files, run terminal commands, use the browser, and more with your permission.</Text>
 
 				<Box flexDirection="column">
 					<Text bold>Plan vs Act Mode</Text>

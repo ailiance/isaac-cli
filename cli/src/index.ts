@@ -1,5 +1,5 @@
 /**
- * ISAAC CLI - TypeScript implementation with React Ink (fork of Dirac/Cline)
+ * ISAAC CLI - TypeScript implementation with React Ink (inspired by Dirac/Cline)
  */
 
 // MUST be the first import — its top-level side effect (raw-mode stdin) runs
@@ -28,7 +28,7 @@ export { captureUnhandledException } from "./utils/errors"
 // Setup CLI commands
 const program = new Command()
 
-// ailiance-agent fork: rebrand CLI banner
+// ailiance-agent: rebrand CLI banner
 program
 	.name("isaac")
 	.description("ISAAC — Intelligence Souveraine Ailiance Agent Codeur · powered by LISAEL")
@@ -164,9 +164,9 @@ program
 		return checkForUpdates(CLI_VERSION, options)
 	})
 
-// ailiance-agent fork: drop upstream Isaac kanban integration — we don't ship it.
+// ailiance-agent: drop upstream Isaac kanban integration — we don't ship it.
 
-// ailiance-agent fork: cross-task memory CRUD CLI (v0.9.0).
+// ailiance-agent: cross-task memory CRUD CLI (v0.9.0).
 const memoryCommand = program.command("memory").description("Manage cross-task memories")
 memoryCommand
 	.command("remember")
@@ -205,7 +205,7 @@ memoryCommand
 		await runMemoryForget({ name })
 	})
 
-// ailiance-agent fork: trace rotation + listing CLI
+// ailiance-agent: trace rotation + listing CLI
 const traceCommand = program.command("trace").description("Manage ISAAC run traces")
 
 traceCommand
@@ -320,7 +320,7 @@ program
 		if (typeof options.mcpThreshold === "string") {
 			process.env.AILIANCE_MCP_THRESHOLD = options.mcpThreshold
 		}
-		// ailiance-agent fork: kanban path removed.
+		// ailiance-agent: kanban path removed.
 		const { printWarning } = await import("./utils/display")
 		// Check for ACP mode first - this takes precedence over everything else
 		if (options.acp) {

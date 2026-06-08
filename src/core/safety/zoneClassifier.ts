@@ -1,4 +1,4 @@
-// ailiance-agent fork: 3-zone shell-command classifier ported from
+// ailiance-agent: 3-zone shell-command classifier ported from
 // ailiance-agent-py-archive/src/ailiance_agent/tools/shell.py (classify_command).
 //
 // Zones:

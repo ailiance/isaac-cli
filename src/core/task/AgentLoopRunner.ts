@@ -291,7 +291,7 @@ export class AgentLoopRunner {
 				this.taskState.toolUseIdMap.clear()
 
 				const { toolUseHandler, reasonsHandler } = this.ctx.streamHandler.getHandlers()
-				// ailiance-agent fork: tracing — measure latency of every API roundtrip
+				// ailiance-agent: tracing — measure latency of every API roundtrip
 				const plannerStartedAt = Date.now()
 				const stream = this.ctx.attemptApiRequest(previousApiReqIndex, shouldCompact)
 
@@ -467,7 +467,7 @@ export class AgentLoopRunner {
 					}
 					await usageChunkSideEffectsQueue
 
-					// ailiance-agent fork: tracing — record this planner roundtrip.
+					// ailiance-agent: tracing — record this planner roundtrip.
 					try {
 						this.ctx.toolExecutor.recordPlannerTurn(assistantMessage, Date.now() - plannerStartedAt)
 					} catch (_err) {
@@ -489,7 +489,7 @@ export class AgentLoopRunner {
 					if (!this.taskState.abandoned) {
 						const isaacError = ErrorService.get().toIsaacError(error, this.ctx.api.getModel().id)
 						const errorMessage = isaacError.serialize()
-						// ailiance-agent fork: tracing — record the failed roundtrip
+						// ailiance-agent: tracing — record the failed roundtrip
 						try {
 							this.ctx.toolExecutor.recordPlannerTurn(assistantMessage, Date.now() - plannerStartedAt, [
 								errorMessage,
@@ -531,7 +531,7 @@ export class AgentLoopRunner {
 							)
 						}
 
-						// ailiance-agent fork: tracing close hook
+						// ailiance-agent: tracing close hook
 						this.ctx.abortTask("error", 1)
 						await abortStream("streaming_failed", errorMessage)
 						await this.ctx.reinitExistingTaskFromId(this.ctx.taskId)
@@ -595,7 +595,7 @@ export class AgentLoopRunner {
 								? "You have reached the output token limit. Please continue your response from where you left off. If you were in the middle of a tool call, start over with that tool call. If you were finished, call attempt_completion."
 								: formatResponse.noToolsUsed(this.taskState.useNativeToolCalls),
 						})
-						// ailiance-agent fork: faster fail when the response carried
+						// ailiance-agent: faster fail when the response carried
 						// zero output tokens. Some MLX backends (Mistral-Medium-128B
 						// observed 2026-05-12) accept a tools[] request but reply
 						// with finish_reason=stop and empty content — neither a
@@ -626,7 +626,7 @@ export class AgentLoopRunner {
 					})
 				}
 			} catch (error) {
-				// ailiance-agent fork: do NOT swallow uncaught exceptions as
+				// ailiance-agent: do NOT swallow uncaught exceptions as
 				// "task finished successfully". Previously this catch returned
 				// true unconditionally, masking programming bugs, network
 				// panics, JSON parse errors and silently terminating tasks

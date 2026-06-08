@@ -56,7 +56,7 @@ export async function parseSlashCommands(
 	isDirectResponse?: boolean
 	directResponseText?: string
 }> {
-	// ailiance-agent fork: dropped "askIsaac" — RAG over upstream Isaac source code, irrelevant for our fork
+	// ailiance-agent: dropped "askIsaac" — RAG over upstream Isaac source code, irrelevant for ISAAC
 	const SUPPORTED_DEFAULT_COMMANDS = [
 		"newtask",
 		"smol",

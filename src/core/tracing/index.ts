@@ -1,10 +1,5 @@
-// ailiance-agent fork: tracing barrel
-export {
-	JsonlTracer,
-	scrubSecrets,
-	TRACING_DIR_NAME,
-	TRACING_SCHEMA_VERSION,
-} from "./JsonlTracer"
+// ailiance-agent: tracing barrel
+
 export type {
 	RunMeta,
 	RunMetaSeed,
@@ -12,4 +7,10 @@ export type {
 	TraceLine,
 	TracePhase,
 	WorkerInfo,
+} from "./JsonlTracer"
+export {
+	JsonlTracer,
+	scrubSecrets,
+	TRACING_DIR_NAME,
+	TRACING_SCHEMA_VERSION,
 } from "./JsonlTracer"

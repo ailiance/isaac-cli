@@ -1,4 +1,4 @@
-// ailiance-agent fork: capture X-Ailiance-* response headers
+// ailiance-agent: capture X-Ailiance-* response headers
 //
 // The gateway (see ailiance/ailiance PR #78) emits five response
 // headers exposing the actual routing decision:
@@ -93,12 +93,7 @@ export function wrapFetchForWorkerInfo(baseFetch: typeof globalThis.fetch): type
 	return async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
 		const response = await baseFetch(input, init)
 		try {
-			const url =
-				typeof input === "string"
-					? input
-					: input instanceof URL
-						? input.toString()
-						: input.url
+			const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url
 			if (url.includes("/chat/completions")) {
 				captureFromResponse(response)
 			}

@@ -1,4 +1,4 @@
-// ailiance-agent fork: integration-style tests for ResponseProcessor.
+// ailiance-agent: integration-style tests for ResponseProcessor.
 //
 // Issue #21 — P0-2. These tests cover the two fork-critical paths in
 // ResponseProcessor.presentAssistantMessage that previously had zero
@@ -15,7 +15,7 @@
 // over its own logic; only the world around it is faked.
 
 import { strict as assert } from "assert"
-import { describe, it, beforeEach } from "mocha"
+import { beforeEach, describe, it } from "mocha"
 import sinon from "sinon"
 import { ResponseProcessor } from "../ResponseProcessor"
 import { TaskState } from "../TaskState"
@@ -115,11 +115,7 @@ describe("ResponseProcessor — hallucinated XML dispatch (issue #21)", () => {
 		taskState.assistantMessageContent = [
 			{
 				type: "text",
-				content:
-					"I'll list the files.\n" +
-					"<function=list_files>\n" +
-					"<parameter=path>.</parameter>\n" +
-					"</function>",
+				content: "I'll list the files.\n" + "<function=list_files>\n" + "<parameter=path>.</parameter>\n" + "</function>",
 				partial: false,
 			} as any,
 			{

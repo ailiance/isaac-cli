@@ -20,7 +20,7 @@
  *
  * See PRD: Multi-Workspace Folder Support for complete requirements
  *
- * ailiance-agent fork (P1 #9): this class is intentionally NOT wired into
+ * ailiance-agent (P1 #9): this class is intentionally NOT wired into
  * buildCheckpointManager() — it is incomplete. `restoreCheckpoint()` and
  * `doesLatestTaskCompletionHaveNewChanges()` were silent no-ops (returning {}
  * and false), which means a user "restoring" a checkpoint or asking to "see new
@@ -203,7 +203,7 @@ export class MultiRootCheckpointManager implements ICheckpointManager {
 
 		Logger.log(`[MultiRootCheckpointManager] Restoring checkpoint for primary root: ${primaryRoot.name}`)
 
-		// ailiance-agent fork (P1 #9): restore is NOT implemented. Returning {}
+		// ailiance-agent (P1 #9): restore is NOT implemented. Returning {}
 		// here silently dropped the user's restore request. Fail loudly instead so
 		// the broken path can never ship unnoticed (and so the factory's
 		// single-root fallback stays the only live code path).
@@ -221,7 +221,7 @@ export class MultiRootCheckpointManager implements ICheckpointManager {
 			return false
 		}
 
-		// ailiance-agent fork (P1 #9): diff checking is NOT implemented. Always
+		// ailiance-agent (P1 #9): diff checking is NOT implemented. Always
 		// returning false silently hid changes from the "See new changes" button.
 		// Fail loudly instead of pretending there are no changes.
 		throw new Error(
