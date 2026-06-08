@@ -11,6 +11,13 @@ export interface SnapshotCommandDeps {
 	capture: typeof captureSnapshot
 	rehydrate: typeof rehydrate
 	newTaskId: () => string
+	/**
+	 * Register the rehydrated task so it isn't an orphan: persists a HistoryItem
+	 * for `taskId` so the restored session appears in task history and can be
+	 * opened later. The controller-touching work lives in the callback so this
+	 * module stays pure.
+	 */
+	enterRestored: (taskId: string, bundle: SnapshotBundle) => Promise<void>
 }
 
 export async function runSnapshot(deps: SnapshotCommandDeps, label: string): Promise<string> {
@@ -46,5 +53,10 @@ export async function runRestore(deps: SnapshotCommandDeps, id: string): Promise
 	}
 	const target = deps.newTaskId()
 	await deps.rehydrate(bundle, target)
-	return `Restored snapshot ${id} into a new session (${target}).`
+	// Deferral: we persist the restored task into history (via enterRestored) but
+	// do NOT reinit/resume it here — runRestore executes inside the current task's
+	// API-request preparation, where re-entering the controller (clearTask) would
+	// clobber the live task loop. The user resumes it from task history instead.
+	await deps.enterRestored(target, bundle)
+	return `Restored snapshot ${id} to a new session ${target}. Open it from task history to continue.`
 }

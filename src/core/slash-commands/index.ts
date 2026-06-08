@@ -147,7 +147,7 @@ export async function parseSlashCommands(
 			if (SUPPORTED_DEFAULT_COMMANDS.includes(commandName)) {
 				if ((commandName === "snapshot" || commandName === "restore" || commandName === "sessions") && runDirectCommand) {
 					// Extract the argument: everything in the tag content after the command token.
-					const afterCmd = tagContent.slice((slashMatch.index ?? 0) + slashMatch[1].length + ("/" + commandName).length)
+					const afterCmd = tagContent.slice(slashMatch.index + slashMatch[1].length + ("/" + commandName).length)
 					const arg = afterCmd.trim().split(/\r?\n/)[0]?.trim() ?? ""
 					const directResponseText = await runDirectCommand(commandName, arg)
 					const textWithoutSlashCommand = removeSlashCommand(text, tagContent, contentStartIndex, slashMatch)

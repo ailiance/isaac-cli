@@ -6,6 +6,7 @@ import { parseSlashCommands } from "@core/slash-commands"
 import { ensureSnapshotsDirectoryExists, GlobalFileNames } from "@core/storage/disk"
 import { captureSnapshot } from "@core/storage/snapshot/capture"
 import { rehydrate } from "@core/storage/snapshot/restore"
+import type { SnapshotBundle } from "@core/storage/snapshot/SessionSnapshot"
 import { SnapshotStore } from "@core/storage/snapshot/SnapshotStore"
 import { runRestore, runSessions, runSnapshot } from "@core/storage/snapshot/snapshotCommands"
 import { resolveWorkspacePath } from "@core/workspace"
@@ -357,14 +358,31 @@ export class ContextLoader {
 		const runDirectCommand = async (name: string, arg: string): Promise<string> => {
 			const env = new LocalEnvironment(this.dependencies.cwd)
 			const store = new SnapshotStore(env, await ensureSnapshotsDirectoryExists())
+			const controller = this.dependencies.controller
 			const deps = {
 				store,
 				taskId: this.dependencies.taskId,
-				envLabel: "local",
+				envLabel: env.id,
 				newId: () => `snap_${randomUUID().slice(0, 8)}`,
 				capture: captureSnapshot,
 				rehydrate,
 				newTaskId: () => randomUUID(),
+				// Persist a minimal HistoryItem so the rehydrated task is reachable
+				// from task history. We deliberately do NOT reinit/resume it here:
+				// runDirectCommand runs during the current task's request prep, and
+				// controller.reinitExistingTaskFromId → initTask → clearTask would
+				// tear down the live task loop (re-entrancy). Resume is deferred to
+				// the user via the normal task-history UI.
+				enterRestored: async (restoredTaskId: string, bundle: SnapshotBundle): Promise<void> => {
+					await controller.updateTaskHistory({
+						id: restoredTaskId,
+						ts: Date.now(),
+						task: `Restored snapshot ${bundle.meta.id}${bundle.meta.label ? ` (${bundle.meta.label})` : ""}`,
+						tokensIn: 0,
+						tokensOut: 0,
+						totalCost: 0,
+					})
+				},
 			}
 			if (name === "snapshot") {
 				return runSnapshot(deps, arg)
