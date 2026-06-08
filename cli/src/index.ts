@@ -31,7 +31,7 @@ const program = new Command()
 // ailiance-agent fork: rebrand CLI banner
 program
 	.name("isaac")
-	.description("ISAAC — Intelligence Souveraine Ailiance Agent Codeur (fork of Dirac/Cline)")
+	.description("ISAAC — Intelligence Souveraine Ailiance Agent Codeur · powered by LISAEL")
 	.version(CLI_VERSION)
 
 // Enable positional options to avoid conflicts between root and subcommand options with the same name

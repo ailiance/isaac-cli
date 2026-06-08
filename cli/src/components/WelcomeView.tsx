@@ -254,7 +254,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onSubmit, onExit, cont
 			{/* Main prompt - centered, bold */}
 			<Box alignItems="center" flexDirection="column" marginTop={1}>
 				<Text bold color="white">
-					{centerText(`ISAAC v${CLI_VERSION} — EU-sovereign coding agent (fork of Dirac/Cline)`)}
+					{centerText(`ISAAC v${CLI_VERSION} — EU-sovereign coding agent · powered by LISAEL`)}
 				</Text>
 
 				<Box marginTop={1}>
