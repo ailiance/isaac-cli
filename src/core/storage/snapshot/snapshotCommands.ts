@@ -18,6 +18,8 @@ export interface SnapshotCommandDeps {
 	 * module stays pure.
 	 */
 	enterRestored: (taskId: string, bundle: SnapshotBundle) => Promise<void>
+	/** Ask the agent loop to re-enter the restored session at the next safe point. */
+	requestRestoreReentry: (taskId: string) => void
 }
 
 export async function runSnapshot(deps: SnapshotCommandDeps, label: string): Promise<string> {
@@ -53,10 +55,10 @@ export async function runRestore(deps: SnapshotCommandDeps, id: string): Promise
 	}
 	const target = deps.newTaskId()
 	await deps.rehydrate(bundle, target)
-	// Deferral: we persist the restored task into history (via enterRestored) but
-	// do NOT reinit/resume it here — runRestore executes inside the current task's
-	// API-request preparation, where re-entering the controller (clearTask) would
-	// clobber the live task loop. The user resumes it from task history instead.
+	// Persist the restored task into history, then ask the agent loop to switch
+	// into it. The actual reinit runs at a safe turn boundary (not here, during
+	// request-prep) so it cannot tear down the live loadContext.
 	await deps.enterRestored(target, bundle)
-	return `Restored snapshot ${id} to a new session ${target}. Open it from task history to continue.`
+	deps.requestRestoreReentry(target)
+	return `Restored snapshot ${id} — switching to the restored session (${target})…`
 }

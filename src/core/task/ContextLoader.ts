@@ -383,6 +383,11 @@ export class ContextLoader {
 						totalCost: 0,
 					})
 				},
+				// Defer the actual reinit to the agent loop's turn boundary (safe —
+				// past loadContext), avoiding the clearTask() re-entrancy.
+				requestRestoreReentry: (restoredTaskId: string): void => {
+					this.dependencies.taskState.pendingRestoreTaskId = restoredTaskId
+				},
 			}
 			if (name === "snapshot") {
 				return runSnapshot(deps, arg)

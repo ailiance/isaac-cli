@@ -1,3 +1,6 @@
+import * as fs from "node:fs/promises"
+import * as os from "node:os"
+import * as path from "node:path"
 import { afterEach, beforeEach, describe, it } from "mocha"
 import "should"
 import { getHookLaunchConfig, resetHookLaunchConfigCacheForTesting } from "../HookProcess"
@@ -47,12 +50,20 @@ describe("HookProcess", () => {
 	})
 
 	it("keeps Unix launch behavior unchanged", async () => {
-		await withPlatform("linux", async () => {
-			const config = await getHookLaunchConfig("/tmp/.isaacrules/hooks/PreToolUse")
-			config.args.should.deepEqual([])
-			config.shell.should.equal(true)
-			config.detached.should.equal(true)
-		})
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "hook-test-"))
+		const scriptPath = path.join(dir, "PreToolUse")
+		await fs.writeFile(scriptPath, "#!/usr/bin/env bash\necho hi\n")
+		try {
+			await withPlatform("linux", async () => {
+				const config = await getHookLaunchConfig(scriptPath)
+				config.args.should.deepEqual([])
+				config.shell.should.equal(false)
+				config.command.should.equal(scriptPath)
+				config.detached.should.equal(true)
+			})
+		} finally {
+			await fs.rm(dir, { recursive: true, force: true })
+		}
 	})
 
 	it("surfaces resolver failures", async () => {

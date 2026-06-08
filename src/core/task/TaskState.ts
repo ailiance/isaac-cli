@@ -1,9 +1,9 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import { AssistantMessageContent } from "@core/assistant-message"
 import { IsaacAskResponse } from "@shared/WebviewMessage"
-import type { HookExecution } from "./types/HookExecution"
-import { PendingToolRegistry } from "./PendingToolRegistry"
 import { SkillMetadata } from "@/shared/skills"
+import { PendingToolRegistry } from "./PendingToolRegistry"
+import type { HookExecution } from "./types/HookExecution"
 
 export class TaskState {
 	// Sprint 2 — registry of asynchronously executing tool invocations.
@@ -46,6 +46,10 @@ export class TaskState {
 	didRespondToPlanAskBySwitchingMode = false
 	didSwitchToActMode = false
 
+	// Set by the /restore slash command; consumed by the agent loop at turn-end
+	// to re-enter the restored session (safe point — past loadContext).
+	pendingRestoreTaskId?: string
+
 	// Context and history
 	conversationHistoryDeletedRange?: [number, number]
 
@@ -66,7 +70,6 @@ export class TaskState {
 	// Task Initialization
 	isInitialized = false
 
-
 	// Task Abort / Cancellation
 	abort = false
 	didFinishAbortingStream = false
@@ -84,5 +87,4 @@ export class TaskState {
 	initialCheckpointCommitPromise?: Promise<string | undefined>
 	availableSkills: SkillMetadata[] = []
 	discoveredSkillsCache?: SkillMetadata[]
-
 }

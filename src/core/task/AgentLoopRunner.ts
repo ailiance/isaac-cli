@@ -122,6 +122,14 @@ export class AgentLoopRunner {
 
 			if (apiRequestData.isDirectResponse && apiRequestData.directResponseText) {
 				await this.ctx.say("text", apiRequestData.directResponseText)
+				// /restore sets pendingRestoreTaskId. We re-enter the restored
+				// session HERE — past loadContext, at a clean turn boundary — so
+				// reinit's clearTask() does not tear down a mid-flight loadContext.
+				const pendingRestore = this.taskState.pendingRestoreTaskId
+				if (pendingRestore) {
+					this.taskState.pendingRestoreTaskId = undefined
+					await this.ctx.reinitExistingTaskFromId(pendingRestore)
+				}
 				return true
 			}
 

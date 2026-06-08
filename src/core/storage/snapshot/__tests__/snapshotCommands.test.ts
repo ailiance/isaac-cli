@@ -6,7 +6,11 @@ import { SNAPSHOT_SCHEMA_VERSION, type SnapshotBundle, serialize } from "../Sess
 import { SnapshotStore } from "../SnapshotStore"
 import { runRestore, runSessions, runSnapshot, type SnapshotCommandDeps } from "../snapshotCommands"
 
-function makeDeps(store: SnapshotStore, entered?: Array<{ taskId: string; bundle: SnapshotBundle }>): SnapshotCommandDeps {
+function makeDeps(
+	store: SnapshotStore,
+	entered?: Array<{ taskId: string; bundle: SnapshotBundle }>,
+	reentered?: string[],
+): SnapshotCommandDeps {
 	let n = 0
 	return {
 		store,
@@ -29,6 +33,9 @@ function makeDeps(store: SnapshotStore, entered?: Array<{ taskId: string; bundle
 		newTaskId: () => "task-restored",
 		enterRestored: async (taskId: string, bundle: SnapshotBundle) => {
 			entered?.push({ taskId, bundle })
+		},
+		requestRestoreReentry: (taskId: string) => {
+			reentered?.push(taskId)
 		},
 	}
 }
@@ -59,9 +66,17 @@ describe("snapshotCommands", () => {
 		await runSnapshot(deps, "before refactor")
 		const out = await runRestore(deps, "snap_id0")
 		assert.match(out, /task-restored/)
-		assert.match(out, /task history/i)
+		assert.match(out, /switching/i)
 		assert.equal(entered.length, 1)
 		assert.equal(entered[0].taskId, "task-restored")
 		assert.equal(entered[0].bundle.meta.id, "snap_id0")
+	})
+	it("runRestore requests re-entry into the restored session", async () => {
+		const store = new SnapshotStore(new InMemoryEnvironment("/"), "/snapshots")
+		const reentered: string[] = []
+		const deps = makeDeps(store, undefined, reentered)
+		await runSnapshot(deps, "x")
+		await runRestore(deps, "snap_id0")
+		assert.deepEqual(reentered, ["task-restored"])
 	})
 })

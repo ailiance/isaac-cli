@@ -1,9 +1,9 @@
+import * as fs from "node:fs/promises"
 import { ChildProcess, spawn } from "child_process"
 import { EventEmitter } from "events"
 import { Logger } from "@/shared/services/Logger"
 import { resolveWindowsPowerShellExecutable } from "@/utils/powershell"
 import { HookProcessRegistry } from "./HookProcessRegistry"
-import { escapeShellPath } from "./shell-escape"
 
 // Maximum total output size (stdout + stderr combined)
 const MAX_HOOK_OUTPUT_SIZE = 1024 * 1024 // 1MB
@@ -66,11 +66,15 @@ export async function getHookLaunchConfig(
 		}
 	}
 
-	const escapedScriptPath = escapeShellPath(scriptPath)
+	// Make the hook script executable and run it directly. A POSIX kernel
+	// honors the script's shebang on direct exec, so we avoid a shell entirely
+	// (plugin hooks come from a user-writable cache — shell:true would be a
+	// shell-injection surface). No shell ⇒ no path escaping needed.
+	await fs.chmod(scriptPath, 0o755)
 	return {
-		command: escapedScriptPath,
+		command: scriptPath,
 		args: [],
-		shell: true,
+		shell: false,
 		detached: true,
 	}
 }
