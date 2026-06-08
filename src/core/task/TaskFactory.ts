@@ -466,6 +466,7 @@ export function buildTaskManagers(inputs: TaskManagerInputs): TaskManagers {
 
 	const contextLoader = new ContextLoader({
 		ulid,
+		taskId,
 		stateManager,
 		controller,
 		cwd,

@@ -335,12 +335,46 @@ export async function saveTaskMetadata(taskId: string, metadata: TaskMetadata) {
 	}
 }
 
+/**
+ * Atomically write a raw state file into a task directory. Used by snapshot
+ * restore to rehydrate captured JSON files without re-parsing their typed
+ * shapes. Mirrors the temp+rename guarantee of the typed save* helpers.
+ */
+export async function writeTaskStateFile(taskId: string, fileName: string, data: string): Promise<void> {
+	const filePath = path.join(await ensureTaskDirectoryExists(taskId), fileName)
+	// 0600: rehydrated state is owner-private task state and may include a
+	// plaintext copy of the conversation history (see saveApiConversationHistory).
+	await atomicWriteFile(filePath, data, 0o600)
+}
+
+/** Read a raw state file from a task directory, or undefined if absent. */
+export async function readTaskStateFile(taskId: string, fileName: string): Promise<string | undefined> {
+	const filePath = path.join(await ensureTaskDirectoryExists(taskId), fileName)
+	if (await fileExistsAtPath(filePath)) {
+		return fs.readFile(filePath, "utf8")
+	}
+	return undefined
+}
+
 export async function ensureStateDirectoryExists(): Promise<string> {
 	return getGlobalStorageDir("state")
 }
 
 export async function ensureCacheDirectoryExists(): Promise<string> {
 	return getGlobalStorageDir("cache")
+}
+
+export async function ensureSnapshotsDirectoryExists(): Promise<string> {
+	const dir = await getGlobalStorageDir("snapshots")
+	// 0700: snapshot bundles contain copies of conversation history that may hold
+	// secrets. Environment.writeFile can't set a per-file mode, so restrict the
+	// root dir instead so the copies aren't world/group-readable.
+	try {
+		await fs.chmod(dir, 0o700)
+	} catch (error) {
+		Logger.warn("Failed to chmod snapshots directory to 0700:", error)
+	}
+	return dir
 }
 
 async function getGlobalStorageDir(...subdirs: string[]) {

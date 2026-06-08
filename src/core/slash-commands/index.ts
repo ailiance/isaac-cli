@@ -48,6 +48,7 @@ export async function parseSlashCommands(
 	permissionController?: CommandPermissionController,
 	extensionPath?: string,
 	sourceDir: string = getExtensionSourceDir(),
+	runDirectCommand?: (name: string, arg: string) => Promise<string>,
 ): Promise<{
 	processedText: string
 	needsIsaacrulesFileCheck: boolean
@@ -55,7 +56,18 @@ export async function parseSlashCommands(
 	directResponseText?: string
 }> {
 	// ailiance-agent fork: dropped "askIsaac" — RAG over upstream Isaac source code, irrelevant for our fork
-	const SUPPORTED_DEFAULT_COMMANDS = ["newtask", "smol", "compact", "newrule", "reportbug", "explain-changes", "permissions"]
+	const SUPPORTED_DEFAULT_COMMANDS = [
+		"newtask",
+		"smol",
+		"compact",
+		"newrule",
+		"reportbug",
+		"explain-changes",
+		"permissions",
+		"snapshot",
+		"restore",
+		"sessions",
+	]
 
 	const willUseNativeTools = true
 	const commandReplacements: Record<string, string | Promise<string>> = {
@@ -133,6 +145,21 @@ export async function parseSlashCommands(
 
 			// we give preference to the default commands if the user has a file with the same name
 			if (SUPPORTED_DEFAULT_COMMANDS.includes(commandName)) {
+				if ((commandName === "snapshot" || commandName === "restore" || commandName === "sessions") && runDirectCommand) {
+					// Extract the argument: everything in the tag content after the command token.
+					const afterCmd = tagContent.slice(slashMatch.index + slashMatch[1].length + ("/" + commandName).length)
+					const arg = afterCmd.trim().split(/\r?\n/)[0]?.trim() ?? ""
+					const directResponseText = await runDirectCommand(commandName, arg)
+					const textWithoutSlashCommand = removeSlashCommand(text, tagContent, contentStartIndex, slashMatch)
+					telemetryService.captureSlashCommandUsed(ulid, commandName, "builtin")
+					return {
+						processedText: textWithoutSlashCommand,
+						needsIsaacrulesFileCheck: false,
+						isDirectResponse: true,
+						directResponseText,
+					}
+				}
+
 				if (commandName === "permissions" && permissionController) {
 					const { processedText: feedback } = await handlePermissionsCommand(tagContent, permissionController)
 					const textWithoutSlashCommand = removeSlashCommand(text, tagContent, contentStartIndex, slashMatch)

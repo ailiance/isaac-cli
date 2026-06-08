@@ -37,6 +37,24 @@ export const BASE_SLASH_COMMANDS: SlashCommand[] = [
 		section: "default",
 		cliCompatible: true,
 	},
+	{
+		name: "snapshot",
+		description: "Save a restorable snapshot of this session",
+		section: "default",
+		cliCompatible: true,
+	},
+	{
+		name: "restore",
+		description: "Restore a session from a snapshot id",
+		section: "default",
+		cliCompatible: true,
+	},
+	{
+		name: "sessions",
+		description: "List saved session snapshots",
+		section: "default",
+		cliCompatible: true,
+	},
 
 	// ISAAC fork: dropped /askIsaac (RAG over upstream Isaac source — irrelevant here)
 ]

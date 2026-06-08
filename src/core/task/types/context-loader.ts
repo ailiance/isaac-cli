@@ -10,6 +10,7 @@ import { TaskState } from "../TaskState"
 
 export interface ContextLoaderDependencies {
 	ulid: string
+	taskId: string
 	stateManager: StateManager
 	controller: Controller
 	cwd: string
